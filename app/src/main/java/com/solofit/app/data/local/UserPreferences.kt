@@ -45,6 +45,7 @@ class UserPreferences @Inject constructor(
     private val morningGoalsTimeKey = intPreferencesKey("rem_morning_time")
     private val eveningGratitudeEnabledKey = booleanPreferencesKey("rem_evening_enabled")
     private val eveningGratitudeTimeKey = intPreferencesKey("rem_evening_time")
+    private val waterGoalMlKey = intPreferencesKey("water_goal_ml")
     private val quietStartKey = intPreferencesKey("rem_quiet_start")
     private val quietEndKey = intPreferencesKey("rem_quiet_end")
 
@@ -126,6 +127,13 @@ class UserPreferences @Inject constructor(
     suspend fun setWaterMl(date: String, valueMl: Int) {
         val key = intPreferencesKey("water_$date")
         context.dataStore.edit { it[key] = valueMl.coerceAtLeast(0) }
+    }
+
+    val waterGoalMl: Flow<Int> =
+        context.dataStore.data.map { it[waterGoalMlKey] ?: 3000 }
+
+    suspend fun setWaterGoalMl(ml: Int) {
+        context.dataStore.edit { it[waterGoalMlKey] = ml.coerceIn(250, 10000) }
     }
 
     // ---- Reminders ----

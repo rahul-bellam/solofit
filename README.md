@@ -184,7 +184,5 @@ app/src/main/java/com/solofit/app/
 
 ## 🛣️ Possible next steps
 
-- Custom foods / barcode-free manual food entry persistence (entity flag already exists).
-- Editable profile screen (recompute targets on weight change).
-- Progressive-overload charts per exercise from `exercise_sets` history.
 - Export/import the local DB as an encrypted file for device migration.
+- Progressive-overload charts per exercise from `exercise_sets` history.

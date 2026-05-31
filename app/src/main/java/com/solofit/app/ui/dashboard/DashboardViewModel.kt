@@ -54,14 +54,16 @@ class DashboardViewModel @Inject constructor(
         profileRepository.observeProfile(),
         dailyLogRepository.observeTotalsForDate(today),
         profileRepository.waterMl(today),
+        profileRepository.waterGoalMl,
         workoutRepository.observeHistory()
-    ) { profile, totals, water, history ->
+    ) { profile, totals, water, goal, history ->
         val dates = history.map { it.session.date }
         val now = LocalDate.now()
         CoreData(
             profile = profile,
             totals = totals,
             water = water,
+            waterGoal = goal,
             streak = StreakCalculator.currentStreak(dates, now),
             activeThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
             workoutToday = dates.contains(today)
@@ -113,7 +115,7 @@ class DashboardViewModel @Inject constructor(
         val recovery = FitnessMath.recoveryScore(
             sleepHours = t.sleepHours, steps = t.steps,
             workoutDone = c.workoutToday, waterMl = c.water,
-            waterGoalMl = 3000, energyScore = t.energy
+            waterGoalMl = c.waterGoal, energyScore = t.energy
         )
         val consistency = (c.activeThisWeek / 7.0).coerceIn(0.0, 1.0)
         val transformationScore = FitnessMath.transformationScore(
@@ -131,6 +133,7 @@ class DashboardViewModel @Inject constructor(
             consumed = c.totals,
             date = today,
             waterMl = c.water,
+            waterGoalMl = c.waterGoal,
             streakDays = c.streak,
             daysActiveThisWeek = c.activeThisWeek,
             phaseName = t.name,
@@ -152,6 +155,7 @@ class DashboardViewModel @Inject constructor(
         val profile: UserProfileEntity?,
         val totals: MacroTotals,
         val water: Int,
+        val waterGoal: Int,
         val streak: Int,
         val activeThisWeek: Int,
         val workoutToday: Boolean

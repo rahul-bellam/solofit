@@ -89,6 +89,22 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch { dailyLogRepository.removeEntry(row.log) }
     }
 
+    fun addCustomFood(name: String, kcal: Double, protein: Double, carbs: Double, fats: Double) {
+        viewModelScope.launch {
+            foodRepository.addCustomFood(
+                FoodItemEntity(
+                    name = name,
+                    category = "Custom",
+                    caloriesPer100g = kcal,
+                    proteinPer100g = protein,
+                    carbsPer100g = carbs,
+                    fatsPer100g = fats,
+                    isCustom = true
+                )
+            )
+        }
+    }
+
     private fun sumMacros(rows: List<LoggedFoodRow>): MacroTotals =
         rows.fold(MacroTotals()) { acc, row ->
             val f = row.log.gramsConsumed / 100.0

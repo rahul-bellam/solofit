@@ -41,6 +41,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import kotlin.math.roundToInt
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.ui.components.CalorieRing
 import com.solofit.app.ui.components.MacroBar
@@ -65,6 +69,7 @@ fun SettingsScreen(
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val animationsEnabled by viewModel.animationsEnabled.collectAsStateWithLifecycle()
+    val waterGoalMl by viewModel.waterGoalMl.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -155,6 +160,48 @@ fun SettingsScreen(
                     subtitle = "Latency p50/p95 for hot paths",
                     onClick = onPerf
                 )
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ---- Water goal ----
+            SectionTitle("Hydration")
+            Card(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(16.dp)) {
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Daily water goal", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "$waterGoalMl ml",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Slider(
+                        value = waterGoalMl.toFloat(),
+                        onValueChange = { viewModel.setWaterGoalMl(it.roundToInt()) },
+                        valueRange = 500f..6000f,
+                        steps = 10,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        listOf(1000, 2000, 3000, 4000).forEach { preset ->
+                            androidx.compose.material3.TextButton(
+                                onClick = { viewModel.setWaterGoalMl(preset) },
+                                modifier = Modifier.height(32.dp)
+                            ) {
+                                Text("${preset / 1000}L", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
             }
 
             Spacer(Modifier.height(20.dp))

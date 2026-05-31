@@ -37,6 +37,9 @@ interface ProfileRepository {
     val phaseTargetDays: Flow<Int>
     suspend fun setPhase(name: String, startDateIso: String, targetDays: Int)
 
+    val waterGoalMl: Flow<Int>
+    suspend fun setWaterGoalMl(ml: Int)
+
     val trainingGoal: Flow<com.solofit.app.domain.model.TrainingGoal>
     suspend fun setTrainingGoal(goal: com.solofit.app.domain.model.TrainingGoal)
 }

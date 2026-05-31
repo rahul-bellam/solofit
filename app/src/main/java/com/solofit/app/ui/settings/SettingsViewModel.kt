@@ -30,11 +30,18 @@ class SettingsViewModel @Inject constructor(
     val animationsEnabled = repository.animationsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
+    val waterGoalMl = repository.waterGoalMl
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3000)
+
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repository.setThemeMode(mode) }
     }
 
     fun setAnimationsEnabled(enabled: Boolean) {
         viewModelScope.launch { repository.setAnimationsEnabled(enabled) }
+    }
+
+    fun setWaterGoalMl(ml: Int) {
+        viewModelScope.launch { repository.setWaterGoalMl(ml) }
     }
 }

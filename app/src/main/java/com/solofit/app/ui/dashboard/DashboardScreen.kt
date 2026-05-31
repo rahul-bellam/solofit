@@ -14,6 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
@@ -54,6 +55,7 @@ fun DashboardScreen(
     onOpenJournal: () -> Unit = {},
     onOpenBody: () -> Unit = {},
     onEditPhase: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -257,13 +259,21 @@ fun DashboardScreen(
             }
         }
         Spacer(Modifier.height(12.dp))
-        OutlinedButton(
-            onClick = onOpenJournal,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
-            Text("  Open Journal — goals & gratitude")
-        }
+            OutlinedButton(
+                onClick = onOpenJournal,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
+                Text("  Open Journal — goals & gratitude")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onOpenHistory,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
+                Text("  View Workout History")
+            }
         Spacer(Modifier.height(24.dp))
     }
 }

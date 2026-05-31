@@ -18,7 +18,6 @@ object Routes {
     const val ACTIVE_WORKOUT = "active_workout"           // /{sessionId}
 
     const val SCAN = "scan"                               // barcode pipeline
-    const val PHOTO = "photo"                             // photo classification pipeline
 
     const val SETTINGS = "settings"
     const val EDIT_PROFILE = "edit_profile"

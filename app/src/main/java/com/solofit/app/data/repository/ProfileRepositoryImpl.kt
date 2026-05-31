@@ -39,6 +39,9 @@ class ProfileRepositoryImpl @Inject constructor(
     override suspend fun setPhase(name: String, startDateIso: String, targetDays: Int) =
         prefs.setPhase(name, startDateIso, targetDays)
 
+    override val waterGoalMl: Flow<Int> = prefs.waterGoalMl
+    override suspend fun setWaterGoalMl(ml: Int) = prefs.setWaterGoalMl(ml)
+
     override val trainingGoal: Flow<com.solofit.app.domain.model.TrainingGoal> = prefs.trainingGoal
     override suspend fun setTrainingGoal(goal: com.solofit.app.domain.model.TrainingGoal) =
         prefs.setTrainingGoal(goal)

@@ -38,7 +38,7 @@ class HydrationWorker @AssistedInject constructor(
         // Skip if already hydrated enough today.
         val today = DateUtils.today()
         val current = prefs.waterMl(today).first()
-        val goal = 3000
+        val goal = prefs.waterGoalMl.first()
         if (current >= goal) return Result.success()
 
         val remaining = goal - current

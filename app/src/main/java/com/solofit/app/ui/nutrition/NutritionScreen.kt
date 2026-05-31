@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
@@ -54,6 +55,7 @@ fun NutritionScreen(
     val sections by viewModel.sections.collectAsStateWithLifecycle()
 
     var selectedFood by remember { mutableStateOf<FoodItemEntity?>(null) }
+    var showCreateFood by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = Modifier
@@ -84,6 +86,14 @@ fun NutritionScreen(
             OutlinedButton(onClick = onScanBarcode, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.QrCodeScanner, null)
                 Text("  Scan barcode")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { showCreateFood = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Add, null)
+                Text("  Add custom food")
             }
         }
 
@@ -120,6 +130,16 @@ fun NutritionScreen(
                 viewModel.logFood(food, grams, category)
                 selectedFood = null
                 viewModel.onQueryChange("")
+            }
+        )
+    }
+
+    if (showCreateFood) {
+        CreateFoodDialog(
+            onDismiss = { showCreateFood = false },
+            onConfirm = { name, kcal, protein, carbs, fats ->
+                viewModel.addCustomFood(name, kcal, protein, carbs, fats)
+                showCreateFood = false
             }
         )
     }
@@ -300,5 +320,87 @@ private fun LogFoodDialog(
             ) { Text("Add") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun CreateFoodDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (name: String, kcal: Double, protein: Double, carbs: Double, fats: Double) -> Unit
+) {
+    var name by remember { mutableStateOf("") }
+    var kcal by remember { mutableStateOf("") }
+    var protein by remember { mutableStateOf("") }
+    var carbs by remember { mutableStateOf("") }
+    var fats by remember { mutableStateOf("") }
+
+    val valid = name.isNotBlank() &&
+        kcal.toDoubleOrNull() != null &&
+        protein.toDoubleOrNull() != null &&
+        carbs.toDoubleOrNull() != null &&
+        fats.toDoubleOrNull() != null
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Custom Food") },
+        text = {
+            Column {
+                Text(
+                    "Macros per 100g",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = { name = it },
+                    label = { Text("Food name") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(8.dp))
+                DecimalField("Calories", kcal, { kcal = it })
+                DecimalField("Protein (g)", protein, { protein = it })
+                DecimalField("Carbs (g)", carbs, { carbs = it })
+                DecimalField("Fats (g)", fats, { fats = it })
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onConfirm(
+                        name,
+                        kcal.toDouble(),
+                        protein.toDouble(),
+                        carbs.toDouble(),
+                        fats.toDouble()
+                    )
+                },
+                enabled = valid
+            ) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun DecimalField(
+    label: String,
+    value: String,
+    onChange: (String) -> Unit
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = { input ->
+            onChange(input.filterIndexed { i, c ->
+                c.isDigit() || (c == '.' && !input.substring(0, i).contains('.'))
+            })
+        },
+        label = { Text(label) },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
     )
 }

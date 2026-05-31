@@ -111,7 +111,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
-                            onEditPhase = { navController.navigate(Routes.EDIT_PHASE) }
+                            onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
+                            onOpenHistory = { navController.navigate(Routes.HISTORY) }
                         )
                     }
                     composable(Routes.NUTRITION) {
