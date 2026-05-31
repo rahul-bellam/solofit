@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lock down all networking: deny cleartext globally, and only allow secure
+  (HTTPS) traffic to the Open Food Facts hosts. Everything else is implicitly
+  governed by the base config (no cleartext). This keeps the app's network
+  surface minimal even though INTERNET is now declared.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">openfoodfacts.org</domain>
+    </domain-config>
+</network-security-config>

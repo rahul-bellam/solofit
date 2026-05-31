@@ -1,0 +1,5 @@
+# Rename to local.properties (git-ignored). Point this at your Android SDK install.
+# macOS:   sdk.dir=/Users/<you>/Library/Android/sdk
+# Linux:   sdk.dir=/home/<you>/Android/Sdk
+# Windows: sdk.dir=C\:\\Users\\<you>\\AppData\\Local\\Android\\Sdk
+sdk.dir=/path/to/your/Android/Sdk
