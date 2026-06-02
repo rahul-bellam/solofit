@@ -66,7 +66,7 @@ class NutritionViewModel @Inject constructor(
     val sectionsLoaded = sections
         .drop(1)
         .map { true }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun onQueryChange(q: String) { _query.value = q }
 

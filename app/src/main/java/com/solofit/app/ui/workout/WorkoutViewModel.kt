@@ -24,7 +24,7 @@ class WorkoutViewModel @Inject constructor(
     val routinesLoaded = routines
         .drop(1)
         .map { true }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun deleteRoutine(routine: RoutineEntity) {
         viewModelScope.launch { repository.deleteRoutine(routine) }
