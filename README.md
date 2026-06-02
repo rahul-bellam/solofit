@@ -12,7 +12,25 @@ See [`docs/BARCODE_SCANNING.md`](docs/BARCODE_SCANNING.md).
 ---
 
 
-## v2.2 — "Fitness OS" pivot (current)
+## v2.3 — Weekly workout planner & playful polish (current)
+
+- **Weekly Workout Planner** — assign a plan to each day of the week (Monday→Sunday)
+  with exercises, sets, reps, weight, and kg/lbs toggle. Persistent via Room (new
+  `weekly_plans` + `planned_exercises` tables, migration v9→v10).
+- **Dashboard integration** — today's exercises appear on the dashboard as a checkable
+  list (light haptic per tap). Check them all off → **dust particle burst animation**
+  (40-particle Canvas burst, 800ms fade-out) → section auto-dismisses.
+- **Journal UX fix** — entire card row is clickable for goal toggle (was tiny icon only).
+- **Nutrition search preserved** — logging a meal no longer clears the query, so you
+  can log multiple entries without re-typing.
+- **Conflated snackbar events** — water add/remove no longer triggers duplicate toasts.
+- **BMI on dashboard** — shown inline under the greeting when height is set.
+- **Light haptic** (`KEYBOARD_TAP`) on water tracker buttons, journal toggle/delete,
+  and exercise checkoffs.
+- **Workout list spinner fix** — resolved a race condition where an empty routine list
+  kept the loading spinner spinning forever.
+
+## v2.2 — "Fitness OS" pivot
 
 Nutrition is now **manual entry** against the local food dataset (log "100 g chicken
 breast" or "5 eggs" → macros). The on-device ML photo classifier + portion estimator
@@ -103,7 +121,7 @@ See [`docs/REMINDERS_AND_MONITORING.md`](docs/REMINDERS_AND_MONITORING.md).
 | **Onboarding & Profile** | Collects age, gender, weight, height, activity level, goal → computes **BMR (Mifflin-St Jeor)**, **TDEE**, calorie target (±offset by goal) and a hardcoded macro split (2 g protein/kg, 25% kcal fat, rest carbs). Live preview as you type. |
 | **Dashboard** | Glanceable day summary: animated **circular calorie ring** + three linear **macro bars** (protein/carbs/fats) + quick actions. |
 | **Nutrition Log** | Search a **118-item local food DB** + optional **USDA FoodData Central lookup** (20+ nutrients), enter grams → exact macros computed `(grams/100)*base`, logged by meal (Breakfast/Lunch/Dinner/Snacks). |
-| **Workout Tracker** | **Routine Builder** (pick from 47 seeded exercises), **Active Workout** screen with weight/reps inputs + per-set completion checkboxes, and a **calendar History** of completed sessions with volume stats. |
+| **Workout Tracker** | **Routine Builder** (pick from 47 seeded exercises), **Active Workout** screen with weight/reps inputs + per-set completion checkboxes, a **calendar History** of completed sessions with volume stats, and a **Weekly Planner** to schedule exercises per day-of-week. |
 
 ## 🔒 Non-Functional Requirements (met)
 
@@ -134,6 +152,7 @@ data (Room entities/DAOs, repositories, seed data, DataStore)   ← framework
 user_profile        food_items            daily_log (FK → food_items)
 routines ──1:N──► exercises
 workout_sessions ──1:N──► exercise_sets
+weekly_plans ──1:N──► planned_exercises
 ```
 
 See `data/local/entity/*` and `data/local/relation/Relations.kt`.
@@ -185,7 +204,10 @@ app/src/main/java/com/solofit/app/
 ├─ data/local/seed/FoodSeedData.kt                      # 105 foods
 ├─ data/local/seed/ExerciseSeedData.kt                  # 47 exercises
 ├─ data/local/SoloFitDatabase.kt                        # Room DB + first-run seeding
+├─ ui/components/DustCompletionAnimation.kt              # Canvas particle burst
 ├─ ui/onboarding | dashboard | nutrition | workout      # the four modules
+├─ ui/workout/plan/WorkoutPlannerScreen.kt               # weekly planner
+├─ ui/workout/plan/WorkoutPlannerViewModel.kt            # planner state
 └─ ui/SoloFitApp.kt                                      # nav graph + bottom bar
 ```
 
