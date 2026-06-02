@@ -43,16 +43,8 @@ class NutritionViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
-    /**
-     * Search pipeline applying three cross-domain signal/stream principles:
-     *  - debounce(250ms): telecom "signal conditioning" — wait for typing to settle
-     *    so we issue one query instead of one-per-keystroke.
-     *  - distinctUntilChanged: dedupe identical inputs (e.g. type+delete same char).
-     *  - flatMapLatest + conflate: reactive "backpressure/conflation" — cancel the
-     *    in-flight query when a newer one arrives, and only keep the freshest result.
-     */
     val searchResults = _query
-        .debounce { q -> if (q.isBlank()) 0L else 250L } // immediate when cleared
+        .debounce { q -> if (q.isBlank()) 0L else 250L }
         .distinctUntilChanged()
         .flatMapLatest { q ->
             if (q.isBlank()) foodRepository.observeAll() else foodRepository.search(q)
@@ -74,10 +66,13 @@ class NutritionViewModel @Inject constructor(
 
     fun logFood(food: FoodItemEntity, grams: Double, category: MealCategory) {
         viewModelScope.launch {
+            val actualId = if (food.id == 0L) {
+                foodRepository.addCustomFood(food)
+            } else food.id
             dailyLogRepository.logFood(
                 DailyLogEntity(
                     date = today,
-                    foodId = food.id,
+                    foodId = actualId,
                     gramsConsumed = grams,
                     mealCategory = category.name
                 )

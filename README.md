@@ -102,7 +102,7 @@ See [`docs/REMINDERS_AND_MONITORING.md`](docs/REMINDERS_AND_MONITORING.md).
 |---|---|
 | **Onboarding & Profile** | Collects age, gender, weight, height, activity level, goal → computes **BMR (Mifflin-St Jeor)**, **TDEE**, calorie target (±offset by goal) and a hardcoded macro split (2 g protein/kg, 25% kcal fat, rest carbs). Live preview as you type. |
 | **Dashboard** | Glanceable day summary: animated **circular calorie ring** + three linear **macro bars** (protein/carbs/fats) + quick actions. |
-| **Nutrition Log** | Search a **105-item local food DB** (per-100g macros), enter grams → exact macros computed `(grams/100)*base`, logged by meal (Breakfast/Lunch/Dinner/Snacks). |
+| **Nutrition Log** | Search a **118-item local food DB** + optional **USDA FoodData Central lookup** (20+ nutrients), enter grams → exact macros computed `(grams/100)*base`, logged by meal (Breakfast/Lunch/Dinner/Snacks). |
 | **Workout Tracker** | **Routine Builder** (pick from 47 seeded exercises), **Active Workout** screen with weight/reps inputs + per-set completion checkboxes, and a **calendar History** of completed sessions with volume stats. |
 
 ## 🔒 Non-Functional Requirements (met)
@@ -153,6 +153,13 @@ Requirements: **Android Studio (Koala or newer)**, **JDK 17**, Android SDK 34.
 
 > The first sync downloads Gradle 8.9, AGP 8.5.2 and dependencies — that step needs
 > internet **on your dev machine**. The *app itself* never uses the network.
+
+### USDA FoodData Central lookup
+
+The **Food Nutrition Lookup** screen queries the [USDA FoodData Central API](https://fdc.nal.usda.gov/)
+for any food and returns 20+ nutrients (calories, macros, fiber, vitamins, minerals).
+Get a **free API key** at https://data.nal.usda.gov/registration-api-key, then set it in
+`app/build.gradle.kts` → `buildConfigField("String", "USDA_API_KEY", "\"your_key\"")`.
 
 If `local.properties` is missing, Android Studio creates it; or copy the template:
 

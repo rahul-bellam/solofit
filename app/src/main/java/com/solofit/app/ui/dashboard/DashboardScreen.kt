@@ -17,6 +17,7 @@ import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
@@ -56,6 +57,7 @@ fun DashboardScreen(
     onOpenBody: () -> Unit = {},
     onEditPhase: () -> Unit = {},
     onOpenHistory: () -> Unit = {},
+    onFoodLookup: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -265,6 +267,14 @@ fun DashboardScreen(
             ) {
                 Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
                 Text("  Open Journal — goals & gratitude")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = onFoodLookup,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(Icons.Filled.Search, contentDescription = null)
+                Text("  Food Nutrition Lookup")
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(

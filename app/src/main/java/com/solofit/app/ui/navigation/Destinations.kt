@@ -29,6 +29,7 @@ object Routes {
     const val EDIT_PHASE = "edit_phase"
     const val STRENGTH = "strength"
     const val PHOTOS = "photos"
+    const val FOOD_LOOKUP = "food_lookup"
 }
 
 enum class BottomDestination(

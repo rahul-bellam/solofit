@@ -22,6 +22,8 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        // Get your free USDA API key at https://data.nal.usda.gov/registration-api-key
+        buildConfigField("String", "USDA_API_KEY", "\"YOUR_USDA_API_KEY\"")
     }
 
     buildTypes {

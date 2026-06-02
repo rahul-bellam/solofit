@@ -61,6 +61,8 @@ interface FoodRepository {
     fun search(query: String): Flow<List<FoodItemEntity>>
     suspend fun getById(id: Long): FoodItemEntity?
     suspend fun addCustomFood(item: FoodItemEntity): Long
+    /** Search USDA FoodData Central and persist results as custom foods for offline reuse. */
+    suspend fun searchUsda(query: String): List<FoodItemEntity>
     /** Read-ahead: touch the table so SQLite pages are warm before first search. */
     suspend fun warmUp()
 }

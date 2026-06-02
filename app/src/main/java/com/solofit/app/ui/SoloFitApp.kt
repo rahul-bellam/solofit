@@ -24,6 +24,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.solofit.app.ui.dashboard.DashboardScreen
+import com.solofit.app.ui.foodlookup.FoodLookupScreen
 import com.solofit.app.ui.navigation.BottomDestination
 import com.solofit.app.ui.navigation.Routes
 import com.solofit.app.ui.nutrition.NutritionScreen
@@ -112,12 +113,19 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
                             onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
-                            onOpenHistory = { navController.navigate(Routes.HISTORY) }
+                            onOpenHistory = { navController.navigate(Routes.HISTORY) },
+                            onFoodLookup = { navController.navigate(Routes.FOOD_LOOKUP) }
                         )
                     }
                     composable(Routes.NUTRITION) {
                         NutritionScreen(
-                            onScanBarcode = { navController.navigate(Routes.SCAN) }
+                            onScanBarcode = { navController.navigate(Routes.SCAN) },
+                            onFoodLookup = { navController.navigate(Routes.FOOD_LOOKUP) }
+                        )
+                    }
+                    composable(Routes.FOOD_LOOKUP) {
+                        FoodLookupScreen(
+                            onBack = { navController.popBackStack() }
                         )
                     }
                     composable(Routes.SCAN) {

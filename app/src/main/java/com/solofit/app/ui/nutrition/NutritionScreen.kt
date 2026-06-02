@@ -48,6 +48,7 @@ import kotlin.math.roundToInt
 @Composable
 fun NutritionScreen(
     onScanBarcode: () -> Unit = {},
+    onFoodLookup: () -> Unit = {},
     viewModel: NutritionViewModel = hiltViewModel()
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
@@ -86,6 +87,11 @@ fun NutritionScreen(
             OutlinedButton(onClick = onScanBarcode, modifier = Modifier.fillMaxWidth()) {
                 Icon(Icons.Filled.QrCodeScanner, null)
                 Text("  Scan barcode")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(onClick = onFoodLookup, modifier = Modifier.fillMaxWidth()) {
+                Icon(Icons.Filled.Search, null)
+                Text("  Food nutrition lookup")
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(
