@@ -8,13 +8,13 @@ plugins {
 }
 
 val envFile = rootProject.file(".env")
-val geminiApiKey = if (envFile.exists()) {
+fun envValue(key: String): String = if (envFile.exists()) {
     envFile.readLines()
-        .firstOrNull { it.startsWith("GEMINI_API_KEY=") }
+        .firstOrNull { it.startsWith("$key=") }
         ?.substringAfter("=")?.trim()?.trim('"') ?: ""
-} else {
-    ""
-}
+} else ""
+val geminiApiKey = envValue("GEMINI_API_KEY")
+val usdaApiKey = envValue("USDA_API_KEY")
 
 android {
     namespace = "com.solofit.app"
@@ -31,10 +31,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // Get your free USDA API key at https://data.nal.usda.gov/registration-api-key
-        buildConfigField("String", "USDA_API_KEY", "\"YOUR_USDA_API_KEY\"")
-        // Get your free Gemini API key at https://aistudio.google.com/app/apikey
-        // Create a .env file at project root with: GEMINI_API_KEY=your_key_here
+        // Get your free API keys and put them in .env at project root:
+        //   USDA_API_KEY=https://data.nal.usda.gov/registration-api-key
+        //   GEMINI_API_KEY=https://aistudio.google.com/app/apikey
+        buildConfigField("String", "USDA_API_KEY", "\"${usdaApiKey}\"")
         buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey}\"")
     }
 
