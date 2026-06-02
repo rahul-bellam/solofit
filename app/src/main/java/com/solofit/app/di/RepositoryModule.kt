@@ -8,6 +8,7 @@ import com.solofit.app.data.repository.WeightRepositoryImpl
 import com.solofit.app.data.repository.DailyLogRepositoryImpl
 import com.solofit.app.data.repository.FoodRepositoryImpl
 import com.solofit.app.data.repository.ProfileRepositoryImpl
+import com.solofit.app.data.repository.WeeklyPlanRepositoryImpl
 import com.solofit.app.data.repository.WorkoutRepositoryImpl
 import com.solofit.app.domain.repository.BarcodeRepository
 import com.solofit.app.domain.repository.BodyRepository
@@ -17,6 +18,7 @@ import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.FoodRepository
 import com.solofit.app.domain.repository.ProfileRepository
+import com.solofit.app.domain.repository.WeeklyPlanRepository
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.Binds
 import dagger.Module
@@ -54,4 +56,7 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindProgressPhotoRepository(impl: ProgressPhotoRepositoryImpl): ProgressPhotoRepository
+
+    @Binds @Singleton
+    abstract fun bindWeeklyPlanRepository(impl: WeeklyPlanRepositoryImpl): WeeklyPlanRepository
 }

@@ -1,5 +1,8 @@
 package com.solofit.app.ui.dashboard
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,13 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -42,15 +46,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import com.solofit.app.data.local.entity.PlannedExerciseEntity
+import com.solofit.app.ui.components.DustCompletionAnimation
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.rememberAnimationsActive
@@ -73,14 +83,18 @@ fun DashboardScreen(
     onOpenJournal: () -> Unit = {},
     onOpenBody: () -> Unit = {},
     onEditPhase: () -> Unit = {},
-    onOpenHistory: () -> Unit = {},
-    onFoodLookup: () -> Unit = {},
+    onOpenProfile: () -> Unit = {},
+    onOpenReminders: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val animateEnabled by viewModel.animationsEnabled.collectAsStateWithLifecycle()
     val animate = rememberAnimationsActive(animateEnabled)
     val profile = state.profile
+    val planName by viewModel.todayPlanName.collectAsState()
+    val exercises by viewModel.todayExercises.collectAsState()
+    val allDone by viewModel.todayAllDone.collectAsState()
+    val planDismissed by viewModel.planDismissed.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(Unit) {
@@ -132,6 +146,17 @@ fun DashboardScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                profile?.let { p ->
+                    if (p.heightCm > 0) {
+                        val bmi = p.weightKg / ((p.heightCm / 100.0) * (p.heightCm / 100.0))
+                        Text(
+                            "BMI ${"%.1f".format(bmi)}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
+                }
             }
             IconButton(onClick = onOpenSettings) {
                 Icon(Icons.Filled.Settings, contentDescription = "Settings")
@@ -237,6 +262,114 @@ fun DashboardScreen(
             }
         }
 
+        Spacer(Modifier.height(12.dp))
+
+        // ---- Today's Summary ----
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+        ) {
+            Row(
+                Modifier.fillMaxWidth().padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val calsPct = profile?.let {
+                    if (it.targetCalories > 0) (state.consumed.calories / it.targetCalories * 100).roundToInt()
+                    else 0
+                } ?: 0
+                val waterPct = if (state.waterGoalMl > 0) (state.waterMl * 100 / state.waterGoalMl).coerceAtMost(100) else 0
+
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Text("${calsPct}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text("calories", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Filled.WaterDrop, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Text("${waterPct}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                    Text("water", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (state.remindersActive) {
+                        Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Text("ON", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
+                        Text("reminders", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(
+                        if (state.workoutToday) Icons.Filled.CheckCircle else Icons.Filled.FitnessCenter,
+                        contentDescription = null,
+                        tint = if (state.workoutToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        if (state.workoutToday) "Done" else "—",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text("workout", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(20.dp))
+
+        // ---- Today's Plan ----
+        AnimatedVisibility(
+            visible = planName.isNotEmpty() && !planDismissed,
+            exit = fadeOut()
+        ) {
+            Box {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                            Spacer(Modifier.size(8.dp))
+                            Text(planName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        exercises.forEach { ex ->
+                            val view = LocalView.current
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                        viewModel.toggleExercise(ex)
+                                    }
+                                    .padding(vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.CheckCircle,
+                                    contentDescription = null,
+                                    tint = if (ex.isCompleted) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.size(8.dp))
+                                Text(
+                                    "${ex.exerciseName}  ${ex.sets}×${ex.reps} @ ${ex.weight}${ex.weightUnit}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (ex.isCompleted) MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.6f)
+                                    else MaterialTheme.colorScheme.onTertiaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+                if (allDone) {
+                    DustCompletionAnimation(
+                        onAnimationEnd = viewModel::dismissCompletedPlan
+                    )
+                }
+            }
+        }
+
         Spacer(Modifier.height(20.dp))
 
         Card(
@@ -302,12 +435,22 @@ fun DashboardScreen(
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
-                onClick = onLogMeal,
+                onClick = onOpenProfile,
                 modifier = Modifier.weight(1f)
             ) {
-                Icon(Icons.Filled.Restaurant, contentDescription = null)
-                Text("  Log Meal")
+                Icon(Icons.Filled.Person, contentDescription = null)
+                Text("  Edit Profile")
             }
+            OutlinedButton(
+                onClick = onOpenReminders,
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(Icons.Filled.Notifications, contentDescription = null)
+                Text("  Reminders")
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(
                 onClick = onLogWorkout,
                 modifier = Modifier.weight(1f)
@@ -315,31 +458,14 @@ fun DashboardScreen(
                 Icon(Icons.Filled.FitnessCenter, contentDescription = null)
                 Text("  Log Workout")
             }
-        }
-        Spacer(Modifier.height(12.dp))
             OutlinedButton(
                 onClick = onOpenJournal,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.weight(1f)
             ) {
                 Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
-                Text("  Open Journal — goals & gratitude")
+                Text("  Journal")
             }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onFoodLookup,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Filled.Search, contentDescription = null)
-                Text("  Food Nutrition Lookup")
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = onOpenHistory,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.AutoMirrored.Filled.OpenInNew, contentDescription = null)
-                Text("  View Workout History")
-            }
+        }
         Spacer(Modifier.height(24.dp))
         }
     }

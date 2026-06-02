@@ -30,6 +30,7 @@ object Routes {
     const val STRENGTH = "strength"
     const val PHOTOS = "photos"
     const val FOOD_LOOKUP = "food_lookup"
+    const val WEEKLY_PLANNER = "weekly_planner"
 }
 
 enum class BottomDestination(

@@ -48,6 +48,7 @@ import com.solofit.app.ui.onboarding.OnboardingScreen
 import com.solofit.app.ui.workout.ActiveWorkoutScreen
 import com.solofit.app.ui.workout.HistoryScreen
 import com.solofit.app.ui.workout.RoutineBuilderScreen
+import com.solofit.app.ui.workout.plan.WorkoutPlannerScreen
 import com.solofit.app.ui.workout.WorkoutScreen
 
 @Composable
@@ -122,8 +123,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
                             onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
-                            onOpenHistory = { navController.navigate(Routes.HISTORY) },
-                            onFoodLookup = { navController.navigate(Routes.FOOD_LOOKUP) }
+                            onOpenProfile = { navController.navigate(Routes.EDIT_PROFILE) },
+                            onOpenReminders = { navController.navigate(Routes.REMINDERS) }
                         )
                     }
                     composable(Routes.NUTRITION) {
@@ -192,7 +193,15 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             },
                             onStartSession = { sessionId ->
                                 navController.navigate("${Routes.ACTIVE_WORKOUT}/$sessionId")
+                            },
+                            onOpenWeeklyPlanner = {
+                                navController.navigate(Routes.WEEKLY_PLANNER)
                             }
+                        )
+                    }
+                    composable(Routes.WEEKLY_PLANNER) {
+                        WorkoutPlannerScreen(
+                            onBack = { navController.popBackStack() }
                         )
                     }
                     composable(Routes.HISTORY) { HistoryScreen() }

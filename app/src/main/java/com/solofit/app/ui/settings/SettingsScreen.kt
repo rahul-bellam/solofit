@@ -39,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.width
@@ -331,7 +332,7 @@ private fun AnimationPreview(animate: Boolean) {
     ) {
         Text(
             "Preview",
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))

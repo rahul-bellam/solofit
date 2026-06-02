@@ -29,8 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 
@@ -50,12 +50,12 @@ fun WaterTracker(
     val goalGlasses = goalMl / glassMl
     val goalHit = goalMl > 0 && currentMl >= goalMl
 
-    val haptics = LocalHapticFeedback.current
+    val view = LocalView.current
     // One-shot celebratory ripple when the goal is first reached.
     val ripple = remember { Animatable(0f) }
     LaunchedEffect(goalHit) {
         if (goalHit) {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
             if (animate) {
                 ripple.snapTo(0f)
                 ripple.animateTo(1f, androidx.compose.animation.core.tween(600))
@@ -123,11 +123,17 @@ fun WaterTracker(
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    FilledTonalIconButton(onClick = { onRemove(glassMl) }) {
+                    FilledTonalIconButton(onClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        onRemove(glassMl)
+                    }) {
                         Icon(Icons.Filled.Remove, contentDescription = "Remove a glass")
                     }
                     Text("$glassMl ml", fontWeight = FontWeight.SemiBold)
-                    FilledTonalIconButton(onClick = { onAdd(glassMl) }) {
+                    FilledTonalIconButton(onClick = {
+                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                        onAdd(glassMl)
+                    }) {
                         Icon(Icons.Filled.Add, contentDescription = "Add a glass")
                     }
                 }

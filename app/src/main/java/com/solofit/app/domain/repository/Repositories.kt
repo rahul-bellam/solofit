@@ -10,6 +10,7 @@ import com.solofit.app.data.local.entity.WorkoutSessionEntity
 import com.solofit.app.data.local.relation.RoutineWithExercises
 import com.solofit.app.data.local.relation.SessionWithSets
 import com.solofit.app.domain.model.ExercisePlan
+import com.solofit.app.domain.model.ReminderSettings
 import kotlinx.coroutines.flow.Flow
 
 interface ProfileRepository {
@@ -42,6 +43,8 @@ interface ProfileRepository {
 
     val trainingGoal: Flow<com.solofit.app.domain.model.TrainingGoal>
     suspend fun setTrainingGoal(goal: com.solofit.app.domain.model.TrainingGoal)
+
+    val reminderSettings: Flow<ReminderSettings>
 }
 
 interface BodyRepository {

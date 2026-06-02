@@ -3,6 +3,7 @@ package com.solofit.app.data.repository
 import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.data.local.dao.UserProfileDao
 import com.solofit.app.data.local.entity.UserProfileEntity
+import com.solofit.app.domain.model.ReminderSettings
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.repository.ProfileRepository
 import kotlinx.coroutines.flow.Flow
@@ -45,4 +46,6 @@ class ProfileRepositoryImpl @Inject constructor(
     override val trainingGoal: Flow<com.solofit.app.domain.model.TrainingGoal> = prefs.trainingGoal
     override suspend fun setTrainingGoal(goal: com.solofit.app.domain.model.TrainingGoal) =
         prefs.setTrainingGoal(goal)
+
+    override val reminderSettings: Flow<ReminderSettings> = prefs.reminderSettings
 }

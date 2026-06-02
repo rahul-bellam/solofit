@@ -14,6 +14,7 @@ import com.solofit.app.data.local.dao.JournalDao
 import com.solofit.app.data.local.dao.BodyMeasurementDao
 import com.solofit.app.data.local.dao.DailyMetricDao
 import com.solofit.app.data.local.dao.ProgressPhotoDao
+import com.solofit.app.data.local.dao.WeeklyPlanDao
 import com.solofit.app.data.local.dao.WeightDao
 import com.solofit.app.data.local.dao.WorkoutDao
 import com.solofit.app.data.local.entity.DailyLogEntity
@@ -26,7 +27,9 @@ import com.solofit.app.data.local.entity.GoalItemEntity
 import com.solofit.app.data.local.entity.GratitudeEntryEntity
 import com.solofit.app.data.local.entity.BodyMeasurementEntity
 import com.solofit.app.data.local.entity.DailyMetricEntity
+import com.solofit.app.data.local.entity.PlannedExerciseEntity
 import com.solofit.app.data.local.entity.ProgressPhotoEntity
+import com.solofit.app.data.local.entity.WeeklyPlanEntity
 import com.solofit.app.data.local.entity.WeightEntryEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
 import com.solofit.app.data.local.seed.FoodSeedData
@@ -48,9 +51,11 @@ import kotlinx.coroutines.launch
         GratitudeEntryEntity::class,
         BodyMeasurementEntity::class,
         DailyMetricEntity::class,
-        ProgressPhotoEntity::class
+        ProgressPhotoEntity::class,
+        WeeklyPlanEntity::class,
+        PlannedExerciseEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -65,6 +70,7 @@ abstract class SoloFitDatabase : RoomDatabase() {
     abstract fun bodyMeasurementDao(): BodyMeasurementDao
     abstract fun dailyMetricDao(): DailyMetricDao
     abstract fun progressPhotoDao(): ProgressPhotoDao
+    abstract fun weeklyPlanDao(): WeeklyPlanDao
 
     companion object {
         const val DB_NAME = "solofit.db"
@@ -238,6 +244,34 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v9 -> v10: weekly plan tables. */
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS weekly_plans (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        dayOfWeek INTEGER NOT NULL,
+                        name TEXT NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS planned_exercises (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        planId INTEGER NOT NULL,
+                        exerciseName TEXT NOT NULL,
+                        sets INTEGER NOT NULL DEFAULT 3,
+                        reps INTEGER NOT NULL DEFAULT 10,
+                        weight REAL NOT NULL DEFAULT 0.0,
+                        weightUnit TEXT NOT NULL DEFAULT 'kg',
+                        sortOrder INTEGER NOT NULL DEFAULT 0,
+                        isCompleted INTEGER NOT NULL DEFAULT 0,
+                        FOREIGN KEY (planId) REFERENCES weekly_plans(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_planned_exercises_planId ON planned_exercises(planId)")
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
             var needsSeed = false
             val db = Room.databaseBuilder(
@@ -245,7 +279,7 @@ abstract class SoloFitDatabase : RoomDatabase() {
                 SoloFitDatabase::class.java,
                 DB_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         needsSeed = true

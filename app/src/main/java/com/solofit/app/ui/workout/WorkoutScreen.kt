@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -42,6 +43,7 @@ fun WorkoutScreen(
     onCreateRoutine: () -> Unit,
     onEditRoutine: (Long) -> Unit,
     onStartSession: (Long) -> Unit,
+    onOpenWeeklyPlanner: () -> Unit = {},
     viewModel: WorkoutViewModel = hiltViewModel()
 ) {
     val routines by viewModel.routines.collectAsStateWithLifecycle()
@@ -79,6 +81,14 @@ fun WorkoutScreen(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = onOpenWeeklyPlanner,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Filled.Add, null)
+                    Text("  Weekly Plan — schedule each day")
+                }
+                Spacer(Modifier.height(12.dp))
             }
 
             if (routines.isEmpty()) {

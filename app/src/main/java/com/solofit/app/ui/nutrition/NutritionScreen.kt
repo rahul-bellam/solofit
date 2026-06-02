@@ -202,7 +202,6 @@ fun NutritionScreen(
             onConfirm = { grams, category ->
                 viewModel.logFood(food, grams, category)
                 selectedFood = null
-                viewModel.onQueryChange("")
             }
         )
     }

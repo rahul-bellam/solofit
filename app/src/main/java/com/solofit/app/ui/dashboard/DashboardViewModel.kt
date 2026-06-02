@@ -8,16 +8,25 @@ import com.solofit.app.core.StreakCalculator
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.domain.model.MacroTotals
 import com.solofit.app.domain.model.TrainingGoal
+import com.solofit.app.data.local.entity.PlannedExerciseEntity
+import com.solofit.app.data.local.entity.WeeklyPlanEntity
 import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.ProfileRepository
+import com.solofit.app.domain.repository.WeeklyPlanRepository
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -41,6 +50,8 @@ data class DashboardState(
     val waterGoalMl: Int = 3000,
     val streakDays: Int = 0,
     val daysActiveThisWeek: Int = 0,
+    val workoutToday: Boolean = false,
+    val remindersActive: Boolean = false,
     // Transformation dashboard
     val phaseName: String = "Foundation Recomp",
     val phaseDay: Int = 1,
@@ -57,12 +68,13 @@ class DashboardViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val dailyLogRepository: DailyLogRepository,
     private val workoutRepository: WorkoutRepository,
-    private val bodyRepository: BodyRepository
+    private val bodyRepository: BodyRepository,
+    private val weeklyPlanRepository: WeeklyPlanRepository
 ) : ViewModel() {
 
     private val today = DateUtils.today()
     private val _isRefreshing = MutableStateFlow(false)
-    private val _snackbar = Channel<SnackbarEvent>(Channel.BUFFERED)
+    private val _snackbar = Channel<SnackbarEvent>(Channel.CONFLATED)
     val snackbarEvent = _snackbar.receiveAsFlow()
     private var lastWaterRemovedMl = 0
 
@@ -122,7 +134,7 @@ class DashboardViewModel @Inject constructor(
         ScoreInputs(goal, waistProgress, strengthProgress)
     }
 
-    val state = combine(_isRefreshing, core, transform, scoreInputs) { refreshing, c, t, si ->
+    val state = combine(_isRefreshing, core, transform, scoreInputs, profileRepository.reminderSettings) { refreshing, c, t, si, reminders ->
         val phaseDay = t.startDate?.let {
             runCatching {
                 ChronoUnit.DAYS.between(LocalDate.parse(it), LocalDate.now()).toInt() + 1
@@ -154,6 +166,9 @@ class DashboardViewModel @Inject constructor(
             waterGoalMl = c.waterGoal,
             streakDays = c.streak,
             daysActiveThisWeek = c.activeThisWeek,
+            workoutToday = c.workoutToday,
+            remindersActive = reminders.hydrationEnabled || reminders.workoutEnabled ||
+                reminders.morningGoalsEnabled || reminders.eveningGratitudeEnabled,
             phaseName = t.name,
             phaseDay = phaseDay.coerceAtLeast(1),
             phaseTargetDays = t.target,
@@ -173,6 +188,41 @@ class DashboardViewModel @Inject constructor(
 
     val animationsEnabled = profileRepository.animationsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    // ---- Weekly plan for today ----
+
+    private val todayOfWeek = java.time.LocalDate.now().dayOfWeek.value // 1=Monday … 7=Sunday
+
+    private val todayPlan: Flow<WeeklyPlanEntity?> =
+        weeklyPlanRepository.observePlanForDay(todayOfWeek)
+
+    val todayPlanName = todayPlan
+        .map { it?.name ?: "" }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
+
+    val todayExercises = todayPlan
+        .flatMapLatest { plan ->
+            if (plan != null) weeklyPlanRepository.observeExercisesForPlan(plan.id)
+            else flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val todayAllDone = todayExercises
+        .map { list -> list.isNotEmpty() && list.all { it.isCompleted } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    fun toggleExercise(exercise: PlannedExerciseEntity) {
+        viewModelScope.launch {
+            weeklyPlanRepository.setExerciseCompleted(exercise.id, !exercise.isCompleted)
+        }
+    }
+
+    private val _planDismissed = MutableStateFlow(false)
+    val planDismissed: StateFlow<Boolean> = _planDismissed.asStateFlow()
+
+    fun dismissCompletedPlan() {
+        _planDismissed.value = true
+    }
 
     fun addWater(ml: Int) = viewModelScope.launch {
         try {

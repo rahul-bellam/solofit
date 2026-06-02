@@ -6,10 +6,9 @@ import com.solofit.app.data.local.entity.RoutineEntity
 import com.solofit.app.data.local.relation.RoutineWithExercises
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -18,13 +17,20 @@ class WorkoutViewModel @Inject constructor(
     private val repository: WorkoutRepository
 ) : ViewModel() {
 
-    val routines = repository.observeRoutines()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    private val _routines = MutableStateFlow<List<RoutineWithExercises>>(emptyList())
+    val routines: StateFlow<List<RoutineWithExercises>> = _routines.asStateFlow()
 
-    val routinesLoaded = routines
-        .drop(1)
-        .map { true }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    private val _routinesLoaded = MutableStateFlow(false)
+    val routinesLoaded: StateFlow<Boolean> = _routinesLoaded.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            repository.observeRoutines().collect { list ->
+                _routines.value = list
+                _routinesLoaded.value = true
+            }
+        }
+    }
 
     fun deleteRoutine(routine: RoutineEntity) {
         viewModelScope.launch { repository.deleteRoutine(routine) }

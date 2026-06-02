@@ -1,6 +1,7 @@
 package com.solofit.app.ui.journal
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -41,8 +42,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.rememberAnimationsActive
@@ -66,7 +67,7 @@ fun JournalScreen(
 
     var newGoal by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
-    val haptics = LocalHapticFeedback.current
+    val view = LocalView.current
 
     // Scroll-driven "overhead press": as you scroll down, the figure presses the
     // bar up. Maps the first ~600px of scroll to press 0f..1f.
@@ -180,34 +181,41 @@ fun JournalScreen(
             }
 
             items(goals, key = { it.id }) { goal ->
-                Card(Modifier.fillMaxWidth()) {
-                    Row(
-                        Modifier
+                    Card(
+                        modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 12.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        DumbbellCheck(
-                            checked = goal.done,
-                            onToggle = {
-                                if (!goal.done) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            .clickable {
+                                if (!goal.done) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                                 viewModel.toggleGoal(goal)
-                            },
-                            animate = animate
-                        )
-                        Text(
-                            goal.text,
-                            modifier = Modifier.weight(1f),
-                            textDecoration = if (goal.done) TextDecoration.LineThrough else null,
-                            color = if (goal.done) MaterialTheme.colorScheme.onSurfaceVariant
-                            else MaterialTheme.colorScheme.onSurface
-                        )
-                        IconButton(onClick = { viewModel.deleteGoal(goal.id) }) {
-                            Icon(Icons.Filled.Close, "Delete goal")
+                            }
+                    ) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 12.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            DumbbellCheck(
+                                checked = goal.done,
+                                onToggle = {},
+                                animate = animate
+                            )
+                            Text(
+                                goal.text,
+                                modifier = Modifier.weight(1f),
+                                textDecoration = if (goal.done) TextDecoration.LineThrough else null,
+                                color = if (goal.done) MaterialTheme.colorScheme.onSurfaceVariant
+                                else MaterialTheme.colorScheme.onSurface
+                            )
+                            IconButton(onClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                viewModel.deleteGoal(goal.id)
+                            }) {
+                                Icon(Icons.Filled.Close, "Delete goal")
+                            }
                         }
                     }
-                }
             }
 
             item {
