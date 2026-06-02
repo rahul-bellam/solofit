@@ -1,5 +1,6 @@
 package com.solofit.app.ui.scan
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.solofit.app.core.DateUtils
@@ -40,10 +41,10 @@ class ScanViewModel @Inject constructor(
     private val _state = MutableStateFlow<ScanUiState>(ScanUiState.Idle)
     val state = _state.asStateFlow()
 
-    fun startScan() {
+    fun startScan(context: Context) {
         _state.update { ScanUiState.Scanning }
         viewModelScope.launch {
-            when (val outcome = scanner.scan()) {
+            when (val outcome = scanner.scan(context)) {
                 is ScanOutcome.Success -> lookup(outcome.rawValue)
                 ScanOutcome.Cancelled -> _state.update { ScanUiState.Idle }
                 is ScanOutcome.Failure -> _state.update { ScanUiState.Error(outcome.message) }

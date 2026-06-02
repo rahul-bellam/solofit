@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -48,6 +49,7 @@ fun ScanScreen(
     viewModel: ScanViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     // Once logged, bounce back to the previous screen.
     LaunchedEffect(state) {
@@ -91,7 +93,7 @@ fun ScanScreen(
                         Text(s.message, color = MaterialTheme.colorScheme.error)
                     }
                     Spacer(Modifier.height(20.dp))
-                    Button(onClick = viewModel::startScan, modifier = Modifier.fillMaxWidth()) {
+                    Button(onClick = { viewModel.startScan(context) }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.QrCodeScanner, null)
                         Text("  Start Scanner")
                     }
