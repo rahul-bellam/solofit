@@ -33,5 +33,6 @@ data class OffNutriments(
     @SerialName("energy_100g") val energyKj100g: Double? = null,
     @SerialName("proteins_100g") val proteins100g: Double? = null,
     @SerialName("carbohydrates_100g") val carbs100g: Double? = null,
-    @SerialName("fat_100g") val fat100g: Double? = null
+    @SerialName("fat_100g") val fat100g: Double? = null,
+    @SerialName("fiber_100g") val fiber100g: Double? = null
 )

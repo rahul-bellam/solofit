@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -62,6 +63,11 @@ class NutritionViewModel @Inject constructor(
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    val sectionsLoaded = sections
+        .drop(1)
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
     fun onQueryChange(q: String) { _query.value = q }
 
     fun logFood(food: FoodItemEntity, grams: Double, category: MealCategory) {
@@ -84,7 +90,7 @@ class NutritionViewModel @Inject constructor(
         viewModelScope.launch { dailyLogRepository.removeEntry(row.log) }
     }
 
-    fun addCustomFood(name: String, kcal: Double, protein: Double, carbs: Double, fats: Double) {
+    fun addCustomFood(name: String, kcal: Double, protein: Double, carbs: Double, fats: Double, fiber: Double = 0.0) {
         viewModelScope.launch {
             foodRepository.addCustomFood(
                 FoodItemEntity(
@@ -94,6 +100,7 @@ class NutritionViewModel @Inject constructor(
                     proteinPer100g = protein,
                     carbsPer100g = carbs,
                     fatsPer100g = fats,
+                    fiberPer100g = fiber,
                     isCustom = true
                 )
             )
@@ -107,7 +114,8 @@ class NutritionViewModel @Inject constructor(
                 row.food.caloriesPer100g * f,
                 row.food.proteinPer100g * f,
                 row.food.carbsPer100g * f,
-                row.food.fatsPer100g * f
+                row.food.fatsPer100g * f,
+                row.food.fiberPer100g * f
             )
         }
 }

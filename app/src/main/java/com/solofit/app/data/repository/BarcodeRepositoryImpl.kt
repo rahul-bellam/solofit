@@ -75,7 +75,8 @@ class BarcodeRepositoryImpl @Inject constructor(
                     caloriesPer100g = calories,
                     proteinPer100g = n.proteins100g ?: 0.0,
                     carbsPer100g = n.carbs100g ?: 0.0,
-                    fatsPer100g = n.fat100g ?: 0.0
+                    fatsPer100g = n.fat100g ?: 0.0,
+                    fiberPer100g = n.fiber100g ?: 0.0
                 )
                 memCache.put(barcode, food)
                 BarcodeLookupResult.Found(food)
@@ -98,6 +99,7 @@ class BarcodeRepositoryImpl @Inject constructor(
                     proteinPer100g = food.proteinPer100g,
                     carbsPer100g = food.carbsPer100g,
                     fatsPer100g = food.fatsPer100g,
+                    fiberPer100g = food.fiberPer100g,
                     isCustom = true,
                     barcode = food.barcode
                 )
@@ -113,7 +115,8 @@ class BarcodeRepositoryImpl @Inject constructor(
         caloriesPer100g = caloriesPer100g,
         proteinPer100g = proteinPer100g,
         carbsPer100g = carbsPer100g,
-        fatsPer100g = fatsPer100g
+        fatsPer100g = fatsPer100g,
+        fiberPer100g = fiberPer100g
     )
 
     private fun OffNutriments.resolvedKcal(): Double? =

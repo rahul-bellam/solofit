@@ -111,8 +111,9 @@ fun WaterTracker(
                     )
                 }
                 Spacer(Modifier.height(2.dp))
+                val waterPct = if (goalMl > 0) (currentMl * 100 / goalMl).coerceAtMost(100) else 0
                 Text(
-                    "$currentMl / $goalMl ml · $glasses of $goalGlasses glasses",
+                    "$currentMl / $goalMl ml ($waterPct%) · $glasses of $goalGlasses glasses",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

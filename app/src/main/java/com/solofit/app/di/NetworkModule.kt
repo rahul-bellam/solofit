@@ -2,6 +2,7 @@ package com.solofit.app.di
 
 import com.jakewharton.retrofit2.converter.kotlinx.serialization.asConverterFactory
 import com.solofit.app.BuildConfig
+import com.solofit.app.data.remote.GeminiService
 import com.solofit.app.data.remote.OpenFoodFactsService
 import com.solofit.app.data.remote.UsdaFoodService
 import dagger.Module
@@ -77,4 +78,22 @@ object NetworkModule {
     @Singleton
     fun provideUsdaFoodService(@UsdaRetrofit retrofit: Retrofit): UsdaFoodService =
         retrofit.create(UsdaFoodService::class.java)
+
+    @Provides
+    @Singleton
+    @GeminiRetrofit
+    fun provideGeminiRetrofit(json: Json, client: OkHttpClient): Retrofit =
+        Retrofit.Builder()
+            .baseUrl(GeminiService.BASE_URL)
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+
+    @Provides
+    @Singleton
+    fun provideGeminiService(@GeminiRetrofit retrofit: Retrofit): GeminiService =
+        retrofit.create(GeminiService::class.java)
 }
+
+@Qualifier
+annotation class GeminiRetrofit

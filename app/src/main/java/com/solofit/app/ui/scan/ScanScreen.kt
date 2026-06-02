@@ -127,6 +127,7 @@ fun ScanScreen(
                             proteinPer100g = s.food.proteinPer100g,
                             carbsPer100g = s.food.carbsPer100g,
                             fatsPer100g = s.food.fatsPer100g,
+                            fiberPer100g = s.food.fiberPer100g,
                             onDismiss = { showPortion = false },
                             onConfirm = { grams, cat ->
                                 viewModel.logFood(s.food, grams, cat)
@@ -138,8 +139,8 @@ fun ScanScreen(
                 is ScanUiState.ManualEntry -> {
                     ManualEntryForm(
                         barcode = s.barcode,
-                        onSubmit = { name, kcal, p, c, f ->
-                            viewModel.submitManual(s.barcode, name, kcal, p, c, f)
+                        onSubmit = { name, kcal, p, c, f, fiber ->
+                            viewModel.submitManual(s.barcode, name, kcal, p, c, f, fiber)
                         },
                         onCancel = viewModel::reset
                     )
@@ -168,7 +169,8 @@ private fun FoundCard(s: ScanUiState.Found) {
                 "${s.food.caloriesPer100g.roundToInt()} kcal · " +
                     "P ${s.food.proteinPer100g.roundToInt()}g · " +
                     "C ${s.food.carbsPer100g.roundToInt()}g · " +
-                    "F ${s.food.fatsPer100g.roundToInt()}g  (per 100g)"
+                    "F ${s.food.fatsPer100g.roundToInt()}g · " +
+                    "Fib ${s.food.fiberPer100g.roundToInt()}g (per 100g)"
             )
         }
     }
@@ -202,7 +204,7 @@ private fun ManualBarcodeEntry(onLookup: (String) -> Unit) {
 @Composable
 private fun ManualEntryForm(
     barcode: String,
-    onSubmit: (name: String, kcal: Double, p: Double, c: Double, f: Double) -> Unit,
+    onSubmit: (name: String, kcal: Double, p: Double, c: Double, f: Double, fiber: Double) -> Unit,
     onCancel: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
@@ -210,6 +212,7 @@ private fun ManualEntryForm(
     var protein by remember { mutableStateOf("") }
     var carbs by remember { mutableStateOf("") }
     var fats by remember { mutableStateOf("") }
+    var fiber by remember { mutableStateOf("") }
 
     val valid = name.isNotBlank() && kcal.toDoubleOrNull() != null
 
@@ -227,6 +230,7 @@ private fun ManualEntryForm(
             DecimalField("Protein / 100g", protein, { protein = it })
             DecimalField("Carbs / 100g", carbs, { carbs = it })
             DecimalField("Fats / 100g", fats, { fats = it })
+            DecimalField("Fiber / 100g", fiber, { fiber = it })
             Spacer(Modifier.height(12.dp))
             Button(
                 onClick = {
@@ -235,7 +239,8 @@ private fun ManualEntryForm(
                         kcal.toDoubleOrNull() ?: 0.0,
                         protein.toDoubleOrNull() ?: 0.0,
                         carbs.toDoubleOrNull() ?: 0.0,
-                        fats.toDoubleOrNull() ?: 0.0
+                        fats.toDoubleOrNull() ?: 0.0,
+                        fiber.toDoubleOrNull() ?: 0.0
                     )
                 },
                 enabled = valid,

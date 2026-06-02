@@ -65,7 +65,7 @@ class FitnessMathTest {
 
 class FitnessMathProgressionTest {
     @Test
-    fun `all sets hit top with low rir -> increase`() {
+    fun `all sets hit top with low rir leads to increase`() {
         val p = FitnessMath.progression(
             repsPerSet = listOf(12, 12, 12),
             rirPerSet = listOf(1, 1, 0),
@@ -75,7 +75,7 @@ class FitnessMathProgressionTest {
     }
 
     @Test
-    fun `below range -> hold`() {
+    fun `below range leads to hold`() {
         val p = FitnessMath.progression(
             repsPerSet = listOf(8, 9, 8),
             rirPerSet = listOf(2, 2, 2),
@@ -85,7 +85,7 @@ class FitnessMathProgressionTest {
     }
 
     @Test
-    fun `struggled badly with zero rir -> deload`() {
+    fun `struggled badly with zero rir leads to deload`() {
         val p = FitnessMath.progression(
             repsPerSet = listOf(5, 4),
             rirPerSet = listOf(0, 0),
@@ -95,7 +95,7 @@ class FitnessMathProgressionTest {
     }
 
     @Test
-    fun `empty -> none`() {
+    fun `empty leads to none`() {
         assertEquals(FitnessMath.Progression.NONE, FitnessMath.progression(emptyList(), emptyList(), 12))
     }
 

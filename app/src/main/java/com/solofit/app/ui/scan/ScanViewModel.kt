@@ -74,9 +74,10 @@ class ScanViewModel @Inject constructor(
         kcal: Double,
         protein: Double,
         carbs: Double,
-        fats: Double
+        fats: Double,
+        fiber: Double = 0.0
     ) {
-        val food = ScannedFood(barcode, name.trim(), kcal, protein, carbs, fats)
+        val food = ScannedFood(barcode, name.trim(), kcal, protein, carbs, fats, fiber)
         viewModelScope.launch {
             barcodeRepository.saveScannedFood(food)
             _state.update { ScanUiState.Found(food) }

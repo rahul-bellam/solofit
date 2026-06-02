@@ -1,7 +1,11 @@
 package com.solofit.app.ui.nutrition
 
+import android.graphics.Bitmap
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,20 +19,26 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,21 +53,58 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.data.local.entity.FoodItemEntity
 import com.solofit.app.domain.model.MealCategory
 import com.solofit.app.ui.components.ChipSelector
+import com.solofit.app.ui.scan.AiFoodScanViewModel
+import com.solofit.app.ui.scan.AiScanResult
 import kotlin.math.roundToInt
 
 @Composable
 fun NutritionScreen(
     onScanBarcode: () -> Unit = {},
     onFoodLookup: () -> Unit = {},
-    viewModel: NutritionViewModel = hiltViewModel()
+    viewModel: NutritionViewModel = hiltViewModel(),
+    aiScanViewModel: AiFoodScanViewModel = hiltViewModel()
 ) {
     val query by viewModel.query.collectAsStateWithLifecycle()
     val results by viewModel.searchResults.collectAsStateWithLifecycle()
     val sections by viewModel.sections.collectAsStateWithLifecycle()
+    val loaded by viewModel.sectionsLoaded.collectAsStateWithLifecycle()
+    val isAiScanning by aiScanViewModel.isScanning.collectAsStateWithLifecycle()
 
     var selectedFood by remember { mutableStateOf<FoodItemEntity?>(null) }
     var showCreateFood by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
+    val cameraLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicturePreview()
+    ) { bmp: Bitmap? ->
+        if (bmp != null) aiScanViewModel.analyzeAndLog(bmp)
+    }
+
+    LaunchedEffect(Unit) {
+        aiScanViewModel.scanResult.collect { result ->
+            when (result) {
+                is AiScanResult.Success -> {
+                    val kcal = (result.caloriesPer100g * result.estimatedGrams / 100.0).roundToInt()
+                    snackbarHostState.showSnackbar(
+                        "AI: ${result.name} · ${result.estimatedGrams.roundToInt()}g · ${kcal}kcal",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+                is AiScanResult.Error -> {
+                    snackbarHostState.showSnackbar(result.message, duration = SnackbarDuration.Short)
+                }
+            }
+        }
+    }
+
+    if (!loaded && query.isBlank()) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
+        }
+        return
+    }
+
+    Box(Modifier.fillMaxSize()) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -84,9 +131,27 @@ fun NutritionScreen(
                 modifier = Modifier.fillMaxWidth()
             )
             Spacer(Modifier.height(10.dp))
-            OutlinedButton(onClick = onScanBarcode, modifier = Modifier.fillMaxWidth()) {
+            OutlinedButton(
+                onClick = onScanBarcode,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isAiScanning
+            ) {
                 Icon(Icons.Filled.QrCodeScanner, null)
                 Text("  Scan barcode")
+            }
+            Spacer(Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { cameraLauncher.launch(null) },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isAiScanning
+            ) {
+                if (isAiScanning) {
+                    CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp)
+                    Text("  Analyzing food…")
+                } else {
+                    Icon(Icons.Filled.PhotoCamera, null)
+                    Text("  AI Food Scan (photo)")
+                }
             }
             Spacer(Modifier.height(8.dp))
             OutlinedButton(onClick = onFoodLookup, modifier = Modifier.fillMaxWidth()) {
@@ -127,6 +192,8 @@ fun NutritionScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
+    SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
+}
 
     selectedFood?.let { food ->
         LogFoodDialog(
@@ -143,8 +210,8 @@ fun NutritionScreen(
     if (showCreateFood) {
         CreateFoodDialog(
             onDismiss = { showCreateFood = false },
-            onConfirm = { name, kcal, protein, carbs, fats ->
-                viewModel.addCustomFood(name, kcal, protein, carbs, fats)
+            onConfirm = { name, kcal, protein, carbs, fats, fiber ->
+                viewModel.addCustomFood(name, kcal, protein, carbs, fats, fiber)
                 showCreateFood = false
             }
         )
@@ -167,12 +234,13 @@ private fun FoodSearchRow(food: FoodItemEntity, onClick: () -> Unit) {
         ) {
             Column(Modifier.weight(1f)) {
                 Text(food.name, fontWeight = FontWeight.SemiBold)
-                Text(
-                    "${food.caloriesPer100g.roundToInt()} kcal · P${food.proteinPer100g.roundToInt()} " +
-                        "C${food.carbsPer100g.roundToInt()} F${food.fatsPer100g.roundToInt()} (per 100g)",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                    Text(
+                        "${food.caloriesPer100g.roundToInt()} kcal · P${food.proteinPer100g.roundToInt()} " +
+                            "C${food.carbsPer100g.roundToInt()} F${food.fatsPer100g.roundToInt()} " +
+                            "Fib${food.fiberPer100g.roundToInt()} (per 100g)",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
             }
             Text(food.category, style = MaterialTheme.typography.labelSmall)
         }
@@ -191,14 +259,25 @@ private fun MealSectionCard(
         Column(Modifier.padding(14.dp)) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(section.category.displayName, fontWeight = FontWeight.Bold)
-                Text(
-                    "${section.totals.calories.roundToInt()} kcal",
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(
+                        "${section.totals.calories.roundToInt()} kcal",
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        "P${section.totals.proteinG.roundToInt()} " +
+                            "C${section.totals.carbsG.roundToInt()} " +
+                            "F${section.totals.fatsG.roundToInt()} " +
+                            "Fib${section.totals.fiberG.roundToInt()}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             if (section.entries.isEmpty()) {
                 Text(
@@ -220,7 +299,11 @@ private fun MealSectionCard(
                             Text(row.food.name)
                             Text(
                                 "${row.log.gramsConsumed.roundToInt()}g · " +
-                                    "${(row.food.caloriesPer100g * f).roundToInt()} kcal",
+                                    "${(row.food.caloriesPer100g * f).roundToInt()} kcal · " +
+                                    "P${(row.food.proteinPer100g * f).roundToInt()} " +
+                                    "C${(row.food.carbsPer100g * f).roundToInt()} " +
+                                    "F${(row.food.fatsPer100g * f).roundToInt()} " +
+                                    "Fib${(row.food.fiberPer100g * f).roundToInt()}",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -304,7 +387,8 @@ private fun LogFoodDialog(
                     "= ${(food.caloriesPer100g * f).roundToInt()} kcal · " +
                         "P ${(food.proteinPer100g * f).roundToInt()}g · " +
                         "C ${(food.carbsPer100g * f).roundToInt()}g · " +
-                        "F ${(food.fatsPer100g * f).roundToInt()}g",
+                        "F ${(food.fatsPer100g * f).roundToInt()}g · " +
+                        "Fib ${(food.fiberPer100g * f).roundToInt()}g",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -332,13 +416,14 @@ private fun LogFoodDialog(
 @Composable
 private fun CreateFoodDialog(
     onDismiss: () -> Unit,
-    onConfirm: (name: String, kcal: Double, protein: Double, carbs: Double, fats: Double) -> Unit
+    onConfirm: (name: String, kcal: Double, protein: Double, carbs: Double, fats: Double, fiber: Double) -> Unit
 ) {
     var name by remember { mutableStateOf("") }
     var kcal by remember { mutableStateOf("") }
     var protein by remember { mutableStateOf("") }
     var carbs by remember { mutableStateOf("") }
     var fats by remember { mutableStateOf("") }
+    var fiber by remember { mutableStateOf("") }
 
     val valid = name.isNotBlank() &&
         kcal.toDoubleOrNull() != null &&
@@ -369,6 +454,7 @@ private fun CreateFoodDialog(
                 DecimalField("Protein (g)", protein, { protein = it })
                 DecimalField("Carbs (g)", carbs, { carbs = it })
                 DecimalField("Fats (g)", fats, { fats = it })
+                DecimalField("Fiber (g)", fiber, { fiber = it })
             }
         },
         confirmButton = {
@@ -379,7 +465,8 @@ private fun CreateFoodDialog(
                         kcal.toDouble(),
                         protein.toDouble(),
                         carbs.toDouble(),
-                        fats.toDouble()
+                        fats.toDouble(),
+                        fiber.toDoubleOrNull() ?: 0.0
                     )
                 },
                 enabled = valid

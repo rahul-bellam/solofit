@@ -10,7 +10,8 @@ data class ScannedFood(
     val caloriesPer100g: Double,
     val proteinPer100g: Double,
     val carbsPer100g: Double,
-    val fatsPer100g: Double
+    val fatsPer100g: Double,
+    val fiberPer100g: Double = 0.0
 )
 
 /** Outcome of a remote barcode lookup. */

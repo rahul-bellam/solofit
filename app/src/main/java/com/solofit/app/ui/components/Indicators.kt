@@ -4,10 +4,12 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -47,7 +49,8 @@ fun CalorieRing(
     size: Dp = 200.dp,
     strokeWidth: Dp = 18.dp,
     waveFill: Boolean = true,
-    animate: Boolean = true
+    animate: Boolean = true,
+    onClick: (() -> Unit)? = null
 ) {
     val progress = if (target > 0) (consumed.toFloat() / target).coerceIn(0f, 1f) else 0f
     val animated by animateFloatAsState(
@@ -57,6 +60,7 @@ fun CalorieRing(
     )
     val remaining = (target - consumed).coerceAtLeast(0)
     val over = (consumed - target).coerceAtLeast(0)
+    val pct = if (target > 0) ((consumed.toFloat() / target) * 100).toInt().coerceIn(0, 100) else 0
 
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
     val ringColor = if (over > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
@@ -74,7 +78,19 @@ fun CalorieRing(
         p
     } else 0f
 
-    Box(modifier = modifier.size(size), contentAlignment = Alignment.Center) {
+    val animatedConsumed by animateIntAsState(
+        targetValue = consumed,
+        animationSpec = tween(if (animate) 700 else 0),
+        label = "calConsumed"
+    )
+    val animatedPct by animateIntAsState(
+        targetValue = pct,
+        animationSpec = tween(if (animate) 700 else 0),
+        label = "calPct"
+    )
+
+    val clickMod = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    Box(modifier = modifier.size(size).then(clickMod), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(size)) {
             val stroke = Stroke(width = strokeWidth.toPx(), cap = StrokeCap.Round)
 
@@ -129,7 +145,7 @@ fun CalorieRing(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = consumed.toString(),
+                text = animatedConsumed.toString(),
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
@@ -138,6 +154,12 @@ fun CalorieRing(
                 text = "of $target kcal",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = "${animatedPct}%",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.Bold,
+                color = ringColor
             )
             Spacer(Modifier.height(4.dp))
             if (over > 0) {
@@ -168,6 +190,11 @@ fun MacroBar(
     animate: Boolean = true
 ) {
     val progress = if (target > 0) (consumed.toFloat() / target).coerceIn(0f, 1f) else 0f
+    val animatedConsumed by animateIntAsState(
+        targetValue = consumed,
+        animationSpec = tween(if (animate) 600 else 0),
+        label = "macroConsumed_$label"
+    )
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -175,7 +202,7 @@ fun MacroBar(
         ) {
             Text(label, style = MaterialTheme.typography.labelLarge)
             Text(
-                "${consumed}g / ${target}g",
+                "${animatedConsumed}g / ${target}g",
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

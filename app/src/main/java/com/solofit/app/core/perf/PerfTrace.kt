@@ -35,7 +35,7 @@ object PerfTrace {
         }
     }
 
-    suspend inline fun <T> measureSuspend(label: String, block: () -> T): T {
+    suspend inline fun <T> measureSuspend(label: String, block: suspend () -> T): T {
         if (!BuildConfig.DEBUG) return block()
         val start = SystemClock.elapsedRealtimeNanos()
         try {

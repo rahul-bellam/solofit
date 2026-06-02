@@ -24,12 +24,14 @@ data class MacroTotals(
     val calories: Double = 0.0,
     val proteinG: Double = 0.0,
     val carbsG: Double = 0.0,
-    val fatsG: Double = 0.0
+    val fatsG: Double = 0.0,
+    val fiberG: Double = 0.0
 ) {
     operator fun plus(other: MacroTotals) = MacroTotals(
         calories = calories + other.calories,
         proteinG = proteinG + other.proteinG,
         carbsG = carbsG + other.carbsG,
-        fatsG = fatsG + other.fatsG
+        fatsG = fatsG + other.fatsG,
+        fiberG = fiberG + other.fiberG
     )
 }

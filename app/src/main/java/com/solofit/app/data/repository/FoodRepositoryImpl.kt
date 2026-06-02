@@ -26,6 +26,7 @@ class FoodRepositoryImpl @Inject constructor(
                 val protein = usda.foodNutrients.find { it.nutrientId == 1003 }?.value
                 val carbs = usda.foodNutrients.find { it.nutrientId == 1005 }?.value
                 val fat = usda.foodNutrients.find { it.nutrientId == 1004 }?.value
+                val fiber = usda.foodNutrients.find { it.nutrientId == 1079 }?.value ?: 0.0
                 if (kcal == null || protein == null || carbs == null || fat == null) return@mapNotNull null
                 FoodItemEntity(
                     name = usda.description,
@@ -34,6 +35,7 @@ class FoodRepositoryImpl @Inject constructor(
                     proteinPer100g = protein,
                     carbsPer100g = carbs,
                     fatsPer100g = fat,
+                    fiberPer100g = fiber,
                     isCustom = true
                 )
             }

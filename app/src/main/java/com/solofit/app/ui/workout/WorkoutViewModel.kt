@@ -7,6 +7,8 @@ import com.solofit.app.data.local.relation.RoutineWithExercises
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,6 +20,11 @@ class WorkoutViewModel @Inject constructor(
 
     val routines = repository.observeRoutines()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val routinesLoaded = routines
+        .drop(1)
+        .map { true }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun deleteRoutine(routine: RoutineEntity) {
         viewModelScope.launch { repository.deleteRoutine(routine) }

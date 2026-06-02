@@ -37,6 +37,7 @@ fun PortionDialog(
     proteinPer100g: Double,
     carbsPer100g: Double,
     fatsPer100g: Double,
+    fiberPer100g: Double = 0.0,
     onDismiss: () -> Unit,
     onConfirm: (grams: Double, category: MealCategory) -> Unit,
     initialGrams: Int = 300,
@@ -91,7 +92,8 @@ fun PortionDialog(
                     "= ${(caloriesPer100g * f).roundToInt()} kcal · " +
                         "P ${(proteinPer100g * f).roundToInt()}g · " +
                         "C ${(carbsPer100g * f).roundToInt()}g · " +
-                        "F ${(fatsPer100g * f).roundToInt()}g",
+                        "F ${(fatsPer100g * f).roundToInt()}g · " +
+                        "Fib ${(fiberPer100g * f).roundToInt()}g",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.primary
                 )

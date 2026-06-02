@@ -28,6 +28,7 @@ data class FoodItemEntity(
     val proteinPer100g: Double,
     val carbsPer100g: Double,
     val fatsPer100g: Double,
+    val fiberPer100g: Double = 0.0,
     val isCustom: Boolean = false,
     val barcode: String? = null,
     /** grams in one countable unit (e.g. 50.0 for an egg); null = grams-only food. */

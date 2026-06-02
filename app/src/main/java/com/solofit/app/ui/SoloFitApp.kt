@@ -1,5 +1,10 @@
 package com.solofit.app.ui
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -94,7 +99,11 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                 NavHost(
                     navController = navController,
                     startDestination = start,
-                    modifier = Modifier.padding(padding)
+                    modifier = Modifier.padding(padding),
+                    enterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { it / 4 } },
+                    exitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { -it / 4 } },
+                    popEnterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -it / 4 } },
+                    popExitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { it / 4 } }
                 ) {
                     composable(Routes.ONBOARDING) {
                         OnboardingScreen(

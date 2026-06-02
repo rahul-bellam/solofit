@@ -24,7 +24,8 @@ data class DailyTotals(
     val calories: Double?,
     val proteinG: Double?,
     val carbsG: Double?,
-    val fatsG: Double?
+    val fatsG: Double?,
+    val fiberG: Double?
 )
 
 @Dao
@@ -45,7 +46,7 @@ interface DailyLogDao {
             fi.id AS food_id, fi.name AS food_name, fi.category AS food_category,
             fi.caloriesPer100g AS food_caloriesPer100g, fi.proteinPer100g AS food_proteinPer100g,
             fi.carbsPer100g AS food_carbsPer100g, fi.fatsPer100g AS food_fatsPer100g,
-            fi.isCustom AS food_isCustom
+            fi.fiberPer100g AS food_fiberPer100g, fi.isCustom AS food_isCustom
         FROM daily_log dl
         INNER JOIN food_items fi ON fi.id = dl.foodId
         WHERE dl.date = :date
@@ -64,7 +65,8 @@ interface DailyLogDao {
             SUM(dl.gramsConsumed / 100.0 * fi.caloriesPer100g) AS calories,
             SUM(dl.gramsConsumed / 100.0 * fi.proteinPer100g)  AS proteinG,
             SUM(dl.gramsConsumed / 100.0 * fi.carbsPer100g)    AS carbsG,
-            SUM(dl.gramsConsumed / 100.0 * fi.fatsPer100g)     AS fatsG
+            SUM(dl.gramsConsumed / 100.0 * fi.fatsPer100g)     AS fatsG,
+            SUM(dl.gramsConsumed / 100.0 * fi.fiberPer100g)    AS fiberG
         FROM daily_log dl
         INNER JOIN food_items fi ON fi.id = dl.foodId
         WHERE dl.date = :date

@@ -50,7 +50,7 @@ import kotlinx.coroutines.launch
         DailyMetricEntity::class,
         ProgressPhotoEntity::class
     ],
-    version = 8,
+    version = 9,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -231,24 +231,33 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v8 -> v9: add fiberPer100g column to food_items. */
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE food_items ADD COLUMN fiberPer100g REAL NOT NULL DEFAULT 0.0")
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
-            lateinit var instance: SoloFitDatabase
-            instance = Room.databaseBuilder(
+            var needsSeed = false
+            val db = Room.databaseBuilder(
                 context.applicationContext,
                 SoloFitDatabase::class.java,
                 DB_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
-                        super.onCreate(db)
-                        scope.launch(Dispatchers.IO) {
-                            instance.foodDao().insertAll(FoodSeedData.items)
-                        }
+                        needsSeed = true
                     }
                 })
                 .build()
-            return instance
+            if (needsSeed) {
+                scope.launch(Dispatchers.IO) {
+                    db.foodDao().insertAll(FoodSeedData.items)
+                }
+            }
+            return db
         }
     }
 }

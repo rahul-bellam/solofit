@@ -7,6 +7,15 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+val envFile = rootProject.file(".env")
+val geminiApiKey = if (envFile.exists()) {
+    envFile.readLines()
+        .firstOrNull { it.startsWith("GEMINI_API_KEY=") }
+        ?.substringAfter("=")?.trim()?.trim('"') ?: ""
+} else {
+    ""
+}
+
 android {
     namespace = "com.solofit.app"
     compileSdk = 34
@@ -24,6 +33,9 @@ android {
         }
         // Get your free USDA API key at https://data.nal.usda.gov/registration-api-key
         buildConfigField("String", "USDA_API_KEY", "\"YOUR_USDA_API_KEY\"")
+        // Get your free Gemini API key at https://aistudio.google.com/app/apikey
+        // Create a .env file at project root with: GEMINI_API_KEY=your_key_here
+        buildConfigField("String", "GEMINI_API_KEY", "\"${geminiApiKey}\"")
     }
 
     buildTypes {
