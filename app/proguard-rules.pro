@@ -27,6 +27,9 @@
     kotlinx.serialization.KSerializer serializer(...);
 }
 
+# ---- USDA + Gemini DTOs (serializable classes in remote/ package) ----
+-keepclassmembers class com.solofit.app.data.remote.** { *; }
+
 # ---- Retrofit / OkHttp ----
 -dontwarn retrofit2.**
 -dontwarn okhttp3.**

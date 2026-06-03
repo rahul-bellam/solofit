@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
+import android.database.sqlite.SQLiteException
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.solofit.app.data.local.dao.DailyLogDao
 import com.solofit.app.data.local.dao.FoodDao
@@ -276,7 +277,7 @@ abstract class SoloFitDatabase : RoomDatabase() {
         /** v10 -> v11: add personal_records table + warm-up/notes/superset columns on exercise_sets. */
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                try { db.execSQL(
+                db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS personal_records (
                         id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -288,16 +289,27 @@ abstract class SoloFitDatabase : RoomDatabase() {
                         sessionId INTEGER NOT NULL
                     )
                     """.trimIndent()
-                ) } catch (_: Exception) {}
-                try { db.execSQL("CREATE INDEX IF NOT EXISTS index_personal_records_exerciseName ON personal_records(exerciseName)") } catch (_: Exception) {}
-                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN isWarmUp INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
-                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN notes TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
-                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN supersetId INTEGER") } catch (_: Exception) {}
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_personal_records_exerciseName ON personal_records(exerciseName)")
+                try {
+                    db.execSQL("ALTER TABLE exercise_sets ADD COLUMN isWarmUp INTEGER NOT NULL DEFAULT 0")
+                } catch (e: SQLiteException) {
+                    if ("duplicate column" !in (e.message ?: "")) throw e
+                }
+                try {
+                    db.execSQL("ALTER TABLE exercise_sets ADD COLUMN notes TEXT NOT NULL DEFAULT ''")
+                } catch (e: SQLiteException) {
+                    if ("duplicate column" !in (e.message ?: "")) throw e
+                }
+                try {
+                    db.execSQL("ALTER TABLE exercise_sets ADD COLUMN supersetId INTEGER")
+                } catch (e: SQLiteException) {
+                    if ("duplicate column" !in (e.message ?: "")) throw e
+                }
             }
         }
 
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
-            var needsSeed = false
             val db = Room.databaseBuilder(
                 context.applicationContext,
                 SoloFitDatabase::class.java,
@@ -308,19 +320,21 @@ abstract class SoloFitDatabase : RoomDatabase() {
                     MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
                     MIGRATION_9_10, MIGRATION_10_11
                 )
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigrationFrom(1, 2, 3)
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
-                        needsSeed = true
+                        scope.launch(Dispatchers.IO) {
+                            runCatching { dbHelper?.foodDao()?.insertAll(FoodSeedData.items) }
+                        }
                     }
                 })
                 .build()
-            if (needsSeed) {
-                scope.launch(Dispatchers.IO) {
-                    db.foodDao().insertAll(FoodSeedData.items)
-                }
-            }
+            // Expose the built instance for the callback to use.
+            dbHelper = db
             return db
         }
+
+        /** Holder so Callback.onCreate can access DAOs without a circular build(). */
+        private var dbHelper: SoloFitDatabase? = null
     }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -76,10 +77,7 @@ class WorkoutPlannerViewModel @Inject constructor(
 
     private suspend fun refresh() {
         currentPlan?.let { plan ->
-            repository.observeExercisesForPlan(plan.id).collect { list ->
-                _planExercises.value = list
-                return@collect
-            }
+            _planExercises.value = repository.observeExercisesForPlan(plan.id).first()
         }
     }
 }

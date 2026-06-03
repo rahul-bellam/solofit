@@ -48,4 +48,6 @@ class ProfileRepositoryImpl @Inject constructor(
         prefs.setTrainingGoal(goal)
 
     override val reminderSettings: Flow<ReminderSettings> = prefs.reminderSettings
+    override suspend fun setReminderSettings(settings: ReminderSettings) =
+        prefs.setReminderSettings(settings)
 }

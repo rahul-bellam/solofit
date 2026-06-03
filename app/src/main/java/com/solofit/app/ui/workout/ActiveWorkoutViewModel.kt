@@ -11,6 +11,7 @@ import com.solofit.app.data.local.relation.SessionWithSets
 import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,6 +50,8 @@ class ActiveWorkoutViewModel @Inject constructor(
 
     val animationsEnabled = profileRepository.animationsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    private var timerJob: Job? = null
 
     private val _uiState = MutableStateFlow(ActiveWorkoutUiState())
     val uiState = _uiState.asStateFlow()
@@ -115,9 +118,10 @@ class ActiveWorkoutViewModel @Inject constructor(
     }
 
     private fun startRestTimer() {
+        timerJob?.cancel()
         val duration = _uiState.value.restDuration
         _uiState.update { it.copy(restTimerRunning = true, restSecondsRemaining = duration) }
-        viewModelScope.launch {
+        timerJob = viewModelScope.launch {
             for (i in duration downTo 1) {
                 kotlinx.coroutines.delay(1000L)
                 _uiState.update { it.copy(restSecondsRemaining = i) }
@@ -127,6 +131,7 @@ class ActiveWorkoutViewModel @Inject constructor(
     }
 
     fun dismissRestTimer() {
+        timerJob?.cancel()
         _uiState.update { it.copy(restTimerRunning = false, restSecondsRemaining = 0) }
     }
 

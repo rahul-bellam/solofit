@@ -1,6 +1,7 @@
 package com.solofit.app.data.local
 
 import android.content.Context
+import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
@@ -11,6 +12,7 @@ import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.model.TrainingGoal
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -166,6 +168,24 @@ class UserPreferences @Inject constructor(
             p[eveningGratitudeTimeKey] = settings.eveningGratitudeTimeMinutes
             p[quietStartKey] = settings.quietStartMinutes
             p[quietEndKey] = settings.quietEndMinutes
+        }
+    }
+
+    /**
+     * Remove stale per-day water keys older than [keepDays] to prevent
+     * DataStore file bloat over years of use.
+     */
+    suspend fun pruneOldWaterKeys(keepDays: Long = 7) {
+        val cutoff = LocalDate.now().minusDays(keepDays)
+        context.dataStore.edit { prefs ->
+            prefs.asMap().keys
+                .filter { it.name.startsWith("water_") && it.name != "water_goal_ml" }
+                .filter { key ->
+                    runCatching {
+                        LocalDate.parse(key.name.removePrefix("water_")).isBefore(cutoff)
+                    }.getOrDefault(false)
+                }
+                .forEach { prefs.remove(it) }
         }
     }
 }

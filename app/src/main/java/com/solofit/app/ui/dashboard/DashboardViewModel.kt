@@ -73,11 +73,12 @@ class DashboardViewModel @Inject constructor(
     private val weeklyPlanRepository: WeeklyPlanRepository
 ) : ViewModel() {
 
-    private val today = DateUtils.today()
     private val _isRefreshing = MutableStateFlow(false)
     private val _snackbar = Channel<SnackbarEvent>(Channel.CONFLATED)
     val snackbarEvent = _snackbar.receiveAsFlow()
     private var lastWaterRemovedMl = 0
+
+    private val today: String get() = DateUtils.today()
 
     private val core = combine(
         profileRepository.observeProfile(),

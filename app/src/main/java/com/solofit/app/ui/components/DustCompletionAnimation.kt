@@ -25,6 +25,7 @@ private data class DustParticle(
 @Composable
 fun DustCompletionAnimation(
     modifier: Modifier = Modifier,
+    animate: Boolean = true,
     onAnimationEnd: () -> Unit = {}
 ) {
     val progress = remember { Animatable(0f) }
@@ -40,17 +41,20 @@ fun DustCompletionAnimation(
                     blue = Random.nextFloat() * 0.2f + 0.2f,
                     alpha = 1f
                 ),
-                delay = Random.nextLong() * 200
+                delay = (Random.nextFloat() * 200).toLong()
             )
         }
     }
 
     LaunchedEffect(Unit) {
-        progress.animateTo(1f, tween(800))
+        if (animate) {
+            progress.animateTo(1f, tween(800))
+        }
         onAnimationEnd()
     }
 
-    Canvas(modifier = modifier.fillMaxSize()) {
+    if (animate) {
+        Canvas(modifier = modifier.fillMaxSize()) {
         val cx = size.width / 2f
         val cy = size.height / 2f
         val p = progress.value
@@ -72,5 +76,6 @@ fun DustCompletionAnimation(
                 )
             }
         }
+    }
     }
 }

@@ -39,8 +39,6 @@ class NutritionViewModel @Inject constructor(
     private val dailyLogRepository: DailyLogRepository
 ) : ViewModel() {
 
-    private val today = DateUtils.today()
-
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
@@ -53,7 +51,7 @@ class NutritionViewModel @Inject constructor(
         .conflate()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
-    val sections = dailyLogRepository.observeForDate(today)
+    val sections = dailyLogRepository.observeForDate(DateUtils.today())
         .map { rows ->
             MealCategory.entries.map { cat ->
                 val entries = rows.filter { it.log.mealCategory == cat.name }
@@ -77,7 +75,7 @@ class NutritionViewModel @Inject constructor(
             } else food.id
             dailyLogRepository.logFood(
                 DailyLogEntity(
-                    date = today,
+                    date = DateUtils.today(),
                     foodId = actualId,
                     gramsConsumed = grams,
                     mealCategory = category.name

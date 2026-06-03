@@ -382,6 +382,7 @@ fun DashboardScreen(
                 }
                 if (allDone) {
                     DustCompletionAnimation(
+                        animate = animate,
                         onAnimationEnd = viewModel::dismissCompletedPlan
                     )
                 }
@@ -554,6 +555,7 @@ fun DashboardScreen(
                 spread = 8f,
                 density = 7f,
                 vaporizeDurationMs = 3000,
+                animate = animate,
                 onAnimationEnd = { showWaterCelebration = false }
             )
         }

@@ -6,6 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.solofit.app.core.perf.PerfTrace
 import com.solofit.app.data.local.SoloFitDatabase
+import com.solofit.app.data.local.UserPreferences
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -25,18 +26,18 @@ import dagger.assisted.AssistedInject
 class DbMaintenanceWorker @AssistedInject constructor(
     @Assisted appContext: Context,
     @Assisted params: WorkerParameters,
-    private val database: SoloFitDatabase
+    private val database: SoloFitDatabase,
+    private val userPreferences: UserPreferences
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result = PerfTrace.measureSuspend("db.maintenance") {
         try {
             val db = database.openHelper.writableDatabase
-            // Checkpoint + truncate the WAL, then compact the file.
             db.query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
             db.execSQL("VACUUM")
+            userPreferences.pruneOldWaterKeys()
             Result.success()
         } catch (e: Exception) {
-            // Maintenance is best-effort; never fail loudly.
             Result.success()
         }
     }

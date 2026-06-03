@@ -244,6 +244,7 @@ fun ActiveWorkoutScreen(
                             spread = 8f,
                             density = 7f,
                             vaporizeDurationMs = 3000,
+                            animate = animate,
                             onAnimationEnd = {
                                 showCelebration = false
                                 viewModel.finish(onFinish)

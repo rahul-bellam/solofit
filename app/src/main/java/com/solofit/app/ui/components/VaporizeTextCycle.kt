@@ -51,9 +51,15 @@ fun VaporizeTextCycle(
     fadeInDurationMs: Long = 1000,
     waitDurationMs: Long = 1500,
     direction: VaporizeDirection = VaporizeDirection.LEFT_TO_RIGHT,
+    animate: Boolean = true,
     onCycleComplete: () -> Unit = {}
 ) {
     if (texts.isEmpty()) return
+
+    if (!animate) {
+        LaunchedEffect(Unit) { onCycleComplete() }
+        return
+    }
 
     val textColorArgb = remember(color) { color.toArgb() }
     val densityVal = remember(density) { (density / 10f).coerceIn(0.3f, 1f) }
@@ -220,13 +226,15 @@ fun VaporizeTextCycle(
     }
 
     Canvas(modifier = modifier) {
+        val progress = vaporizeProgress.floatValue
+        val opacity = fadeOpacity.floatValue
         val cx = size.width / 2f
         val cy = size.height / 2f
         val baseColor = Color(textColorArgb)
         for (p in particles) {
             if (p.alpha > 0.005f) {
                 val alpha = when (state) {
-                    "fadingIn" -> p.alpha * fadeOpacity.floatValue.coerceIn(0f, 1f)
+                    "fadingIn" -> p.alpha * opacity.coerceIn(0f, 1f)
                     else -> p.alpha
                 }.coerceIn(0f, 1f)
                 val strokeW = if (state == "fadingIn") 2.5f else 1.5f
@@ -250,11 +258,13 @@ fun VaporizeCelebration(
     spread: Float = 6f,
     density: Float = 6f,
     vaporizeDurationMs: Long = 2500,
+    animate: Boolean = true,
     onAnimationEnd: () -> Unit = {}
 ) {
     var show by remember { mutableStateOf(true) }
     if (show) {
         VaporizeTextCycle(
+            animate = animate,
             texts = listOf(text),
             modifier = modifier,
             color = color,

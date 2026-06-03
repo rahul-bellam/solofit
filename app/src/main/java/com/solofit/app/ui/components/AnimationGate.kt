@@ -31,7 +31,7 @@ object AnimationGatePolicy {
  */
 @Composable
 fun rememberAnimationsActive(enabled: Boolean): Boolean {
-    if (!enabled) return false
     val state by LocalLifecycleOwner.current.lifecycle.currentStateAsState()
+    if (!enabled) return false
     return AnimationGatePolicy.active(enabled = true, resumed = state.isAtLeast(Lifecycle.State.RESUMED))
 }

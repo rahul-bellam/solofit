@@ -2,7 +2,6 @@ package com.solofit.app.ui.nutrition
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -33,6 +32,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +57,7 @@ import com.solofit.app.ui.components.ChipSelector
 import com.solofit.app.ui.components.NutritionTheme
 import com.solofit.app.ui.scan.AiFoodScanViewModel
 import com.solofit.app.ui.scan.AiScanResult
+import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 @Composable
@@ -80,6 +81,7 @@ fun NutritionScreen(
     var showSearch by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     val captureUri = remember { mutableStateOf<Uri?>(null) }
 
@@ -88,12 +90,18 @@ fun NutritionScreen(
     ) { success ->
         val uri = captureUri.value
         if (success && uri != null) {
-            val bmp = try {
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    BitmapFactory.decodeStream(stream)
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val bmp = runCatching {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        android.graphics.BitmapFactory.decodeStream(stream)
+                    }
+                }.getOrNull()
+                if (bmp != null) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        aiScanViewModel.analyzeAndLog(bmp)
+                    }
                 }
-            } catch (_: Exception) { null }
-            if (bmp != null) aiScanViewModel.analyzeAndLog(bmp)
+            }
         }
     }
 

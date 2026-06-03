@@ -48,6 +48,7 @@ interface ProfileRepository {
     suspend fun setTrainingGoal(goal: com.solofit.app.domain.model.TrainingGoal)
 
     val reminderSettings: Flow<ReminderSettings>
+    suspend fun setReminderSettings(settings: ReminderSettings)
 }
 
 interface BodyRepository {
