@@ -2,7 +2,6 @@ package com.solofit.app.ui.nutrition
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +63,7 @@ import kotlin.math.roundToInt
 fun NutritionScreen(
     onScanBarcode: () -> Unit = {},
     onFoodLookup: () -> Unit = {},
+    onOpenReminders: () -> Unit = {},
     viewModel: NutritionViewModel = hiltViewModel(),
     aiScanViewModel: AiFoodScanViewModel = hiltViewModel()
 ) {
@@ -75,7 +76,7 @@ fun NutritionScreen(
     var selectedFood by remember { mutableStateOf<FoodItemEntity?>(null) }
     var showCreateFood by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
-    var isDark by remember { mutableStateOf(false) }
+    var isDark by rememberSaveable { mutableStateOf(false) }
     var showSearch by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
@@ -198,7 +199,7 @@ fun NutritionScreen(
                                         .size(36.dp)
                                         .clip(RoundedCornerShape(12.dp))
                                         .background(colors.iconBg)
-                                        .clickable { },
+                                        .clickable { onOpenReminders() },
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Text("🔔", fontSize = 16.sp)

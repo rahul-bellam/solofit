@@ -37,9 +37,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.Clay
-import com.solofit.app.ui.theme.ClayDark
-import com.solofit.app.ui.theme.Taupe
+import com.solofit.app.ui.theme.Moss
+import com.solofit.app.ui.theme.Sage
+import com.solofit.app.ui.theme.SageDark
 
 private val glassShape = RoundedCornerShape(28.dp)
 private val innerShape = RoundedCornerShape(27.dp)
@@ -55,7 +55,7 @@ private fun intensityForName(name: String): IntensityLevel = when {
 }
 
 private fun intensityGradient(level: IntensityLevel): Pair<Color, Color> = when (level) {
-    IntensityLevel.HIGH -> Taupe to ClayDark
+    IntensityLevel.HIGH -> Moss to SageDark
     IntensityLevel.MED -> Color(0xFFFF8A3D) to Color(0xFFE85D04)
     IntensityLevel.LOW -> Color(0xFFFFB703) to Color(0xFFFF8A3D)
 }
@@ -241,8 +241,8 @@ fun WorkoutExerciseCard(
     val isComplete = state == RingState.COMPLETE
     val intensity = intensityForName(exerciseName)
 
-    val borderGlow = if (isActive) Clay.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.06f)
-    val borderOuter = if (isActive) Clay.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.1f)
+    val borderGlow = if (isActive) Sage.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.06f)
+    val borderOuter = if (isActive) Sage.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.1f)
 
     val cardModifier = modifier
         .fillMaxWidth()
@@ -354,7 +354,7 @@ fun WorkoutExerciseCard(
                                         .height(8.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .background(
-                                            Brush.horizontalGradient(listOf(Taupe, ClayDark))
+                                            Brush.horizontalGradient(listOf(Moss, SageDark))
                                         )
                                 )
                             }
@@ -372,7 +372,7 @@ fun WorkoutExerciseCard(
                                 SessionActionButton(
                                     text = "Done",
                                     onClick = onCompleteSet,
-                                    gradient = Taupe to ClayDark,
+                                    gradient = Moss to SageDark,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -430,7 +430,7 @@ fun WorkoutExerciseCard(
                             SessionActionButton(
                                 text = "Start Set",
                                 onClick = onStartSet,
-                                gradient = Taupe to ClayDark,
+                                gradient = Moss to SageDark,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -521,7 +521,7 @@ fun SessionHeader(
                     Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(brush = Brush.verticalGradient(listOf(Taupe, ClayDark))),
+                        .background(brush = Brush.verticalGradient(listOf(Moss, SageDark))),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("🔥", fontSize = 18.sp)
@@ -588,7 +588,7 @@ fun SessionProgressBar(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(
-                        Brush.horizontalGradient(listOf(Taupe, ClayDark, Amber))
+                        Brush.horizontalGradient(listOf(Moss, SageDark, Amber))
                     )
             )
         }
@@ -638,7 +638,7 @@ private fun PauseFinishButton(
 ) {
     val bgMod = if (isPrimary) {
         Modifier.background(
-            Brush.verticalGradient(listOf(Taupe, ClayDark)),
+            Brush.verticalGradient(listOf(Moss, SageDark)),
             RoundedCornerShape(16.dp)
         )
     } else {

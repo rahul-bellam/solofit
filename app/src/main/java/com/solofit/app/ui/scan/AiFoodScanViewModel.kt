@@ -114,11 +114,13 @@ class AiFoodScanViewModel @Inject constructor(
 
     fun analyzeAndLog(bitmap: Bitmap) {
         if (_isScanning.value) return
+        _isScanning.value = true
         viewModelScope.launch {
             if (checkRateLimit()) {
                 _scanResult.tryEmit(
                     AiScanResult.Error("Rate limited — max $maxRequestsPerMinute scans per minute, ${minIntervalMs / 1000}s between scans.")
                 )
+                _isScanning.value = false
                 return@launch
             }
 
@@ -128,10 +130,9 @@ class AiFoodScanViewModel @Inject constructor(
                 _scanResult.tryEmit(
                     AiScanResult.Error("Set GEMINI_API_KEY in app/build.gradle.kts")
                 )
+                _isScanning.value = false
                 return@launch
             }
-
-            _isScanning.value = true
             try {
                 val base64 = withContext(Dispatchers.IO) { bitmapToBase64(bitmap) }
                 val response = withContext(Dispatchers.IO) {
@@ -207,9 +208,7 @@ class AiFoodScanViewModel @Inject constructor(
             } catch (e: java.net.SocketTimeoutException) {
                 _scanResult.tryEmit(AiScanResult.Error("Request timed out. Check your internet."))
             } catch (e: Exception) {
-                _scanResult.tryEmit(
-                    AiScanResult.Error(e.message ?: "AI scan failed. Try again.")
-                )
+                _scanResult.tryEmit(AiScanResult.Error("AI scan failed. Try again."))
             } finally {
                 _isScanning.value = false
             }

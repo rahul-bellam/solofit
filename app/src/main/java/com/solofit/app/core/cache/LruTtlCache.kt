@@ -27,12 +27,5 @@ class LruTtlCache<K : Any, V : Any>(
         map[key] = Entry(value, clock() + ttlMillis)
     }
 
-    inline fun getOrPut(key: K, compute: () -> V): V =
-        get(key) ?: compute().also { put(key, it) }
 
-    @Synchronized
-    fun clear() = map.clear()
-
-    @Synchronized
-    fun size(): Int = map.size
 }

@@ -12,11 +12,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColors = darkColorScheme(
-    primary = Clay,
+    primary = Sage,
     onPrimary = Color.White,
-    secondary = ClayDark,
+    secondary = SageDark,
     onSecondary = Color.White,
-    tertiary = Clay.copy(alpha = 0.7f),
+    tertiary = Sage.copy(alpha = 0.7f),
     onTertiary = Color.White,
     background = DarkBackground,
     onBackground = OnDarkBackground,
@@ -30,11 +30,11 @@ private val DarkColors = darkColorScheme(
 )
 
 private val LightColors = lightColorScheme(
-    primary = Clay,
+    primary = Sage,
     onPrimary = Color.White,
-    secondary = ClayDark,
+    secondary = SageDark,
     onSecondary = Color.White,
-    tertiary = Clay.copy(alpha = 0.8f),
+    tertiary = Sage.copy(alpha = 0.8f),
     onTertiary = Color.Black,
     background = LightBackground,
     onBackground = OnLightBackground,

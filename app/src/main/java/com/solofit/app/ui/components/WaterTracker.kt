@@ -46,8 +46,6 @@ fun WaterTracker(
     animate: Boolean = true
 ) {
     val fraction = if (goalMl > 0) (currentMl.toFloat() / goalMl).coerceIn(0f, 1f) else 0f
-    val glasses = currentMl / glassMl
-    val goalGlasses = goalMl / glassMl
     val goalHit = goalMl > 0 && currentMl >= goalMl
 
     val view = LocalView.current
@@ -113,7 +111,7 @@ fun WaterTracker(
                 Spacer(Modifier.height(2.dp))
                 val waterPct = if (goalMl > 0) (currentMl * 100 / goalMl).coerceAtMost(100) else 0
                 Text(
-                    "$currentMl / $goalMl ml ($waterPct%) · $glasses of $goalGlasses glasses",
+                    "$currentMl / $goalMl ml · $waterPct%",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

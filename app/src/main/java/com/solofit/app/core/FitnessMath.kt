@@ -1,6 +1,6 @@
 package com.solofit.app.core
 
-import kotlin.math.roundToInt
+
 
 /**
  * Pure, Android-free fitness calculations so they're unit-testable.
@@ -16,8 +16,6 @@ object FitnessMath {
         if (reps == 1) return weightKg
         return weightKg * (1.0 + reps / 30.0)
     }
-
-    fun epley1RMRounded(weightKg: Double, reps: Int): Int = epley1RM(weightKg, reps).roundToInt()
 
     /**
      * V-Taper score = shoulder-to-waist ratio. A higher number is a more aesthetic

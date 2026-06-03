@@ -43,6 +43,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.solofit.app.ui.components.WorkoutTheme
 
 private val DAY_NAMES = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
@@ -56,6 +57,7 @@ fun WorkoutPlannerScreen(
     val exercises by viewModel.planExercises.collectAsStateWithLifecycle()
     var showAddDialog by remember { mutableStateOf(false) }
 
+    WorkoutTheme {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -143,6 +145,7 @@ fun WorkoutPlannerScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
+    } // WorkoutTheme
 
     if (showAddDialog && selectedDay != null) {
         AddExerciseDialog(

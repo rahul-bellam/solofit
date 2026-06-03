@@ -41,21 +41,23 @@ class BarcodeScanner @Inject constructor() {
     suspend fun scan(context: Context): ScanOutcome = suspendCancellableCoroutine { cont ->
         try {
             val scanner = GmsBarcodeScanning.getClient(context, options)
+            var resumed = false
+            fun once(result: ScanOutcome) {
+                if (!resumed) { resumed = true; cont.resume(result) }
+            }
+            cont.invokeOnCancellation { once(ScanOutcome.Cancelled) }
             scanner.startScan()
                 .addOnSuccessListener { barcode ->
                     val value = barcode.rawValue
-                    if (value.isNullOrBlank()) {
-                        cont.resume(ScanOutcome.Failure("Could not read barcode."))
-                    } else {
-                        cont.resume(ScanOutcome.Success(value))
-                    }
+                    if (value.isNullOrBlank()) once(ScanOutcome.Failure("Could not read barcode."))
+                    else once(ScanOutcome.Success(value))
                 }
-                .addOnCanceledListener { cont.resume(ScanOutcome.Cancelled) }
+                .addOnCanceledListener { once(ScanOutcome.Cancelled) }
                 .addOnFailureListener { e ->
-                    cont.resume(ScanOutcome.Failure(e.message ?: "Scanner error."))
+                    once(ScanOutcome.Failure(e.message ?: "Scanner error."))
                 }
         } catch (e: Exception) {
-            cont.resume(ScanOutcome.Failure(e.message ?: "Scanner unavailable."))
+            if (!cont.isCancelled) cont.resume(ScanOutcome.Failure(e.message ?: "Scanner unavailable."))
         }
     }
 }

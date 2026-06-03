@@ -33,7 +33,9 @@ enum class FitnessGoal(val displayName: String, val calorieOffset: Int) {
 /** Meal categories for the daily nutrition diary. */
 enum class MealCategory(val displayName: String) {
     BREAKFAST("Breakfast"),
+    PRE_WORKOUT("Pre-Workout"),
     LUNCH("Lunch"),
+    POST_WORKOUT("Post-Workout"),
     DINNER("Dinner"),
     SNACKS("Snacks")
 }

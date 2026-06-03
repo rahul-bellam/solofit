@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.LocalFireDepartment
@@ -56,13 +57,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.solofit.app.data.local.entity.PlannedExerciseEntity
 import com.solofit.app.ui.components.DustCompletionAnimation
+import com.solofit.app.ui.components.VaporizeCelebration
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.rememberAnimationsActive
@@ -73,6 +77,7 @@ import com.solofit.app.ui.components.WaterTracker
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
 import com.solofit.app.ui.theme.ProteinColor
+import com.solofit.app.ui.theme.Emerald
 import com.solofit.app.ui.dashboard.SnackbarEvent
 import kotlin.math.roundToInt
 
@@ -99,6 +104,16 @@ fun DashboardScreen(
     val allDone by viewModel.todayAllDone.collectAsState()
     val planDismissed by viewModel.planDismissed.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showWaterCelebration by remember { mutableStateOf(false) }
+    var prevWaterGoalHit by remember { mutableStateOf(false) }
+
+    val waterGoalHit = state.waterGoalMl > 0 && state.waterMl >= state.waterGoalMl
+    LaunchedEffect(waterGoalHit) {
+        if (waterGoalHit && !prevWaterGoalHit) {
+            showWaterCelebration = true
+        }
+        prevWaterGoalHit = waterGoalHit
+    }
 
     LaunchedEffect(Unit) {
         viewModel.snackbarEvent.collect { event ->
@@ -120,6 +135,7 @@ fun DashboardScreen(
         return
     }
 
+    Box {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { innerPadding ->
@@ -348,7 +364,7 @@ fun DashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                             Icon(
-                                if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.CheckCircle,
+                                if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                                 contentDescription = "Exercise status",
                                     tint = if (ex.isCompleted) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f),
@@ -522,6 +538,25 @@ fun DashboardScreen(
             }
         }
         Spacer(Modifier.height(24.dp))
+        }
+    }
+    }
+    if (showWaterCelebration) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0xCC000000)),
+            contentAlignment = Alignment.Center
+        ) {
+            VaporizeCelebration(
+                text = "WATER GOAL REACHED",
+                fontSize = 48.sp,
+                color = Emerald,
+                spread = 8f,
+                density = 7f,
+                vaporizeDurationMs = 3000,
+                onAnimationEnd = { showWaterCelebration = false }
+            )
         }
     }
     }

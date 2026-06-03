@@ -8,11 +8,14 @@ import com.solofit.app.domain.model.Gender
 /** Room type converters for domain enums stored as their name strings. */
 class Converters {
     @TypeConverter fun fromGender(value: Gender): String = value.name
-    @TypeConverter fun toGender(value: String): Gender = Gender.valueOf(value)
+    @TypeConverter fun toGender(value: String): Gender =
+        runCatching { Gender.valueOf(value) }.getOrDefault(Gender.MALE)
 
     @TypeConverter fun fromActivity(value: ActivityLevel): String = value.name
-    @TypeConverter fun toActivity(value: String): ActivityLevel = ActivityLevel.valueOf(value)
+    @TypeConverter fun toActivity(value: String): ActivityLevel =
+        runCatching { ActivityLevel.valueOf(value) }.getOrDefault(ActivityLevel.MODERATE)
 
     @TypeConverter fun fromGoal(value: FitnessGoal): String = value.name
-    @TypeConverter fun toGoal(value: String): FitnessGoal = FitnessGoal.valueOf(value)
+    @TypeConverter fun toGoal(value: String): FitnessGoal =
+        runCatching { FitnessGoal.valueOf(value) }.getOrDefault(FitnessGoal.MAINTAIN)
 }

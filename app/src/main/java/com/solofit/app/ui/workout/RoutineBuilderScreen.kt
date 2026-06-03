@@ -44,6 +44,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import com.solofit.app.ui.components.WorkoutTheme
 
 private val equipmentOptions = listOf("All", "Barbell", "Dumbbell", "Machine", "Cable", "Bodyweight")
 private val difficultyOptions = listOf("All", "Beginner", "Intermediate", "Advanced")
@@ -64,6 +65,7 @@ fun RoutineBuilderScreen(
         )
     }
 
+    WorkoutTheme {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -232,6 +234,7 @@ fun RoutineBuilderScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
+    } // WorkoutTheme
 }
 
 @Composable

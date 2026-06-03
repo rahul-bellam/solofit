@@ -1,7 +1,7 @@
 package com.solofit.app.core.perf
 
 import android.os.SystemClock
-import android.util.Log
+
 import com.solofit.app.BuildConfig
 import java.util.concurrent.ConcurrentHashMap
 
@@ -24,16 +24,6 @@ object PerfTrace {
     private data class Stat(val samples: ArrayDeque<Long> = ArrayDeque())
 
     private val stats = ConcurrentHashMap<String, Stat>()
-
-    inline fun <T> measure(label: String, block: () -> T): T {
-        if (!BuildConfig.DEBUG) return block()
-        val start = SystemClock.elapsedRealtimeNanos()
-        try {
-            return block()
-        } finally {
-            record(label, (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000)
-        }
-    }
 
     suspend inline fun <T> measureSuspend(label: String, block: suspend () -> T): T {
         if (!BuildConfig.DEBUG) return block()
@@ -63,13 +53,5 @@ object PerfTrace {
         return Triple(pct(0.50), pct(0.95), sorted.last())
     }
 
-    /** Dump all summaries to logcat (debug only) — call from a dev menu. */
-    fun dump() {
-        if (!BuildConfig.DEBUG) return
-        stats.keys.sorted().forEach { label ->
-            summary(label)?.let { (p50, p95, max) ->
-                Log.d(TAG, "$label  p50=${p50}ms p95=${p95}ms max=${max}ms")
-            }
-        }
-    }
+
 }

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.EmptyState
+import com.solofit.app.ui.components.WorkoutTheme
 
 @Composable
 fun WorkoutScreen(
@@ -65,6 +66,7 @@ fun WorkoutScreen(
         return
     }
 
+    WorkoutTheme {
     Scaffold(
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -220,6 +222,7 @@ fun WorkoutScreen(
             item { Spacer(Modifier.height(80.dp)) }
         }
     }
+    } // WorkoutTheme
 
     showDeleteConfirm?.let { routineId ->
         val routine = routines.find { it.routine.id == routineId }

@@ -2,9 +2,10 @@ package com.solofit.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Calming earthy tones — replacing red
-val Clay = Color(0xFFB8A88A)
-val ClayDark = Color(0xFF9A8A6E)
+// Earthy green tones
+val Sage = Color(0xFF7AA88A)
+val SageDark = Color(0xFF5A8A6A)
+val Moss = Color(0xFF6B9A7A)
 
 // Page-specific accents
 val Emerald = Color(0xFF12B886)
@@ -12,8 +13,6 @@ val EmeraldLight = Color(0xFFE6F9F2)
 val Amber = Color(0xFFFFA94D)
 val AmberLight = Color(0xFFFFF4E6)
 val Cyan = Color(0xFF00BCD4)
-val Taupe = Color(0xFFA89880)
-val Sage = Color(0xFF8CA88A)
 
 // Surfaces
 val DarkBackground = Color(0xFF000000)

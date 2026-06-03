@@ -8,9 +8,8 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.Clay
 import com.solofit.app.ui.theme.Emerald
-import com.solofit.app.ui.theme.Taupe
+import com.solofit.app.ui.theme.Sage
 
 object Routes {
     const val ONBOARDING = "onboarding"
@@ -45,8 +44,8 @@ enum class BottomDestination(
     val gradientFrom: Color,
     val gradientTo: Color
 ) {
-    DASHBOARD(Routes.DASHBOARD, "Home", Icons.Filled.Home, Clay, Clay),
-    NUTRITION(Routes.NUTRITION, "Nutrition", Icons.Filled.Restaurant, Clay, Clay),
-    WORKOUT(Routes.WORKOUT, "Workouts", Icons.Filled.FitnessCenter, Clay, Clay),
-    HISTORY(Routes.HISTORY, "History", Icons.Filled.CalendarMonth, Clay, Clay)
+    DASHBOARD(Routes.DASHBOARD, "Home", Icons.Filled.Home, Sage, Sage),
+    NUTRITION(Routes.NUTRITION, "Nutrition", Icons.Filled.Restaurant, Sage, Sage),
+    WORKOUT(Routes.WORKOUT, "Workouts", Icons.Filled.FitnessCenter, Sage, Sage),
+    HISTORY(Routes.HISTORY, "History", Icons.Filled.CalendarMonth, Sage, Sage)
 }

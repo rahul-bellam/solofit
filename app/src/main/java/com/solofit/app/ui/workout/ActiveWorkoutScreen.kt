@@ -42,6 +42,8 @@ import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.ui.components.WorkoutTheme
 import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.components.rememberAnimationsActive
+import com.solofit.app.ui.components.VaporizeCelebration
+import com.solofit.app.ui.theme.Emerald
 
 @Composable
 fun ActiveWorkoutScreen(
@@ -65,6 +67,7 @@ fun ActiveWorkoutScreen(
     }
 
     var isPaused by remember { mutableStateOf(false) }
+    var showCelebration by remember { mutableStateOf(false) }
     var activeExerciseName by remember { mutableStateOf<String?>(null) }
 
     val currentExercises = groups.map { group ->
@@ -189,7 +192,7 @@ fun ActiveWorkoutScreen(
                     BottomActionBar(
                         isPaused = isPaused,
                         onPause = { isPaused = !isPaused },
-                        onFinish = { viewModel.finish(onFinish) }
+                        onFinish = { showCelebration = true }
                     )
                 }
 
@@ -223,6 +226,28 @@ fun ActiveWorkoutScreen(
                             color = MaterialTheme.colorScheme.onTertiaryContainer,
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.titleMedium
+                        )
+                    }
+                }
+
+                if (showCelebration) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color(0xCC000000)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        VaporizeCelebration(
+                            text = "WORKOUT COMPLETE",
+                            fontSize = 48.sp,
+                            color = Amber,
+                            spread = 8f,
+                            density = 7f,
+                            vaporizeDurationMs = 3000,
+                            onAnimationEnd = {
+                                showCelebration = false
+                                viewModel.finish(onFinish)
+                            }
                         )
                     }
                 }

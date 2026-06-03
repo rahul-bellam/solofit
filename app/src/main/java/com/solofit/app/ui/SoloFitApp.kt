@@ -106,8 +106,20 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     }
                     composable(Routes.DASHBOARD) {
                         DashboardScreen(
-                            onLogMeal = { navController.navigate(Routes.NUTRITION) },
-                            onLogWorkout = { navController.navigate(Routes.WORKOUT) },
+                            onLogMeal = {
+                                navController.navigate(Routes.NUTRITION) {
+                                    popUpTo(Routes.DASHBOARD) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            onLogWorkout = {
+                                navController.navigate(Routes.WORKOUT) {
+                                    popUpTo(Routes.DASHBOARD) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
@@ -120,7 +132,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     composable(Routes.NUTRITION) {
                         NutritionScreen(
                             onScanBarcode = { navController.navigate(Routes.SCAN) },
-                            onFoodLookup = { navController.navigate(Routes.FOOD_LOOKUP) }
+                            onFoodLookup = { navController.navigate(Routes.FOOD_LOOKUP) },
+                            onOpenReminders = { navController.navigate(Routes.REMINDERS) }
                         )
                     }
                     composable(Routes.FOOD_LOOKUP) {

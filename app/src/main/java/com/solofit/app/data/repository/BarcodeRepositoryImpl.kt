@@ -41,20 +41,20 @@ class BarcodeRepositoryImpl @Inject constructor(
 
     override suspend fun lookup(barcode: String): BarcodeLookupResult = withContext(io) {
         PerfTrace.measureSuspend("barcode.lookup") {
-            // L1: memory
-            memCache.get(barcode)?.let {
-                return@measureSuspend BarcodeLookupResult.Found(it)
-            }
-
-            // L2: local Room cache — fully offline path for repeat scans.
-            foodDao.getByBarcode(barcode)?.let { cached ->
-                val food = cached.toScannedFood()
-                memCache.put(barcode, food)
-                return@measureSuspend BarcodeLookupResult.Found(food)
-            }
-
-            // L3: network (Open Food Facts).
             try {
+                // L1: memory
+                memCache.get(barcode)?.let {
+                    return@measureSuspend BarcodeLookupResult.Found(it)
+                }
+
+                // L2: local Room cache — fully offline path for repeat scans.
+                foodDao.getByBarcode(barcode)?.let { cached ->
+                    val food = cached.toScannedFood()
+                    memCache.put(barcode, food)
+                    return@measureSuspend BarcodeLookupResult.Found(food)
+                }
+
+                // L3: network (Open Food Facts).
                 val response = service.getProduct(barcode)
                 val product = response.product
                 if (response.status != 1 || product == null) {
