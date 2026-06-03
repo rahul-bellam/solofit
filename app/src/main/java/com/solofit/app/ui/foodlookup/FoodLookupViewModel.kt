@@ -104,6 +104,6 @@ fun extractNutrients(nutrients: List<UsdaNutrient>): Map<String, String> {
 }
 
 internal fun Double.formatNutrient(): String = when {
-    this == this.toLong().toDouble() -> this.toLong().toString()
+    kotlin.math.abs(this - kotlin.math.round(this)) < 0.001 -> kotlin.math.round(this).toLong().toString()
     else -> "%.1f".format(this)
 }

@@ -167,7 +167,7 @@ private fun VTaperCard(state: BodyState) {
                     Icon(
                         if (shrinking) Icons.AutoMirrored.Filled.TrendingDown
                         else Icons.AutoMirrored.Filled.TrendingUp,
-                        contentDescription = null
+                        contentDescription = if (shrinking) "Waist decreasing" else "Waist increasing"
                     )
                     Text(
                         "  Waist ${if (shrinking) "down" else "up"} " +

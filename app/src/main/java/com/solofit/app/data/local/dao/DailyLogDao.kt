@@ -46,7 +46,9 @@ interface DailyLogDao {
             fi.id AS food_id, fi.name AS food_name, fi.category AS food_category,
             fi.caloriesPer100g AS food_caloriesPer100g, fi.proteinPer100g AS food_proteinPer100g,
             fi.carbsPer100g AS food_carbsPer100g, fi.fatsPer100g AS food_fatsPer100g,
-            fi.fiberPer100g AS food_fiberPer100g, fi.isCustom AS food_isCustom
+            fi.fiberPer100g AS food_fiberPer100g, fi.isCustom AS food_isCustom,
+            fi.barcode AS food_barcode, fi.servingGrams AS food_servingGrams,
+            fi.servingLabel AS food_servingLabel
         FROM daily_log dl
         INNER JOIN food_items fi ON fi.id = dl.foodId
         WHERE dl.date = :date

@@ -295,8 +295,6 @@ abstract class SoloFitDatabase : RoomDatabase() {
                 try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN supersetId INTEGER") } catch (_: Exception) {}
             }
         }
-            }
-        }
 
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
             var needsSeed = false

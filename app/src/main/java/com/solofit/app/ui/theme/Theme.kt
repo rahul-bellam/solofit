@@ -11,30 +11,46 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val LightColors = lightColorScheme(
-    primary = Emerald,
+private val DarkColors = darkColorScheme(
+    primary = Clay,
     onPrimary = Color.White,
-    secondary = Indigo,
-    tertiary = Amber,
-    background = LightBackground,
-    surface = LightSurface,
-    error = Coral
+    secondary = ClayDark,
+    onSecondary = Color.White,
+    tertiary = Clay.copy(alpha = 0.7f),
+    onTertiary = Color.White,
+    background = DarkBackground,
+    onBackground = OnDarkBackground,
+    surface = DarkSurface,
+    onSurface = OnDarkSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = OnDarkSurfaceVariant,
+    error = Color(0xFFCF6679),
+    onError = Color.Black,
+    outline = OnDarkSurfaceVariant
 )
 
-private val DarkColors = darkColorScheme(
-    primary = Emerald,
-    onPrimary = Color.Black,
-    secondary = Indigo,
-    tertiary = Amber,
-    background = DarkBackground,
-    surface = DarkSurface,
-    error = Coral
+private val LightColors = lightColorScheme(
+    primary = Clay,
+    onPrimary = Color.White,
+    secondary = ClayDark,
+    onSecondary = Color.White,
+    tertiary = Clay.copy(alpha = 0.8f),
+    onTertiary = Color.Black,
+    background = LightBackground,
+    onBackground = OnLightBackground,
+    surface = LightSurface,
+    onSurface = OnLightSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = OnLightSurfaceVariant,
+    error = Color(0xFFB00020),
+    onError = Color.White,
+    outline = OnLightSurfaceVariant
 )
 
 @Composable
 fun SoloFitTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current

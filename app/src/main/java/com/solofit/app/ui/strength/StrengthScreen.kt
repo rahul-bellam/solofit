@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -31,7 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.EmptyState
+import com.solofit.app.ui.components.GlassCard
 import com.solofit.app.ui.components.LineChart
+import com.solofit.app.ui.components.StrengthTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +54,7 @@ fun StrengthScreen(
             )
         }
     ) { padding ->
+        StrengthTheme {
         if (lifts.isEmpty()) {
             EmptyState(
                 icon = Icons.Filled.FitnessCenter,
@@ -61,8 +63,7 @@ fun StrengthScreen(
                     "estimated 1RM trend for each lift will appear here.",
                 modifier = Modifier.padding(padding).padding(top = 40.dp)
             )
-            return@Scaffold
-        }
+        } else {
 
         LazyColumn(
             modifier = Modifier
@@ -80,9 +81,8 @@ fun StrengthScreen(
                 )
             }
             items(lifts, key = { it.exerciseName }) { lift ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(14.dp)) {
-                        Row(
+                GlassCard(Modifier.fillMaxWidth()) {
+                    Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
@@ -96,7 +96,7 @@ fun StrengthScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
                                     Icons.AutoMirrored.Filled.TrendingUp,
-                                    contentDescription = null,
+                                    contentDescription = "Strength increasing",
                                     modifier = Modifier.height(16.dp)
                                 )
                                 Text(
@@ -110,8 +110,9 @@ fun StrengthScreen(
                         LineChart(values = lift.points, height = 140.dp)
                     }
                 }
-            }
             item { Spacer(Modifier.height(24.dp)) }
+        }
+        }
         }
     }
 }

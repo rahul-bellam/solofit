@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -67,6 +69,10 @@ private fun bitmapToBase64(bitmap: Bitmap): String {
     return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
 }
 
+private val json = Json { ignoreUnknownKeys = true }
+
+private val jsonRegex = Regex("```(?:json)?\\s*([\\s\\S]*?)\\s*```|^\\s*([\\s\\S]*?)\\s*$")
+
 private fun inferMealCategory(): MealCategory {
     val hour = LocalTime.now().hour
     return when {
@@ -91,39 +97,40 @@ class AiFoodScanViewModel @Inject constructor(
     private val _scanResult = MutableSharedFlow<AiScanResult>(extraBufferCapacity = 1)
     val scanResult = _scanResult.asSharedFlow()
 
+    private val mutex = Mutex()
     private val requestTimestamps = mutableListOf<Long>()
     private val minIntervalMs = 5_000L
     private val maxRequestsPerMinute = 5L
     private val windowMs = 60_000L
 
-    private fun checkRateLimit(): Boolean {
+    private suspend fun checkRateLimit(): Boolean = mutex.withLock {
         val now = System.currentTimeMillis()
         requestTimestamps.removeAll { now - it > windowMs }
-        if (requestTimestamps.size >= maxRequestsPerMinute.toInt()) return true
-        if (requestTimestamps.isNotEmpty() && now - requestTimestamps.last() < minIntervalMs) return true
+        if (requestTimestamps.size >= maxRequestsPerMinute.toInt()) return@withLock true
+        if (requestTimestamps.isNotEmpty() && now - requestTimestamps.last() < minIntervalMs) return@withLock true
         requestTimestamps.add(now)
-        return false
+        return@withLock false
     }
 
     fun analyzeAndLog(bitmap: Bitmap) {
         if (_isScanning.value) return
-        if (checkRateLimit()) {
-            _scanResult.tryEmit(
-                AiScanResult.Error("Rate limited — max $maxRequestsPerMinute scans per minute, ${minIntervalMs / 1000}s between scans.")
-            )
-            return
-        }
-
-        if (BuildConfig.GEMINI_API_KEY.isBlank() ||
-            BuildConfig.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY"
-        ) {
-            _scanResult.tryEmit(
-                AiScanResult.Error("Set GEMINI_API_KEY in app/build.gradle.kts")
-            )
-            return
-        }
-
         viewModelScope.launch {
+            if (checkRateLimit()) {
+                _scanResult.tryEmit(
+                    AiScanResult.Error("Rate limited — max $maxRequestsPerMinute scans per minute, ${minIntervalMs / 1000}s between scans.")
+                )
+                return@launch
+            }
+
+            if (BuildConfig.GEMINI_API_KEY.isBlank() ||
+                BuildConfig.GEMINI_API_KEY == "YOUR_GEMINI_API_KEY"
+            ) {
+                _scanResult.tryEmit(
+                    AiScanResult.Error("Set GEMINI_API_KEY in app/build.gradle.kts")
+                )
+                return@launch
+            }
+
             _isScanning.value = true
             try {
                 val base64 = withContext(Dispatchers.IO) { bitmapToBase64(bitmap) }
@@ -152,13 +159,10 @@ class AiFoodScanViewModel @Inject constructor(
                     ?.text?.trim()
                     ?: throw Exception("No response from AI")
 
-                val cleaned = text
-                    .removePrefix("```json")
-                    .removePrefix("```")
-                    .removeSuffix("```")
-                    .trim()
+                val cleaned = jsonRegex.find(text)?.let {
+                        it.groupValues[1].ifBlank { it.groupValues[2] }
+                    }?.trim() ?: text.trim()
 
-                val json = Json { ignoreUnknownKeys = true }
                 val aiFood = withContext(Dispatchers.IO) {
                     json.decodeFromString<AiFoodJson>(cleaned)
                 }

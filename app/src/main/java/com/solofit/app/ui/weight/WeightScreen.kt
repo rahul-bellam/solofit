@@ -115,6 +115,7 @@ fun WeightScreen(
                     message = "Log your weight regularly to see your trend and whether you're on track for your goal.",
                     modifier = Modifier.padding(top = 24.dp)
                 )
+                Spacer(Modifier.height(24.dp))
             } else {
                 // ---- Summary ----
                 SummaryCard(state)
@@ -174,7 +175,7 @@ private fun SummaryCard(state: WeightState) {
                 change > 0 -> Icons.AutoMirrored.Filled.TrendingUp
                 else -> Icons.AutoMirrored.Filled.TrendingFlat
             }
-            Icon(icon, contentDescription = null)
+            Icon(icon, contentDescription = "Weight trend")
             Column(Modifier.weight(1f).padding(start = 12.dp)) {
                 Text("Latest: ${state.latestWeight ?: "—"} kg", fontWeight = FontWeight.Bold)
                 Text(

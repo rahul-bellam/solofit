@@ -23,18 +23,13 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.LocalFireDepartment
-<<<<<<< HEAD
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.WaterDrop
-=======
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Straighten
->>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
+import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -90,14 +85,9 @@ fun DashboardScreen(
     onOpenJournal: () -> Unit = {},
     onOpenBody: () -> Unit = {},
     onEditPhase: () -> Unit = {},
-<<<<<<< HEAD
     onOpenProfile: () -> Unit = {},
     onOpenReminders: () -> Unit = {},
-=======
-    onOpenHistory: () -> Unit = {},
-    onOpenReminders: () -> Unit = {},
     onOpenWeight: () -> Unit = {},
->>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -247,7 +237,7 @@ fun DashboardScreen(
                 leadingIcon = {
                     Icon(
                         Icons.Filled.LocalFireDepartment,
-                        contentDescription = null,
+                        contentDescription = "Streak",
                         modifier = Modifier.height(18.dp)
                     )
                 },
@@ -294,18 +284,18 @@ fun DashboardScreen(
                 val waterPct = if (state.waterGoalMl > 0) (state.waterMl * 100 / state.waterGoalMl).coerceAtMost(100) else 0
 
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = "Calories", tint = MaterialTheme.colorScheme.primary)
                     Text("${calsPct}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text("calories", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.WaterDrop, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.WaterDrop, contentDescription = "Water", tint = MaterialTheme.colorScheme.primary)
                     Text("${waterPct}%", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                     Text("water", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     if (state.remindersActive) {
-                        Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.Filled.Notifications, contentDescription = "Reminders", tint = MaterialTheme.colorScheme.primary)
                         Text("ON", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleSmall)
                         Text("reminders", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
@@ -313,7 +303,7 @@ fun DashboardScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
                         if (state.workoutToday) Icons.Filled.CheckCircle else Icons.Filled.FitnessCenter,
-                        contentDescription = null,
+                        contentDescription = "Workout status",
                         tint = if (state.workoutToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
@@ -340,7 +330,7 @@ fun DashboardScreen(
                 ) {
                     Column(Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                            Icon(Icons.Filled.FitnessCenter, contentDescription = "Workout plan", tint = MaterialTheme.colorScheme.onTertiaryContainer)
                             Spacer(Modifier.size(8.dp))
                             Text(planName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                         }
@@ -357,9 +347,9 @@ fun DashboardScreen(
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.CheckCircle,
-                                    contentDescription = null,
+                            Icon(
+                                if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.CheckCircle,
+                                contentDescription = "Exercise status",
                                     tint = if (ex.isCompleted) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.3f),
                                     modifier = Modifier.size(20.dp)
@@ -452,28 +442,21 @@ fun DashboardScreen(
         Text("Tracking", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-<<<<<<< HEAD
-            OutlinedButton(
-                onClick = onOpenProfile,
-                modifier = Modifier.weight(1f)
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenProfile),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Icon(Icons.Filled.Person, contentDescription = null)
-                Text("  Edit Profile")
+                Column(
+                    Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Filled.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Profile", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
             }
-            OutlinedButton(
-                onClick = onOpenReminders,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.Filled.Notifications, contentDescription = null)
-                Text("  Reminders")
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
-                onClick = onLogWorkout,
-                modifier = Modifier.weight(1f)
-=======
             Card(
                 modifier = Modifier
                     .weight(1f)
@@ -484,7 +467,7 @@ fun DashboardScreen(
                     Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "Journal", tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(6.dp))
                     Text("Journal", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
@@ -494,25 +477,16 @@ fun DashboardScreen(
                     .weight(1f)
                     .clickable(onClick = onOpenBody),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
->>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
             ) {
                 Column(
                     Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Filled.Straighten, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.Straighten, contentDescription = "Body", tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(6.dp))
                     Text("Body", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
-<<<<<<< HEAD
-            OutlinedButton(
-                onClick = onOpenJournal,
-                modifier = Modifier.weight(1f)
-            ) {
-                Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
-                Text("  Journal")
-=======
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -520,13 +494,13 @@ fun DashboardScreen(
                 modifier = Modifier
                     .weight(1f)
                     .clickable(onClick = onOpenWeight),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Column(
                     Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Filled.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    Icon(Icons.Filled.MonitorWeight, contentDescription = "Weight", tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(6.dp))
                     Text("Weight", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
@@ -535,17 +509,16 @@ fun DashboardScreen(
                 modifier = Modifier
                     .weight(1f)
                     .clickable(onClick = onOpenReminders),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
                 Column(
                     Modifier.padding(14.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    Icon(Icons.Filled.Notifications, contentDescription = "Reminders", tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.height(6.dp))
                     Text("Reminders", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                 }
->>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
             }
         }
         Spacer(Modifier.height(24.dp))

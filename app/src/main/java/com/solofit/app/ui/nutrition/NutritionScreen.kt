@@ -1,8 +1,13 @@
 package com.solofit.app.ui.nutrition
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,24 +18,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.PhotoCamera
-import androidx.compose.material.icons.filled.QrCodeScanner
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -45,14 +40,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.data.local.entity.FoodItemEntity
 import com.solofit.app.domain.model.MealCategory
+import com.solofit.app.ui.components.AnimatedThemeToggle
 import com.solofit.app.ui.components.ChipSelector
+import com.solofit.app.ui.components.NutritionTheme
 import com.solofit.app.ui.scan.AiFoodScanViewModel
 import com.solofit.app.ui.scan.AiScanResult
 import kotlin.math.roundToInt
@@ -73,11 +75,45 @@ fun NutritionScreen(
     var selectedFood by remember { mutableStateOf<FoodItemEntity?>(null) }
     var showCreateFood by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    var isDark by remember { mutableStateOf(false) }
+    var showSearch by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    val captureUri = remember { mutableStateOf<Uri?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bmp: Bitmap? ->
-        if (bmp != null) aiScanViewModel.analyzeAndLog(bmp)
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        val uri = captureUri.value
+        if (success && uri != null) {
+            val bmp = try {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                }
+            } catch (_: Exception) { null }
+            if (bmp != null) aiScanViewModel.analyzeAndLog(bmp)
+        }
+    }
+
+    val launchCamera: () -> Unit = {
+        try {
+            val file = java.io.File(context.cacheDir, "camera").apply { mkdirs() }
+            val photo = java.io.File(file, "food_scan_${System.currentTimeMillis()}.jpg")
+            val uri = androidx.core.content.FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photo
+            )
+            captureUri.value = uri
+            cameraLauncher.launch(uri)
+        } catch (_: Exception) { }
+    }
+
+    val cameraPermLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) launchCamera()
     }
 
     LaunchedEffect(Unit) {
@@ -104,218 +140,377 @@ fun NutritionScreen(
         return
     }
 
-    Box(Modifier.fillMaxSize()) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        item {
-            Spacer(Modifier.height(12.dp))
-            Text("Nutrition Log", style = MaterialTheme.typography.headlineMedium)
-            Spacer(Modifier.height(12.dp))
-            OutlinedTextField(
-                value = query,
-                onValueChange = viewModel::onQueryChange,
-                placeholder = { Text("Search 100+ foods...") },
-                leadingIcon = { Icon(Icons.Filled.Search, null) },
-                trailingIcon = {
-                    if (query.isNotEmpty()) {
-                        IconButton(onClick = { viewModel.onQueryChange("") }) {
-                            Icon(Icons.Filled.Close, "Clear")
-                        }
-                    }
-                },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-            Spacer(Modifier.height(10.dp))
-            OutlinedButton(
-                onClick = onScanBarcode,
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isAiScanning
-            ) {
-                Icon(Icons.Filled.QrCodeScanner, null)
-                Text("  Scan barcode")
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { cameraLauncher.launch(null) },
-                modifier = Modifier.fillMaxWidth(),
-                enabled = !isAiScanning
-            ) {
-                if (isAiScanning) {
-                    CircularProgressIndicator(Modifier.height(18.dp), strokeWidth = 2.dp)
-                    Text("  Analyzing food…")
-                } else {
-                    Icon(Icons.Filled.PhotoCamera, null)
-                    Text("  AI Food Scan (photo)")
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(onClick = onFoodLookup, modifier = Modifier.fillMaxWidth()) {
-                Icon(Icons.Filled.Search, null)
-                Text("  Food nutrition lookup")
-            }
-            Spacer(Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { showCreateFood = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Filled.Add, null)
-                Text("  Add custom food")
-            }
-        }
+    val colors = nutritionColors(isDark)
 
-        if (query.isNotBlank()) {
-            items(results, key = { "search_${it.id}" }) { food ->
-                FoodSearchRow(food) { selectedFood = food }
-            }
-            if (results.isEmpty()) {
+    NutritionTheme {
+        Box(Modifier.fillMaxSize().background(colors.bg)) {
+
+            // Main scrollable content
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header area with greeting
                 item {
-                    Text(
-                        "No foods match \"$query\".",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(16.dp)
+                    Column {
+                        // Top bar: logo + icons
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(colors.headerBg)
+                                .padding(horizontal = 20.dp, vertical = 16.dp)
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Box(
+                                    Modifier
+                                        .size(32.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(colors.green),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("🌿", fontSize = 16.sp)
+                                }
+                                Text(
+                                    "nourish",
+                                    fontSize = 24.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = colors.textPrimary
+                                )
+                            }
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                AnimatedThemeToggle(
+                                    isDark = isDark,
+                                    onToggle = { isDark = !isDark }
+                                )
+
+                                Box(
+                                    Modifier
+                                        .size(36.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(colors.iconBg)
+                                        .clickable { },
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text("🔔", fontSize = 16.sp)
+                                }
+                            }
+                        }
+
+                        NutritionHeader(
+                            colors = colors,
+                            greeting = "GOOD MORNING",
+                            tagline = "What are you eating today?"
+                        )
+                    }
+                }
+
+                // Daily progress card (offset negative)
+                item {
+                    val dailyCalories = sections.sumOf { s -> s.totals.calories.roundToInt() }
+                    val dailyProtein = sections.sumOf { s -> s.totals.proteinG.roundToInt() }
+                    val dailyCarbs = sections.sumOf { s -> s.totals.carbsG.roundToInt() }
+                    val dailyFat = sections.sumOf { s -> s.totals.fatsG.roundToInt() }
+                    val calGoal = 1980
+                    val proteinGoal = 85
+                    val carbsGoal = 220
+                    val fatGoal = 65
+                    val progress = if (calGoal > 0) (dailyCalories * 100 / calGoal).coerceAtMost(100) else 0
+                    DailyProgressCard(
+                        colors = colors,
+                        progressPercent = progress,
+                        calories = dailyCalories,
+                        caloriesGoal = calGoal,
+                        protein = dailyProtein,
+                        proteinGoal = proteinGoal,
+                        carbs = dailyCarbs,
+                        carbsGoal = carbsGoal,
+                        fat = dailyFat,
+                        fatGoal = fatGoal
                     )
                 }
-            }
-        } else {
-            item {
-                Spacer(Modifier.height(8.dp))
-                Text("Today's Diary", style = MaterialTheme.typography.titleLarge)
-            }
-            items(sections, key = { it.category.name }) { section ->
-                MealSectionCard(section, onRemove = viewModel::removeEntry)
-            }
-            item { Spacer(Modifier.height(24.dp)) }
-        }
-    }
-    SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
-}
 
-    selectedFood?.let { food ->
-        LogFoodDialog(
-            food = food,
-            onDismiss = { selectedFood = null },
-            onConfirm = { grams, category ->
-                viewModel.logFood(food, grams, category)
-                selectedFood = null
-            }
-        )
-    }
-
-    if (showCreateFood) {
-        CreateFoodDialog(
-            onDismiss = { showCreateFood = false },
-            onConfirm = { name, kcal, protein, carbs, fats, fiber ->
-                viewModel.addCustomFood(name, kcal, protein, carbs, fats, fiber)
-                showCreateFood = false
-                viewModel.onQueryChange("")
-            }
-        )
-    }
-}
-
-@Composable
-private fun FoodSearchRow(food: FoodItemEntity, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(14.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(food.name, fontWeight = FontWeight.SemiBold)
-                    Text(
-                        "${food.caloriesPer100g.roundToInt()} kcal · P${food.proteinPer100g.roundToInt()} " +
-                            "C${food.carbsPer100g.roundToInt()} F${food.fatsPer100g.roundToInt()} " +
-                            "Fib${food.fiberPer100g.roundToInt()} (per 100g)",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-            }
-            Text(food.category, style = MaterialTheme.typography.labelSmall)
-        }
-    }
-}
-
-@Composable
-private fun MealSectionCard(
-    section: MealSection,
-    onRemove: (com.solofit.app.data.local.dao.LoggedFoodRow) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(Modifier.padding(14.dp)) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(section.category.displayName, fontWeight = FontWeight.Bold)
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(
-                        "${section.totals.calories.roundToInt()} kcal",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        "P${section.totals.proteinG.roundToInt()} " +
-                            "C${section.totals.carbsG.roundToInt()} " +
-                            "F${section.totals.fatsG.roundToInt()} " +
-                            "Fib${section.totals.fiberG.roundToInt()}",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                // Quick add
+                item {
+                    QuickAddButton(
+                        colors = colors,
+                        onClick = { showSearch = true }
                     )
                 }
-            }
-            if (section.entries.isEmpty()) {
-                Text(
-                    "Nothing logged yet",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-            } else {
-                section.entries.forEach { row ->
-                    HorizontalDivider(Modifier.padding(vertical = 8.dp))
-                    val f = row.log.gramsConsumed / 100.0
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+
+                // Action cards grid
+                item {
+                    Column(
+                        modifier = Modifier.padding(horizontal = 20.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(row.food.name)
-                            Text(
-                                "${row.log.gramsConsumed.roundToInt()}g · " +
-                                    "${(row.food.caloriesPer100g * f).roundToInt()} kcal · " +
-                                    "P${(row.food.proteinPer100g * f).roundToInt()} " +
-                                    "C${(row.food.carbsPer100g * f).roundToInt()} " +
-                                    "F${(row.food.fatsPer100g * f).roundToInt()} " +
-                                    "Fib${(row.food.fiberPer100g * f).roundToInt()}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            NutritionActionCard(
+                                colors = colors,
+                                icon = "📦",
+                                title = "Barcode",
+                                subtitle = "Scan package\nnutrition label",
+                                onClick = onScanBarcode,
+                                modifier = Modifier.weight(1f)
+                            )
+                            NutritionActionCard(
+                                colors = colors,
+                                icon = "🔍",
+                                title = "Food Lookup",
+                                subtitle = "Search our\ndatabase",
+                                onClick = onFoodLookup,
+                                modifier = Modifier.weight(1f)
                             )
                         }
-                        IconButton(onClick = { onRemove(row) }) {
-                            Icon(Icons.Filled.Close, "Remove")
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            NutritionActionCard(
+                                colors = colors,
+                                icon = "⌨️",
+                                title = "Manual Entry",
+                                subtitle = "Add custom\nfoods",
+                                onClick = { showCreateFood = true },
+                                modifier = Modifier.weight(1f)
+                            )
+                            NutritionActionCard(
+                                colors = colors,
+                                icon = "📷",
+                                title = "AI Food Scan",
+                                subtitle = "Snap a photo &\nget instant info",
+                                badge = "NEW",
+                                onClick = {
+                                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                                        launchCamera()
+                                    } else {
+                                        cameraPermLauncher.launch(Manifest.permission.CAMERA)
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
+
+                // Today's log header
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    NutritionSectionHeader(
+                        colors = colors,
+                        title = "Today's Log",
+                        actionLabel = "all",
+                        onAction = { showSearch = true }
+                    )
+                }
+
+                // Food log items or search results
+                if (query.isNotBlank()) {
+                    items(results, key = { "search_${it.id}" }) { food ->
+                        FoodLogItem(
+                            colors = colors,
+                            emoji = "🍎",
+                            name = food.name,
+                            quantity = "per 100g",
+                            time = "${food.caloriesPer100g.roundToInt()} kcal",
+                            calories = food.caloriesPer100g.roundToInt(),
+                            onClick = { selectedFood = food }
+                        )
+                    }
+                    if (results.isEmpty()) {
+                        item {
+                            Text(
+                                "No foods match \"$query\".",
+                                color = colors.textMuted,
+                                modifier = Modifier.padding(horizontal = 20.dp)
+                            )
+                        }
+                    }
+                } else {
+                    val allEntries = sections.flatMap { section ->
+                        section.entries.map { entry ->
+                            FoodLogEntry(
+                                name = entry.food.name,
+                                emoji = "🍽️",
+                                quantity = "${entry.log.gramsConsumed.roundToInt()}g",
+                                time = section.category.displayName,
+                                calories = (entry.food.caloriesPer100g * entry.log.gramsConsumed / 100.0).roundToInt(),
+                                raw = entry
+                            )
+                        }
+                    }
+
+                    if (allEntries.isEmpty()) {
+                        item {
+                            NutritionEmptyState(
+                                colors = colors,
+                                onClick = { showSearch = true }
+                            )
+                        }
+                    } else {
+                        items(allEntries, key = { "${it.name}_${it.time}" }) { entry ->
+                            FoodLogItem(
+                                colors = colors,
+                                emoji = entry.emoji,
+                                name = entry.name,
+                                quantity = entry.quantity,
+                                time = entry.time,
+                                calories = entry.calories,
+                                onClick = { }
+                            )
+                        }
+                    }
+                }
+
+                item { Spacer(Modifier.height(80.dp)) }
+            }
+
+            // FAB scanner
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(end = 20.dp, bottom = 24.dp)
+            ) {
+                ScannerFloatingButton(
+                    colors = colors,
+                    onClick = {
+                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                            launchCamera()
+                        } else {
+                            cameraPermLauncher.launch(Manifest.permission.CAMERA)
+                        }
+                    }
+                )
+            }
+
+            SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
+        }
+
+        selectedFood?.let { food ->
+            LogFoodDialog(
+                food = food,
+                onDismiss = { selectedFood = null },
+                onConfirm = { grams, category ->
+                    viewModel.logFood(food, grams, category)
+                    selectedFood = null
+                }
+            )
+        }
+
+        if (showCreateFood) {
+            CreateFoodDialog(
+                onDismiss = { showCreateFood = false },
+                onConfirm = { name, kcal, protein, carbs, fats, fiber ->
+                    viewModel.addCustomFood(name, kcal, protein, carbs, fats, fiber)
+                    showCreateFood = false
+                    viewModel.onQueryChange("")
+                }
+            )
+        }
+
+        if (showSearch) {
+            SearchFoodDialog(
+                query = query,
+                onQueryChange = viewModel::onQueryChange,
+                results = results,
+                onSelectFood = { selectedFood = it },
+                onDismiss = { showSearch = false },
+                onBarcode = onScanBarcode,
+                onCamera = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                        launchCamera()
+                    } else {
+                        cameraPermLauncher.launch(Manifest.permission.CAMERA)
+                    }
+                }
+            )
+        }
+    }
+}
+
+private data class FoodLogEntry(
+    val name: String,
+    val emoji: String,
+    val quantity: String,
+    val time: String,
+    val calories: Int,
+    val raw: Any? = null
+)
+
+@Composable
+private fun SearchFoodDialog(
+    query: String,
+    onQueryChange: (String) -> Unit,
+    results: List<FoodItemEntity>,
+    onSelectFood: (FoodItemEntity) -> Unit,
+    onDismiss: () -> Unit,
+    onBarcode: () -> Unit,
+    onCamera: () -> Unit
+) {
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Log a food") },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    placeholder = { Text("What did you eat?") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(Modifier.height(12.dp))
+                if (query.isBlank()) {
+                    Text("SUGGESTED", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                    listOf(
+                        Triple("Banana", "🍌", 105),
+                        Triple("Oatmeal with berries", "🍓", 310),
+                        Triple("Almond butter", "🥜", 190),
+                        Triple("Chia seed pudding", "🌱", 175)
+                    ).forEach { (name, emoji, cal) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { onQueryChange(name) }.padding(vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(emoji, fontSize = 24.sp)
+                            Text(name, modifier = Modifier.weight(1f))
+                            Text("$cal cal", color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                } else {
+                    results.forEach { food ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clickable { onSelectFood(food) }.padding(vertical = 6.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(food.name, modifier = Modifier.weight(1f))
+                            Text("${food.caloriesPer100g.roundToInt()} kcal",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
+        },
+        confirmButton = {},
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
         }
-    }
+    )
 }
 
 @Composable
@@ -325,13 +520,12 @@ private fun LogFoodDialog(
     onConfirm: (grams: Double, category: MealCategory) -> Unit
 ) {
     val hasUnits = food.servingGrams != null && food.servingGrams > 0
-    // entry mode: true = count of units (e.g. "5 eggs"), false = grams
     var byUnit by remember { mutableStateOf(hasUnits) }
     var amount by remember { mutableStateOf(if (hasUnits) "1" else "100") }
     var category by remember { mutableStateOf(MealCategory.BREAKFAST) }
 
     val amountValue = amount.toDoubleOrNull() ?: 0.0
-    val gramsValue = if (byUnit && hasUnits) amountValue * food.servingGrams!! else amountValue
+    val gramsValue = if (byUnit && hasUnits) amountValue * (food.servingGrams ?: 0.0) else amountValue
     val f = gramsValue / 100.0
 
     AlertDialog(
@@ -340,7 +534,6 @@ private fun LogFoodDialog(
         text = {
             Column {
                 if (hasUnits) {
-                    // toggle grams vs unit count
                     ChipSelector(
                         options = listOf(true, false),
                         selected = byUnit,
@@ -377,7 +570,7 @@ private fun LogFoodDialog(
                     Spacer(Modifier.height(4.dp))
                     Text(
                         "= ${gramsValue.roundToInt()} g " +
-                            "(${food.servingGrams!!.roundToInt()} g each)",
+                            "(${(food.servingGrams ?: 0.0).roundToInt()} g each)",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -492,8 +685,6 @@ private fun DecimalField(
         label = { Text(label) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
     )
 }

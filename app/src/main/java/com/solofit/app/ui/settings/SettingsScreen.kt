@@ -234,11 +234,7 @@ private fun AnimationPreview(animate: Boolean) {
     ) {
         Text(
             "Preview",
-<<<<<<< HEAD
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
-=======
-            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
->>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))

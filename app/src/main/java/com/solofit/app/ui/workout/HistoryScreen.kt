@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +35,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.EmptyState
+import com.solofit.app.ui.components.GlassCard
+import com.solofit.app.ui.components.WorkoutTheme
 import com.solofit.app.core.DateUtils
 import java.time.LocalDate
 import java.time.YearMonth
@@ -49,6 +50,7 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
     val workoutDates = viewModel.workoutDates(history)
     var visibleMonth by remember { mutableStateOf(YearMonth.now()) }
 
+    WorkoutTheme {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -84,9 +86,8 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
             val volume = s.sets
                 .filter { it.isCompleted }
                 .sumOf { it.weightKg * it.reps }
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(
+            GlassCard(Modifier.fillMaxWidth()) {
+                Row(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -107,8 +108,8 @@ fun HistoryScreen(viewModel: HistoryViewModel = hiltViewModel()) {
                     )
                 }
             }
-        }
         item { Spacer(Modifier.height(24.dp)) }
+    }
     }
 }
 
@@ -120,7 +121,7 @@ private fun CalendarCard(
     onNext: () -> Unit
 ) {
     val iso = DateTimeFormatter.ISO_LOCAL_DATE
-    Card(Modifier.fillMaxWidth()) {
+    GlassCard(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp)) {
             Row(
                 Modifier.fillMaxWidth(),

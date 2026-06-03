@@ -19,6 +19,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -200,6 +201,7 @@ class DashboardViewModel @Inject constructor(
         .map { it?.name ?: "" }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "")
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     val todayExercises = todayPlan
         .flatMapLatest { plan ->
             if (plan != null) weeklyPlanRepository.observeExercisesForPlan(plan.id)
