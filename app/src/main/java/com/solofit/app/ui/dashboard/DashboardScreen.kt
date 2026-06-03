@@ -49,7 +49,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -99,10 +98,10 @@ fun DashboardScreen(
     val animateEnabled by viewModel.animationsEnabled.collectAsStateWithLifecycle()
     val animate = rememberAnimationsActive(animateEnabled)
     val profile = state.profile
-    val planName by viewModel.todayPlanName.collectAsState()
-    val exercises by viewModel.todayExercises.collectAsState()
-    val allDone by viewModel.todayAllDone.collectAsState()
-    val planDismissed by viewModel.planDismissed.collectAsState()
+    val planName by viewModel.todayPlanName.collectAsStateWithLifecycle()
+    val exercises by viewModel.todayExercises.collectAsStateWithLifecycle()
+    val allDone by viewModel.todayAllDone.collectAsStateWithLifecycle()
+    val planDismissed by viewModel.planDismissed.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     var showWaterCelebration by remember { mutableStateOf(false) }
     var prevWaterGoalHit by remember { mutableStateOf(false) }

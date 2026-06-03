@@ -12,6 +12,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -64,7 +65,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
 
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = backStackEntry?.destination?.route
-            val showBottomBar = currentRoute in BottomDestination.entries.map { it.route }
+            val bottomRoutes = remember { BottomDestination.entries.map { it.route } }
+            val showBottomBar = currentRoute in bottomRoutes
             val selectedDestination = BottomDestination.entries.firstOrNull { it.route == currentRoute }
 
             Scaffold(

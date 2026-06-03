@@ -3,6 +3,7 @@ package com.solofit.app.ui.photos
 import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -51,6 +52,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.core.BitmapUtils
@@ -58,6 +60,7 @@ import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.entity.ProgressPhotoEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,13 +72,39 @@ fun ProgressPhotosScreen(
     val context = LocalContext.current
     var pose by remember { mutableStateOf(Pose.FRONT) }
 
+    val captureUri = remember { mutableStateOf<Uri?>(null) }
+
     val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bmp: Bitmap? -> if (bmp != null) viewModel.save(bmp, pose) }
+        ActivityResultContracts.TakePicture()
+    ) { success ->
+        val uri = captureUri.value
+        if (success && uri != null) {
+            val bmp = try {
+                context.contentResolver.openInputStream(uri)?.use { stream ->
+                    BitmapFactory.decodeStream(stream)
+                }
+            } catch (_: Exception) { null }
+            if (bmp != null) viewModel.save(bmp, pose)
+        }
+    }
+
+    val launchCamera: () -> Unit = {
+        try {
+            val file = File(context.cacheDir, "camera").apply { mkdirs() }
+            val photo = File(file, "progress_${System.currentTimeMillis()}.jpg")
+            val uri = FileProvider.getUriForFile(
+                context,
+                "${context.packageName}.fileprovider",
+                photo
+            )
+            captureUri.value = uri
+            cameraLauncher.launch(uri)
+        } catch (_: Exception) { }
+    }
 
     val permLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) cameraLauncher.launch(null) }
+    ) { granted -> if (granted) launchCamera() }
 
     val galleryLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent()

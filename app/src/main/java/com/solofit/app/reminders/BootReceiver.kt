@@ -9,7 +9,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -24,6 +23,7 @@ class BootReceiver : BroadcastReceiver() {
     interface BootEntryPoint {
         fun userPreferences(): UserPreferences
         fun reminderScheduler(): ReminderScheduler
+        fun applicationScope(): CoroutineScope
     }
 
     override fun onReceive(context: Context, intent: Intent) {
@@ -35,9 +35,10 @@ class BootReceiver : BroadcastReceiver() {
         )
         val prefs = entryPoint.userPreferences()
         val scheduler = entryPoint.reminderScheduler()
+        val scope = entryPoint.applicationScope()
 
         val pending = goAsync()
-        CoroutineScope(Dispatchers.Default).launch {
+        scope.launch {
             try {
                 val settings = prefs.reminderSettings.first()
                 scheduler.apply(settings)

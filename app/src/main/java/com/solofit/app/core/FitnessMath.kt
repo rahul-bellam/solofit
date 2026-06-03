@@ -1,6 +1,6 @@
 package com.solofit.app.core
 
-
+import kotlin.math.roundToInt
 
 /**
  * Pure, Android-free fitness calculations so they're unit-testable.

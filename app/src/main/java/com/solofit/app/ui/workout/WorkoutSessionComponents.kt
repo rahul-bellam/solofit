@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.Emerald
 import com.solofit.app.ui.theme.Moss
 import com.solofit.app.ui.theme.Sage
 import com.solofit.app.ui.theme.SageDark
@@ -56,8 +57,8 @@ private fun intensityForName(name: String): IntensityLevel = when {
 
 private fun intensityGradient(level: IntensityLevel): Pair<Color, Color> = when (level) {
     IntensityLevel.HIGH -> Moss to SageDark
-    IntensityLevel.MED -> Color(0xFFFF8A3D) to Color(0xFFE85D04)
-    IntensityLevel.LOW -> Color(0xFFFFB703) to Color(0xFFFF8A3D)
+    IntensityLevel.MED -> Emerald to SageDark
+    IntensityLevel.LOW -> Sage to Amber
 }
 
 // ─── Progress Ring ───
@@ -81,9 +82,9 @@ fun ProgressRing(
     )
 
     val color = when (state) {
-        RingState.COMPLETE -> Color(0xFF22C55E)
-        RingState.ACTIVE -> Color(0xFFE85D04)
-        RingState.REST -> Color(0xFFFFB703)
+        RingState.COMPLETE -> Emerald
+        RingState.ACTIVE -> Amber
+        RingState.REST -> Sage
         RingState.UPCOMING -> Color.White.copy(alpha = 0.2f)
     }
 
