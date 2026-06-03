@@ -9,6 +9,7 @@ import androidx.room.Transaction
 import androidx.room.Update
 import com.solofit.app.data.local.entity.ExerciseEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
+import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.entity.RoutineEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
 import com.solofit.app.data.local.relation.RoutineWithExercises
@@ -88,6 +89,35 @@ interface WorkoutDao {
         """
     )
     fun observeCompletedSetRows(): Flow<List<CompletedSetRow>>
+
+    // ---- Personal Records ----
+    @Query("SELECT * FROM personal_records WHERE exerciseName = :exerciseName ORDER BY estimated1RM DESC LIMIT 1")
+    suspend fun getPersonalRecord(exerciseName: String): PersonalRecordEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertPersonalRecord(pr: PersonalRecordEntity)
+
+    @Query(
+        """
+        SELECT exerciseName, MAX(weightKg * reps * 0.0333 + weightKg) as best1RM
+        FROM exercise_sets
+        WHERE isCompleted = 1 AND weightKg > 0
+        GROUP BY exerciseName
+        """
+    )
+    fun observePRs(): Flow<List<ExercisePR>>
+
+    @Query(
+        """
+        SELECT es.exerciseName, SUM(es.weightKg * es.reps) as totalVolume
+        FROM exercise_sets es
+        INNER JOIN workout_sessions ws ON ws.id = es.sessionId
+        WHERE es.isCompleted = 1 AND ws.isCompleted = 1 AND ws.date >= :sinceDate
+        GROUP BY es.exerciseName
+        ORDER BY totalVolume DESC
+        """
+    )
+    fun observeVolumeSince(sinceDate: String): Flow<List<ExerciseVolume>>
 }
 
 /** A completed set flattened with its session date (for strength-progress charts). */
@@ -96,4 +126,16 @@ data class CompletedSetRow(
     val weightKg: Double,
     val reps: Int,
     val date: String
+)
+
+/** Best estimated 1RM per exercise for the PR leaderboard. */
+data class ExercisePR(
+    val exerciseName: String,
+    val best1RM: Double
+)
+
+/** Total volume (weight × reps) per exercise since a given date. */
+data class ExerciseVolume(
+    val exerciseName: String,
+    val totalVolume: Double
 )

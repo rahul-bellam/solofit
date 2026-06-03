@@ -181,8 +181,21 @@ fun JournalScreen(
             }
 
             items(goals, key = { it.id }) { goal ->
+<<<<<<< HEAD
                     Card(
                         modifier = Modifier
+=======
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            if (!goal.done) haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+                            viewModel.toggleGoal(goal)
+                        }
+                ) {
+                    Row(
+                        Modifier
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
                             .fillMaxWidth()
                             .clickable {
                                 if (!goal.done) view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)

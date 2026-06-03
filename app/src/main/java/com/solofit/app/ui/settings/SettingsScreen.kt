@@ -16,11 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.MonitorWeight
-import androidx.compose.material.icons.filled.Straighten
-import androidx.compose.material.icons.filled.Speed
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -42,10 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import kotlin.math.roundToInt
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.ui.components.CalorieRing
 import com.solofit.app.ui.components.MacroBar
@@ -60,17 +51,11 @@ import com.solofit.app.ui.theme.ProteinColor
 fun SettingsScreen(
     onBack: () -> Unit,
     onEditProfile: () -> Unit,
-    onReminders: () -> Unit = {},
-    onWeight: () -> Unit = {},
-    onBody: () -> Unit = {},
-    onJournal: () -> Unit = {},
-    onPerf: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
     val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val animationsEnabled by viewModel.animationsEnabled.collectAsStateWithLifecycle()
-    val waterGoalMl by viewModel.waterGoalMl.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -119,89 +104,6 @@ fun SettingsScreen(
                         }
                     }
                     Text("Edit", color = MaterialTheme.colorScheme.primary)
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // ---- Tracking & reminders ----
-            SectionTitle("Tracking")
-            NavRow(
-                icon = Icons.Filled.Notifications,
-                title = "Reminders",
-                subtitle = "Silent hydration & workout nudges",
-                onClick = onReminders
-            )
-            Spacer(Modifier.height(8.dp))
-            NavRow(
-                icon = Icons.Filled.MonitorWeight,
-                title = "Weight monitor",
-                subtitle = "Log weigh-ins and track your trend",
-                onClick = onWeight
-            )
-            Spacer(Modifier.height(8.dp))
-            NavRow(
-                icon = Icons.Filled.Straighten,
-                title = "Body & recovery",
-                subtitle = "Measurements, V-Taper score, check-ins",
-                onClick = onBody
-            )
-            Spacer(Modifier.height(8.dp))
-            NavRow(
-                icon = Icons.AutoMirrored.Filled.MenuBook,
-                title = "Journal",
-                subtitle = "Morning goals & evening gratitude",
-                onClick = onJournal
-            )
-            if (com.solofit.app.BuildConfig.DEBUG) {
-                Spacer(Modifier.height(8.dp))
-                NavRow(
-                    icon = Icons.Filled.Speed,
-                    title = "Performance (debug)",
-                    subtitle = "Latency p50/p95 for hot paths",
-                    onClick = onPerf
-                )
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // ---- Water goal ----
-            SectionTitle("Hydration")
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Daily water goal", fontWeight = FontWeight.SemiBold)
-                        Text(
-                            "$waterGoalMl ml",
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Spacer(Modifier.height(4.dp))
-                    Slider(
-                        value = waterGoalMl.toFloat(),
-                        onValueChange = { viewModel.setWaterGoalMl(it.roundToInt()) },
-                        valueRange = 500f..6000f,
-                        steps = 10,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        listOf(1000, 2000, 3000, 4000).forEach { preset ->
-                            androidx.compose.material3.TextButton(
-                                onClick = { viewModel.setWaterGoalMl(preset) },
-                                modifier = Modifier.height(32.dp)
-                            ) {
-                                Text("${preset / 1000}L", style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
                 }
             }
 
@@ -332,7 +234,11 @@ private fun AnimationPreview(animate: Boolean) {
     ) {
         Text(
             "Preview",
+<<<<<<< HEAD
             style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
+=======
+            style = MaterialTheme.typography.labelSmall.copy(fontSize = 8.sp),
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(8.dp))
@@ -359,37 +265,6 @@ private fun AnimationPreview(animate: Boolean) {
                 animate = animate,
                 modifier = Modifier.size(width = 34.dp, height = 56.dp)
             )
-        }
-    }
-}
-
-@Composable
-private fun NavRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-    ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(icon, contentDescription = null)
-            Column(Modifier.weight(1f).padding(start = 12.dp)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Text(
-                    subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
     }
 }

@@ -17,11 +17,13 @@ import com.solofit.app.domain.model.MealCategory
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.FoodRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import java.io.ByteArrayOutputStream
@@ -124,24 +126,26 @@ class AiFoodScanViewModel @Inject constructor(
         viewModelScope.launch {
             _isScanning.value = true
             try {
-                val base64 = bitmapToBase64(bitmap)
-                val response = geminiService.generateContent(
-                    request = GeminiRequest(
-                        contents = listOf(
-                            GeminiContent(
-                                parts = listOf(
-                                    GeminiPart(text = AI_PROMPT),
-                                    GeminiPart(
-                                        inlineData = GeminiInlineData(
-                                            mimeType = "image/jpeg",
-                                            data = base64
+                val base64 = withContext(Dispatchers.IO) { bitmapToBase64(bitmap) }
+                val response = withContext(Dispatchers.IO) {
+                    geminiService.generateContent(
+                        request = GeminiRequest(
+                            contents = listOf(
+                                GeminiContent(
+                                    parts = listOf(
+                                        GeminiPart(text = AI_PROMPT),
+                                        GeminiPart(
+                                            inlineData = GeminiInlineData(
+                                                mimeType = "image/jpeg",
+                                                data = base64
+                                            )
                                         )
                                     )
                                 )
                             )
                         )
                     )
-                )
+                }
 
                 val text = response.candidates?.firstOrNull()
                     ?.content?.parts?.firstOrNull()
@@ -155,29 +159,35 @@ class AiFoodScanViewModel @Inject constructor(
                     .trim()
 
                 val json = Json { ignoreUnknownKeys = true }
-                val aiFood = json.decodeFromString<AiFoodJson>(cleaned)
+                val aiFood = withContext(Dispatchers.IO) {
+                    json.decodeFromString<AiFoodJson>(cleaned)
+                }
 
-                val foodId = foodRepository.addCustomFood(
-                    FoodItemEntity(
-                        name = aiFood.name.trim(),
-                        category = "AI Scan",
-                        caloriesPer100g = aiFood.caloriesPer100g,
-                        proteinPer100g = aiFood.proteinPer100g,
-                        carbsPer100g = aiFood.carbsPer100g,
-                        fatsPer100g = aiFood.fatsPer100g,
-                        fiberPer100g = aiFood.fiberPer100g,
-                        isCustom = true
+                val foodId = withContext(Dispatchers.IO) {
+                    foodRepository.addCustomFood(
+                        FoodItemEntity(
+                            name = aiFood.name.trim(),
+                            category = "AI Scan",
+                            caloriesPer100g = aiFood.caloriesPer100g,
+                            proteinPer100g = aiFood.proteinPer100g,
+                            carbsPer100g = aiFood.carbsPer100g,
+                            fatsPer100g = aiFood.fatsPer100g,
+                            fiberPer100g = aiFood.fiberPer100g,
+                            isCustom = true
+                        )
                     )
-                )
+                }
 
-                dailyLogRepository.logFood(
-                    DailyLogEntity(
-                        date = DateUtils.today(),
-                        foodId = foodId,
-                        gramsConsumed = aiFood.estimatedGrams.coerceAtLeast(10.0),
-                        mealCategory = inferMealCategory().name
+                withContext(Dispatchers.IO) {
+                    dailyLogRepository.logFood(
+                        DailyLogEntity(
+                            date = DateUtils.today(),
+                            foodId = foodId,
+                            gramsConsumed = aiFood.estimatedGrams.coerceAtLeast(10.0),
+                            mealCategory = inferMealCategory().name
+                        )
                     )
-                )
+                }
 
                 _scanResult.tryEmit(
                     AiScanResult.Success(

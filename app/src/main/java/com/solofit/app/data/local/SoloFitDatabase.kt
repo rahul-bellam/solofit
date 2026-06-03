@@ -21,6 +21,7 @@ import com.solofit.app.data.local.entity.DailyLogEntity
 import com.solofit.app.data.local.entity.ExerciseEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.data.local.entity.FoodItemEntity
+import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.entity.RoutineEntity
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.data.local.entity.GoalItemEntity
@@ -53,9 +54,10 @@ import kotlinx.coroutines.launch
         DailyMetricEntity::class,
         ProgressPhotoEntity::class,
         WeeklyPlanEntity::class,
-        PlannedExerciseEntity::class
+        PlannedExerciseEntity::class,
+        PersonalRecordEntity::class
     ],
-    version = 10,
+    version = 11,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -198,7 +200,6 @@ abstract class SoloFitDatabase : RoomDatabase() {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE food_items ADD COLUMN servingGrams REAL")
                 db.execSQL("ALTER TABLE food_items ADD COLUMN servingLabel TEXT")
-                // ---- backfill seeded foods ----
                 db.execSQL("UPDATE food_items SET servingGrams = 120.0, servingLabel = 'breast' WHERE name = 'Chicken Breast (cooked)' AND servingGrams IS NULL")
                 db.execSQL("UPDATE food_items SET servingGrams = 90.0, servingLabel = 'thigh' WHERE name = 'Chicken Thigh (cooked)' AND servingGrams IS NULL")
                 db.execSQL("UPDATE food_items SET servingGrams = 8.0, servingLabel = 'slice' WHERE name = 'Bacon (cooked)' AND servingGrams IS NULL")
@@ -272,6 +273,31 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v10 -> v11: add personal_records table + warm-up/notes/superset columns on exercise_sets. */
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                try { db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS personal_records (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        exerciseName TEXT NOT NULL,
+                        bestWeightKg REAL NOT NULL,
+                        bestReps INTEGER NOT NULL,
+                        estimated1RM REAL NOT NULL,
+                        date TEXT NOT NULL,
+                        sessionId INTEGER NOT NULL
+                    )
+                    """.trimIndent()
+                ) } catch (_: Exception) {}
+                try { db.execSQL("CREATE INDEX IF NOT EXISTS index_personal_records_exerciseName ON personal_records(exerciseName)") } catch (_: Exception) {}
+                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN isWarmUp INTEGER NOT NULL DEFAULT 0") } catch (_: Exception) {}
+                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN notes TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+                try { db.execSQL("ALTER TABLE exercise_sets ADD COLUMN supersetId INTEGER") } catch (_: Exception) {}
+            }
+        }
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
             var needsSeed = false
             val db = Room.databaseBuilder(
@@ -279,7 +305,12 @@ abstract class SoloFitDatabase : RoomDatabase() {
                 SoloFitDatabase::class.java,
                 DB_NAME
             )
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
+                .addMigrations(
+                    MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
+                    MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
+                    MIGRATION_9_10, MIGRATION_10_11
+                )
+                .fallbackToDestructiveMigration()
                 .addCallback(object : Callback() {
                     override fun onCreate(db: SupportSQLiteDatabase) {
                         needsSeed = true

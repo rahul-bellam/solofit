@@ -23,10 +23,18 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.LocalFireDepartment
+<<<<<<< HEAD
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.WaterDrop
+=======
+import androidx.compose.material.icons.filled.MonitorWeight
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Straighten
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
@@ -36,7 +44,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -83,8 +90,14 @@ fun DashboardScreen(
     onOpenJournal: () -> Unit = {},
     onOpenBody: () -> Unit = {},
     onEditPhase: () -> Unit = {},
+<<<<<<< HEAD
     onOpenProfile: () -> Unit = {},
     onOpenReminders: () -> Unit = {},
+=======
+    onOpenHistory: () -> Unit = {},
+    onOpenReminders: () -> Unit = {},
+    onOpenWeight: () -> Unit = {},
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
     viewModel: DashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -429,11 +442,17 @@ fun DashboardScreen(
             onRemove = viewModel::removeWater,
             animate = animate
         )
+        Spacer(Modifier.height(8.dp))
+        WaterGoalRow(
+            goalMl = state.waterGoalMl,
+            onGoalChange = viewModel::setWaterGoalMl
+        )
 
         Spacer(Modifier.height(24.dp))
-        Text("Quick Actions", style = MaterialTheme.typography.titleMedium)
+        Text("Tracking", style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+<<<<<<< HEAD
             OutlinedButton(
                 onClick = onOpenProfile,
                 modifier = Modifier.weight(1f)
@@ -454,20 +473,130 @@ fun DashboardScreen(
             OutlinedButton(
                 onClick = onLogWorkout,
                 modifier = Modifier.weight(1f)
+=======
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenJournal),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
             ) {
-                Icon(Icons.Filled.FitnessCenter, contentDescription = null)
-                Text("  Log Workout")
+                Column(
+                    Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Journal", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
             }
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenBody),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
+            ) {
+                Column(
+                    Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Filled.Straighten, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Body", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+            }
+<<<<<<< HEAD
             OutlinedButton(
                 onClick = onOpenJournal,
                 modifier = Modifier.weight(1f)
             ) {
                 Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = null)
                 Text("  Journal")
+=======
+        }
+        Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenWeight),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(
+                    Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Filled.MonitorWeight, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Weight", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Card(
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable(onClick = onOpenReminders),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
+            ) {
+                Column(
+                    Modifier.padding(14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.secondary)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Reminders", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                }
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
             }
         }
         Spacer(Modifier.height(24.dp))
         }
     }
+    }
+}
+
+@Composable
+private fun WaterGoalRow(
+    goalMl: Int,
+    onGoalChange: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "Daily goal",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    "${goalMl} ml",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                listOf(1500, 2000, 2500, 3000, 3500, 4000).forEach { preset ->
+                    val selected = goalMl == preset
+                    androidx.compose.material3.FilterChip(
+                        selected = selected,
+                        onClick = { onGoalChange(preset) },
+                        label = { Text("${preset / 1000}.${if (preset % 1000 == 0) "0" else "5"}L", style = MaterialTheme.typography.labelSmall) }
+                    )
+                }
+            }
+        }
     }
 }

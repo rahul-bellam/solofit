@@ -7,8 +7,14 @@ import com.solofit.app.data.local.relation.RoutineWithExercises
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+<<<<<<< HEAD
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+=======
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,6 +23,7 @@ class WorkoutViewModel @Inject constructor(
     private val repository: WorkoutRepository
 ) : ViewModel() {
 
+<<<<<<< HEAD
     private val _routines = MutableStateFlow<List<RoutineWithExercises>>(emptyList())
     val routines: StateFlow<List<RoutineWithExercises>> = _routines.asStateFlow()
 
@@ -27,6 +34,17 @@ class WorkoutViewModel @Inject constructor(
         viewModelScope.launch {
             repository.observeRoutines().collect { list ->
                 _routines.value = list
+=======
+    private val _routinesLoaded = MutableStateFlow(false)
+    val routinesLoaded = _routinesLoaded.asStateFlow()
+
+    val routines = repository.observeRoutines()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    init {
+        viewModelScope.launch {
+            repository.observeRoutines().collect {
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
                 _routinesLoaded.value = true
             }
         }

@@ -1,9 +1,12 @@
 package com.solofit.app.domain.repository
 
+import com.solofit.app.data.local.dao.ExercisePR
+import com.solofit.app.data.local.dao.ExerciseVolume
 import com.solofit.app.data.local.dao.LoggedFoodRow
 import com.solofit.app.data.local.entity.DailyLogEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.data.local.entity.FoodItemEntity
+import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.entity.RoutineEntity
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
@@ -91,6 +94,11 @@ interface WorkoutRepository {
     suspend fun completeSession(session: WorkoutSessionEntity)
     fun observeHistory(): Flow<List<SessionWithSets>>
     fun observeCompletedSetRows(): Flow<List<com.solofit.app.data.local.dao.CompletedSetRow>>
+
+    suspend fun getPersonalRecord(exerciseName: String): PersonalRecordEntity?
+    suspend fun savePersonalRecord(pr: PersonalRecordEntity)
+    fun observePRs(): Flow<List<ExercisePR>>
+    fun observeVolumeSince(sinceDate: String): Flow<List<ExerciseVolume>>
 }
 
 interface WeightRepository {

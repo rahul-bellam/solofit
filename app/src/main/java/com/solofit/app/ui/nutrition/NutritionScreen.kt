@@ -212,6 +212,7 @@ fun NutritionScreen(
             onConfirm = { name, kcal, protein, carbs, fats, fiber ->
                 viewModel.addCustomFood(name, kcal, protein, carbs, fats, fiber)
                 showCreateFood = false
+                viewModel.onQueryChange("")
             }
         )
     }
