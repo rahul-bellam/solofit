@@ -41,9 +41,7 @@ fun LineChart(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-        return
-    }
-
+    } else {
     val minV = values.min()
     val maxV = values.max()
     val range = (maxV - minV).takeIf { it > 0f } ?: 1f
@@ -91,6 +89,8 @@ fun LineChart(
 
         for (i in values.indices) {
             drawCircle(color = pointColor, radius = 7f, center = pointAt(i))
+            }
         }
+    }
     }
 }

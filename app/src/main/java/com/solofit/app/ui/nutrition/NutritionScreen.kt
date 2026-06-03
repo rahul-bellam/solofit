@@ -146,9 +146,7 @@ fun NutritionScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        return
-    }
-
+    } else {
     val colors = nutritionColors(isDark)
 
     NutritionTheme {
@@ -446,6 +444,7 @@ fun NutritionScreen(
                 }
             )
         }
+    }
     }
 }
 

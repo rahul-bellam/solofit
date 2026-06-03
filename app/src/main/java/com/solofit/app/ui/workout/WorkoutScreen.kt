@@ -63,9 +63,7 @@ fun WorkoutScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        return
-    }
-
+    } else {
     WorkoutTheme {
     Scaffold(
         floatingActionButton = {
@@ -248,5 +246,6 @@ fun WorkoutScreen(
                 }
             )
         }
+    }
     }
 }

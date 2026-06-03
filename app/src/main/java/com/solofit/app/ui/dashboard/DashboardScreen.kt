@@ -131,9 +131,7 @@ fun DashboardScreen(
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
-        return
-    }
-
+    } else {
     Box {
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) }
