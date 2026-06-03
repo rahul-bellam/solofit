@@ -110,10 +110,10 @@ fun FoodLookupScreen(
                     }
                     item { Spacer(Modifier.height(24.dp)) }
                 }
-            } else if (state.query.isNotEmpty() && !state.isSearching) {
+            } else if (state.query.isEmpty()) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        "Type a food name and tap search",
+                        "Search any food to see its\nfull nutritional profile",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )
@@ -121,7 +121,7 @@ fun FoodLookupScreen(
             } else {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        "Search any food to see its\nfull nutritional profile",
+                        "No results found. Try a different term.",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
                     )

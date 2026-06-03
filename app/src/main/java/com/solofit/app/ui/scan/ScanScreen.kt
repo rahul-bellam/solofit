@@ -112,7 +112,7 @@ fun ScanScreen(
                 }
 
                 is ScanUiState.Found -> {
-                    var showPortion by remember { mutableStateOf(true) }
+                    var showPortion by remember { mutableStateOf(false) }
                     FoundCard(s)
                     Spacer(Modifier.height(16.dp))
                     Button(onClick = { showPortion = true }, modifier = Modifier.fillMaxWidth()) {
@@ -133,6 +133,7 @@ fun ScanScreen(
                             onDismiss = { showPortion = false },
                             onConfirm = { grams, cat ->
                                 viewModel.logFood(s.food, grams, cat)
+                                showPortion = false
                             }
                         )
                     }

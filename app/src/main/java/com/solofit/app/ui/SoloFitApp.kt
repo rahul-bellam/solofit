@@ -123,8 +123,14 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
                             onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
+<<<<<<< HEAD
                             onOpenProfile = { navController.navigate(Routes.EDIT_PROFILE) },
                             onOpenReminders = { navController.navigate(Routes.REMINDERS) }
+=======
+                            onOpenHistory = { navController.navigate(Routes.HISTORY) },
+                            onOpenReminders = { navController.navigate(Routes.REMINDERS) },
+                            onOpenWeight = { navController.navigate(Routes.WEIGHT) }
+>>>>>>> a45e67a (Workout system enhancements, UI fixes, and settings cleanup)
                         )
                     }
                     composable(Routes.NUTRITION) {
@@ -144,12 +150,7 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
                             onBack = { navController.popBackStack() },
-                            onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) },
-                            onReminders = { navController.navigate(Routes.REMINDERS) },
-                            onWeight = { navController.navigate(Routes.WEIGHT) },
-                            onBody = { navController.navigate(Routes.BODY) },
-                            onJournal = { navController.navigate(Routes.JOURNAL) },
-                            onPerf = { navController.navigate(Routes.PERF) }
+                            onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) }
                         )
                     }
                     composable(Routes.EDIT_PROFILE) {

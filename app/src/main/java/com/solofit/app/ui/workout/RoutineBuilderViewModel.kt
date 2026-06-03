@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.solofit.app.data.local.seed.ExerciseSeedData
 import com.solofit.app.data.local.seed.ExerciseTemplate
+import com.solofit.app.data.local.seed.WorkoutTemplate
+import com.solofit.app.data.local.seed.WorkoutTemplates
 import com.solofit.app.domain.model.ExercisePlan
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -21,12 +23,20 @@ data class RoutineBuilderState(
     val selected: List<ExercisePlan> = emptyList(),
     val catalog: List<ExerciseTemplate> = ExerciseSeedData.exercises,
     val muscleGroups: List<String> = ExerciseSeedData.muscleGroups,
-    val activeGroup: String? = null
+    val activeGroup: String? = null,
+    val selectedEquipment: String? = null,
+    val selectedDifficulty: String? = null,
+    val showTemplates: Boolean = false,
+    val templates: List<WorkoutTemplate> = WorkoutTemplates.templates
 ) {
     val canSave: Boolean get() = name.isNotBlank() && selected.isNotEmpty()
+
     val filteredCatalog: List<ExerciseTemplate>
-        get() = if (activeGroup == null) catalog
-        else catalog.filter { it.muscleGroup == activeGroup }
+        get() = catalog.filter { template ->
+            (activeGroup == null || template.muscleGroup == activeGroup) &&
+                (selectedEquipment == null || template.equipment == selectedEquipment) &&
+                (selectedDifficulty == null || template.difficulty == selectedDifficulty)
+        }
 }
 
 @HiltViewModel
@@ -62,11 +72,37 @@ class RoutineBuilderViewModel @Inject constructor(
     fun onName(v: String) = _state.update { it.copy(name = v) }
     fun onNotes(v: String) = _state.update { it.copy(notes = v) }
     fun onGroupFilter(group: String?) = _state.update { it.copy(activeGroup = group) }
+    fun onEquipmentFilter(equipment: String?) = _state.update { it.copy(selectedEquipment = equipment) }
+    fun onDifficultyFilter(difficulty: String?) = _state.update { it.copy(selectedDifficulty = difficulty) }
+    fun onToggleTemplates() = _state.update { it.copy(showTemplates = !it.showTemplates) }
+    fun onDismissTemplates() = _state.update { it.copy(showTemplates = false) }
+
+    fun loadTemplate(template: WorkoutTemplate) {
+        val plans = template.exercises.map { te ->
+            ExercisePlan(
+                name = te.name,
+                muscleGroup = te.muscleGroup,
+                targetSets = te.sets
+            )
+        }
+        _state.update {
+            it.copy(
+                name = template.name,
+                selected = plans,
+                showTemplates = false
+            )
+        }
+    }
 
     fun toggleExercise(template: ExerciseTemplate) = _state.update { s ->
         val exists = s.selected.any { it.name == template.name }
         val updated = if (exists) s.selected.filterNot { it.name == template.name }
-        else s.selected + ExercisePlan(template.name, template.muscleGroup)
+        else s.selected + ExercisePlan(
+            name = template.name,
+            muscleGroup = template.muscleGroup,
+            equipment = template.equipment,
+            difficulty = template.difficulty
+        )
         s.copy(selected = updated)
     }
 

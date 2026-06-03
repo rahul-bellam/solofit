@@ -93,5 +93,25 @@ data class ExerciseSetEntity(
     val reps: Int,
     val isCompleted: Boolean = false,
     /** Reps In Reserve (how many more you could have done). null = not recorded. */
-    val rir: Int? = null
+    val rir: Int? = null,
+    /** True if this set is a warm-up (excluded from volume/PR calculations). */
+    val isWarmUp: Boolean = false,
+    /** Free-text notes for the set (e.g. "felt easy", "slow negative"). */
+    val notes: String = "",
+    /** Groups sets into supersets. Sets with the same non-null supersetId are performed back-to-back. */
+    val supersetId: Int? = null
+)
+
+/**
+ * Tracks personal records (estimated 1RM) per exercise over time.
+ */
+@Entity(tableName = "personal_records")
+data class PersonalRecordEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val exerciseName: String,
+    val bestWeightKg: Double,
+    val bestReps: Int,
+    val estimated1RM: Double,
+    val date: String,
+    val sessionId: Long
 )

@@ -4,6 +4,7 @@ import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.dao.WorkoutDao
 import com.solofit.app.data.local.entity.ExerciseEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
+import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.entity.RoutineEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
 import com.solofit.app.data.local.relation.RoutineWithExercises
@@ -59,7 +60,6 @@ class WorkoutRepositoryImpl @Inject constructor(
                 date = DateUtils.today()
             )
         )
-        // Seed 3 default sets per exercise so the user can immediately fill them in.
         val sets = mutableListOf<ExerciseSetEntity>()
         routine.exercises.sortedBy { it.orderIndex }.forEach { ex ->
             for (setNum in 1..3) {
@@ -118,4 +118,16 @@ class WorkoutRepositoryImpl @Inject constructor(
 
     override fun observeCompletedSetRows(): Flow<List<com.solofit.app.data.local.dao.CompletedSetRow>> =
         dao.observeCompletedSetRows()
+
+    override suspend fun getPersonalRecord(exerciseName: String): PersonalRecordEntity? =
+        dao.getPersonalRecord(exerciseName)
+
+    override suspend fun savePersonalRecord(pr: PersonalRecordEntity) =
+        dao.insertPersonalRecord(pr)
+
+    override fun observePRs(): Flow<List<com.solofit.app.data.local.dao.ExercisePR>> =
+        dao.observePRs()
+
+    override fun observeVolumeSince(sinceDate: String): Flow<List<com.solofit.app.data.local.dao.ExerciseVolume>> =
+        dao.observeVolumeSince(sinceDate)
 }

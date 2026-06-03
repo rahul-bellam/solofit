@@ -4,5 +4,7 @@ package com.solofit.app.domain.model
 data class ExercisePlan(
     val name: String,
     val muscleGroup: String,
-    val targetSets: Int = 3
+    val targetSets: Int = 3,
+    val equipment: String = "Barbell",
+    val difficulty: String = "Intermediate"
 )

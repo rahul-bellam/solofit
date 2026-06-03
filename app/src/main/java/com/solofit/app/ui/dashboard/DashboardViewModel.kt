@@ -248,6 +248,14 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
+    fun setWaterGoalMl(ml: Int) = viewModelScope.launch {
+        try {
+            profileRepository.setWaterGoalMl(ml)
+        } catch (e: Exception) {
+            _snackbar.send(SnackbarEvent("Could not update water goal"))
+        }
+    }
+
     private data class CoreData(
         val profile: UserProfileEntity?,
         val totals: MacroTotals,
