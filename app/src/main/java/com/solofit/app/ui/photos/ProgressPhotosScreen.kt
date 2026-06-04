@@ -3,6 +3,8 @@ package com.solofit.app.ui.photos
 import android.Manifest
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -41,8 +43,8 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +61,7 @@ import com.solofit.app.core.BitmapUtils
 import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.entity.ProgressPhotoEntity
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 
@@ -71,6 +74,7 @@ fun ProgressPhotosScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var pose by remember { mutableStateOf(Pose.FRONT) }
+    val scope = rememberCoroutineScope()
 
     val captureUri = remember { mutableStateOf<Uri?>(null) }
 
@@ -79,27 +83,38 @@ fun ProgressPhotosScreen(
     ) { success ->
         val uri = captureUri.value
         if (success && uri != null) {
-            val bmp = try {
-                context.contentResolver.openInputStream(uri)?.use { stream ->
-                    BitmapFactory.decodeStream(stream)
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val bmp = try {
+                    context.contentResolver.openInputStream(uri)?.use { stream ->
+                        BitmapFactory.decodeStream(stream)
+                    }
+                } catch (_: Exception) { null }
+                if (bmp != null) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        viewModel.save(bmp, pose)
+                    }
+                    bmp.recycle()
                 }
-            } catch (_: Exception) { null }
-            if (bmp != null) viewModel.save(bmp, pose)
+            }
         }
     }
 
     val launchCamera: () -> Unit = {
-        try {
-            val file = File(context.cacheDir, "camera").apply { mkdirs() }
-            val photo = File(file, "progress_${System.currentTimeMillis()}.jpg")
-            val uri = FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photo
-            )
-            captureUri.value = uri
-            cameraLauncher.launch(uri)
-        } catch (_: Exception) { }
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = File(context.cacheDir, "camera").apply { mkdirs() }
+                val photo = File(file, "progress_${System.currentTimeMillis()}.jpg")
+                val uri = FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    photo
+                )
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    captureUri.value = uri
+                    cameraLauncher.launch(uri)
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     val permLauncher = rememberLauncherForActivityResult(
@@ -110,9 +125,15 @@ fun ProgressPhotosScreen(
         ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null) {
-            // Decode the picked image (downsampled) then save to private storage.
-            val bmp = BitmapUtils.decodeSampled(context.contentResolver, uri, maxEdge = 1080)
-            if (bmp != null) viewModel.save(bmp, pose)
+            scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                val bmp = BitmapUtils.decodeSampled(context.contentResolver, uri, maxEdge = 1080)
+                if (bmp != null) {
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                        viewModel.save(bmp, pose)
+                    }
+                    bmp.recycle()
+                }
+            }
         }
     }
 
@@ -259,6 +280,9 @@ private fun PhotoThumb(
                 runCatching { BitmapFactory.decodeFile(f.absolutePath, opts) }.getOrNull()
             }
         }
+    }
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        onDispose { bitmap?.recycle() }
     }
     Box(
         modifier

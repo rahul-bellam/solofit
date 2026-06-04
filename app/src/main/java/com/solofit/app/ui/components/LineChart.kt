@@ -89,7 +89,6 @@ fun LineChart(
 
         for (i in values.indices) {
             drawCircle(color = pointColor, radius = 7f, center = pointAt(i))
-            }
         }
     }
     }

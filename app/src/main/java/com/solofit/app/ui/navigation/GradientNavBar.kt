@@ -133,19 +133,17 @@ private fun GradientNavItem(
             else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
         )
 
-        if (labelScale > 0f) {
-            Text(
-                text = dest.label,
-                color = Color.White,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 13.sp,
-                letterSpacing = tightLetterSpacing,
-                modifier = Modifier.graphicsLayer(
-                    scaleX = labelScale,
-                    scaleY = labelScale,
-                    alpha = labelScale
-                )
+        Text(
+            text = dest.label,
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold,
+            fontSize = 13.sp,
+            letterSpacing = tightLetterSpacing,
+            modifier = Modifier.graphicsLayer(
+                scaleX = labelScale,
+                scaleY = labelScale,
+                alpha = labelScale
             )
-        }
+        )
     }
 }

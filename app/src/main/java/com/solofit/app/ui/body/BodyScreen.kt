@@ -42,6 +42,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.LineChart
 import kotlin.math.abs
+import kotlin.math.abs
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -284,5 +285,5 @@ private fun NumField(
 }
 
 private fun Double.numText(): String =
-    if (this % 1.0 == 0.0) this.roundToInt().toString() else this.toString()
+    if (abs(this % 1.0) < 0.0001) this.roundToInt().toString() else this.toString()
 

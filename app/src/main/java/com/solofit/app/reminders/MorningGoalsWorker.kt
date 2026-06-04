@@ -5,6 +5,8 @@ import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.solofit.app.data.local.UserPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -22,7 +24,7 @@ class MorningGoalsWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val settings = prefs.reminderSettings.first()
+        val settings = withContext(Dispatchers.IO) { prefs.reminderSettings.first() }
         if (settings.morningGoalsEnabled) {
             notifier.notify(
                 channelId = SoloNotifier.CHANNEL_JOURNAL,

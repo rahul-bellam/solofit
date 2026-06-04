@@ -54,6 +54,7 @@ fun ActiveWorkoutScreen(
     val animateEnabled by viewModel.animationsEnabled.collectAsStateWithLifecycle()
     val animate = rememberAnimationsActive(animateEnabled)
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val streak by viewModel.streak.collectAsStateWithLifecycle()
     val groups = viewModel.groupedExercises(session)
     val completedCount = session?.sets?.count { it.isCompleted && !it.isWarmUp } ?: 0
     val totalCount = session?.sets?.count { !it.isWarmUp } ?: 0
@@ -66,7 +67,7 @@ fun ActiveWorkoutScreen(
         }
     }
 
-    var isPaused by remember { mutableStateOf(false) }
+    val isPaused = uiState.isPaused
     var showCelebration by remember { mutableStateOf(false) }
     var activeExerciseName by remember { mutableStateOf<String?>(null) }
 
@@ -91,6 +92,7 @@ fun ActiveWorkoutScreen(
         ExerciseCardData(
             exerciseName = group.exerciseName,
             muscleGroup = group.muscleGroup,
+            orderIndex = group.orderIndex,
             sets = "$totalSetsForExercise SETS",
             reps = reps,
             restTime = "${uiState.restDuration}s",
@@ -101,6 +103,10 @@ fun ActiveWorkoutScreen(
             allCompleted = completedSets == totalSetsForExercise
         )
     }
+
+    val currentActiveIdx = currentExercises.indexOfFirst { it.exerciseName == activeExerciseName }
+    val nextExerciseName = currentExercises.getOrNull(currentActiveIdx + 1)?.exerciseName
+        ?: currentExercises.firstOrNull { it.state == RingState.UPCOMING }?.exerciseName
 
     WorkoutTheme {
         Scaffold(
@@ -123,8 +129,9 @@ fun ActiveWorkoutScreen(
                         Spacer(Modifier.height(8.dp))
                         SessionHeader(
                             subtitle = "Day • ${session?.session?.routineName ?: "WORKOUT"}",
-                            title = "TODAY'S BURN",
-                            streak = 12
+                            title = "Today's Burn",
+                            streak = streak,
+                            startedAt = session?.session?.startedAt ?: 0L
                         )
                         Spacer(Modifier.height(16.dp))
                         SessionProgressBar(
@@ -134,7 +141,7 @@ fun ActiveWorkoutScreen(
                         Spacer(Modifier.height(4.dp))
                     }
 
-                    items(currentExercises, key = { it.exerciseName }) { data ->
+                    items(currentExercises, key = { "${it.exerciseName}_${it.orderIndex}" }) { data ->
                         WorkoutExerciseCard(
                             exerciseName = data.exerciseName,
                             muscleGroup = data.muscleGroup,
@@ -144,6 +151,7 @@ fun ActiveWorkoutScreen(
                             kcal = data.kcal,
                             progress = data.progress,
                             state = data.state,
+                            restSecondsRemaining = uiState.restSecondsRemaining,
                             onStartSet = {
                                 activeExerciseName = data.exerciseName
                             },
@@ -163,7 +171,7 @@ fun ActiveWorkoutScreen(
                                         data.firstIncomplete,
                                         weight = null,
                                         reps = null,
-                                        completed = true
+                                        completed = null
                                     )
                                 }
                             },
@@ -174,7 +182,7 @@ fun ActiveWorkoutScreen(
                     }
 
                     item {
-                        UpNextCard()
+                        UpNextCard(nextExerciseName = nextExerciseName)
                         Spacer(Modifier.height(16.dp))
                     }
 
@@ -191,7 +199,7 @@ fun ActiveWorkoutScreen(
                 ) {
                     BottomActionBar(
                         isPaused = isPaused,
-                        onPause = { isPaused = !isPaused },
+                        onPause = viewModel::togglePause,
                         onFinish = { showCelebration = true }
                     )
                 }
@@ -260,6 +268,7 @@ fun ActiveWorkoutScreen(
 private data class ExerciseCardData(
     val exerciseName: String,
     val muscleGroup: String,
+    val orderIndex: Int,
     val sets: String,
     val reps: String,
     val restTime: String,

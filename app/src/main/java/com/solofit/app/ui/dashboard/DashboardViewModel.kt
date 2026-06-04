@@ -1,5 +1,6 @@
 package com.solofit.app.ui.dashboard
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.solofit.app.core.DateUtils
@@ -70,13 +71,27 @@ class DashboardViewModel @Inject constructor(
     private val dailyLogRepository: DailyLogRepository,
     private val workoutRepository: WorkoutRepository,
     private val bodyRepository: BodyRepository,
-    private val weeklyPlanRepository: WeeklyPlanRepository
+    private val weeklyPlanRepository: WeeklyPlanRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _isRefreshing = MutableStateFlow(false)
     private val _snackbar = Channel<SnackbarEvent>(Channel.CONFLATED)
     val snackbarEvent = _snackbar.receiveAsFlow()
     private var lastWaterRemovedMl = 0
+
+    private val dayFlow = MutableStateFlow(java.time.LocalDate.now().dayOfWeek.value)
+
+    init {
+        viewModelScope.launch {
+            while (true) {
+                val now = java.time.LocalTime.now()
+                val nextMidnight = java.time.Duration.between(now, java.time.LocalTime.MAX).toMillis() + 1
+                delay(nextMidnight)
+                dayFlow.value = java.time.LocalDate.now().dayOfWeek.value
+            }
+        }
+    }
 
     private val today: String get() = DateUtils.today()
 
@@ -193,10 +208,8 @@ class DashboardViewModel @Inject constructor(
 
     // ---- Weekly plan for today ----
 
-    private val todayOfWeek = java.time.LocalDate.now().dayOfWeek.value // 1=Monday … 7=Sunday
-
     private val todayPlan: Flow<WeeklyPlanEntity?> =
-        weeklyPlanRepository.observePlanForDay(todayOfWeek)
+        dayFlow.flatMapLatest { weeklyPlanRepository.observePlanForDay(it) }
 
     val todayPlanName = todayPlan
         .map { it?.name ?: "" }
@@ -220,11 +233,10 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    private val _planDismissed = MutableStateFlow(false)
-    val planDismissed: StateFlow<Boolean> = _planDismissed.asStateFlow()
+    val planDismissed: StateFlow<Boolean> = savedStateHandle.getStateFlow("plan_dismissed_$today", false)
 
     fun dismissCompletedPlan() {
-        _planDismissed.value = true
+        savedStateHandle["plan_dismissed_$today"] = true
     }
 
     fun addWater(ml: Int) = viewModelScope.launch {

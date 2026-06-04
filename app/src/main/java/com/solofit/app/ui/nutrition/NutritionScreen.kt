@@ -84,6 +84,7 @@ fun NutritionScreen(
     val scope = rememberCoroutineScope()
 
     val captureUri = remember { mutableStateOf<Uri?>(null) }
+    var tempPhotoFile by remember { mutableStateOf<java.io.File?>(null) }
 
     val cameraLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture()
@@ -100,23 +101,30 @@ fun NutritionScreen(
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
                         aiScanViewModel.analyzeAndLog(bmp)
                     }
+                    bmp.recycle()
                 }
+                tempPhotoFile?.let { if (it.exists()) it.delete() }
             }
         }
     }
 
     val launchCamera: () -> Unit = {
-        try {
-            val file = java.io.File(context.cacheDir, "camera").apply { mkdirs() }
-            val photo = java.io.File(file, "food_scan_${System.currentTimeMillis()}.jpg")
-            val uri = androidx.core.content.FileProvider.getUriForFile(
-                context,
-                "${context.packageName}.fileprovider",
-                photo
-            )
-            captureUri.value = uri
-            cameraLauncher.launch(uri)
-        } catch (_: Exception) { }
+        scope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                val file = java.io.File(context.cacheDir, "camera").apply { mkdirs() }
+                val photo = java.io.File(file, "food_scan_${System.currentTimeMillis()}.jpg")
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    "${context.packageName}.fileprovider",
+                    photo
+                )
+                tempPhotoFile = photo
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) {
+                    captureUri.value = uri
+                    cameraLauncher.launch(uri)
+                }
+            } catch (_: Exception) { }
+        }
     }
 
     val cameraPermLauncher = rememberLauncherForActivityResult(
@@ -213,24 +221,39 @@ fun NutritionScreen(
                             }
                         }
 
+                        val greeting = when (java.time.LocalTime.now().hour) {
+                            in 5..11 -> "Good morning"
+                            in 12..16 -> "Good afternoon"
+                            in 17..20 -> "Good evening"
+                            else -> "Hey there"
+                        }
+                        val tagline = when (java.time.LocalTime.now().hour) {
+                            in 5..9   -> "Good morning. What's for breakfast?"
+                            in 10..11 -> "Morning fuel — what are you having?"
+                            in 12..13 -> "Lunch hour. What's on the plate?"
+                            in 14..17 -> "Afternoon. Snack time?"
+                            in 18..20 -> "Evening — what's for dinner?"
+                            else      -> "Late night. Keep it light."
+                        }
                         NutritionHeader(
                             colors = colors,
-                            greeting = "GOOD MORNING",
-                            tagline = "What are you eating today?"
+                            greeting = greeting,
+                            tagline = tagline
                         )
                     }
                 }
 
                 // Daily progress card (offset negative)
                 item {
+                    val profile by viewModel.profile.collectAsStateWithLifecycle()
                     val dailyCalories = sections.sumOf { s -> s.totals.calories.roundToInt() }
                     val dailyProtein = sections.sumOf { s -> s.totals.proteinG.roundToInt() }
                     val dailyCarbs = sections.sumOf { s -> s.totals.carbsG.roundToInt() }
                     val dailyFat = sections.sumOf { s -> s.totals.fatsG.roundToInt() }
-                    val calGoal = 1980
-                    val proteinGoal = 85
-                    val carbsGoal = 220
-                    val fatGoal = 65
+                    val calGoal = profile?.targetCalories ?: 2000
+                    val proteinGoal = profile?.targetProtein ?: 85
+                    val carbsGoal = profile?.targetCarbs ?: 220
+                    val fatGoal = profile?.targetFats ?: 65
                     val progress = if (calGoal > 0) (dailyCalories * 100 / calGoal).coerceAtMost(100) else 0
                     DailyProgressCard(
                         colors = colors,
@@ -367,7 +390,7 @@ fun NutritionScreen(
                             )
                         }
                     } else {
-                        items(allEntries, key = { "${it.name}_${it.time}" }) { entry ->
+                        items(allEntries, key = { it.raw?.hashCode()?.toString() ?: "${it.name}_${it.time}" }) { entry ->
                             FoodLogItem(
                                 colors = colors,
                                 emoji = entry.emoji,
@@ -375,31 +398,21 @@ fun NutritionScreen(
                                 quantity = entry.quantity,
                                 time = entry.time,
                                 calories = entry.calories,
-                                onClick = { }
+                                onClick = {
+                                    val row = entry.raw
+                                    if (row is com.solofit.app.data.local.dao.LoggedFoodRow) {
+                                        viewModel.removeEntry(row)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar("Deleted ${entry.name}")
+                                        }
+                                    }
+                                }
                             )
                         }
                     }
                 }
 
                 item { Spacer(Modifier.height(80.dp)) }
-            }
-
-            // FAB scanner
-            Box(
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .padding(end = 20.dp, bottom = 24.dp)
-            ) {
-                ScannerFloatingButton(
-                    colors = colors,
-                    onClick = {
-                        if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
-                            launchCamera()
-                        } else {
-                            cameraPermLauncher.launch(Manifest.permission.CAMERA)
-                        }
-                    }
-                )
             }
 
             SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))

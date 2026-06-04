@@ -1,5 +1,6 @@
 package com.solofit.app.ui
 
+import com.solofit.app.BuildConfig
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -180,8 +181,10 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     composable(Routes.JOURNAL) {
                         JournalScreen(onBack = { navController.popBackStack() })
                     }
-                    composable(Routes.PERF) {
-                        PerfScreen(onBack = { navController.popBackStack() })
+                    if (BuildConfig.DEBUG) {
+                        composable(Routes.PERF) {
+                            PerfScreen(onBack = { navController.popBackStack() })
+                        }
                     }
                     composable(Routes.WORKOUT) {
                         WorkoutScreen(

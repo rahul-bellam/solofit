@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -112,7 +113,7 @@ fun VaporizeTextCycle(
     }
 
     LaunchedEffect(texts) {
-        sampleText(texts[0])
+        withContext(kotlinx.coroutines.Dispatchers.Default) { sampleText(texts[0]) }
         state = "static"
         textIndex.intValue = 0
         vaporizeProgress.floatValue = 0f
@@ -189,7 +190,7 @@ fun VaporizeTextCycle(
                         vaporizeProgress.floatValue = 0f
                         val nextIdx = (textIndex.intValue + 1) % texts.size
                         textIndex.intValue = nextIdx
-                        sampleText(texts[nextIdx])
+                        withContext(kotlinx.coroutines.Dispatchers.Default) { sampleText(texts[nextIdx]) }
                         fadeOpacity.floatValue = 0f
                         state = "fadingIn"
                     }

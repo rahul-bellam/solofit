@@ -10,6 +10,7 @@ import com.solofit.app.domain.model.MacroTotals
 import com.solofit.app.domain.model.MealCategory
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.FoodRepository
+import com.solofit.app.domain.repository.ProfileRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -36,8 +37,12 @@ data class MealSection(
 @HiltViewModel
 class NutritionViewModel @Inject constructor(
     private val foodRepository: FoodRepository,
-    private val dailyLogRepository: DailyLogRepository
+    private val dailyLogRepository: DailyLogRepository,
+    profileRepository: ProfileRepository
 ) : ViewModel() {
+
+    val profile = profileRepository.observeProfile()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()

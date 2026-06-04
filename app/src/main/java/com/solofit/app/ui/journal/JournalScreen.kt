@@ -51,6 +51,17 @@ import com.solofit.app.core.DateUtils
 import com.solofit.app.ui.components.DumbbellCheck
 import com.solofit.app.ui.components.LatPulldownCelebration
 import com.solofit.app.ui.components.LiquidProgressBar
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.graphics.Color
+import com.solofit.app.ui.components.JournalTheme
 import com.solofit.app.ui.components.OverheadPressHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -68,6 +79,19 @@ fun JournalScreen(
     var newGoal by remember { mutableStateOf("") }
     val listState = rememberLazyListState()
     val view = LocalView.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.snackbarEvent.collect { event ->
+            val result = snackbarHostState.showSnackbar(
+                message = event.message,
+                actionLabel = event.actionLabel
+            )
+            if (result == SnackbarResult.ActionPerformed) {
+                event.onAction()
+            }
+        }
+    }
 
     // Scroll-driven "overhead press": as you scroll down, the figure presses the
     // bar up. Maps the first ~600px of scroll to press 0f..1f.
@@ -84,6 +108,7 @@ fun JournalScreen(
 
     val allDone = goals.isNotEmpty() && goals.all { it.done }
 
+    JournalTheme {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -94,7 +119,8 @@ fun JournalScreen(
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         LazyColumn(
             state = listState,
@@ -116,16 +142,8 @@ fun JournalScreen(
                         press = pressProgress,
                         modifier = Modifier.size(56.dp)
                     )
-                    Column {
-                        Text(DateUtils.prettyMedium(DateUtils.today()),
-                            style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            if (animate) "Scroll to press it overhead 💪"
-                            else "Your daily check-in",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                    Text(DateUtils.prettyMedium(DateUtils.today()),
+                        style = MaterialTheme.typography.titleMedium)
                 }
             }
 
@@ -152,11 +170,15 @@ fun JournalScreen(
 
             // Celebration when all goals are done — a lat-pulldown flourish.
             item {
-                AnimatedVisibility(visible = allDone) {
+                AnimatedVisibility(
+                    visible = allDone,
+                    enter = fadeIn(tween(300)) + expandVertically(tween(300)),
+                    exit = fadeOut(tween(200)) + shrinkVertically(tween(200))
+                ) {
                     Card(
                         Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer
+                            containerColor = Color(0xFFFFF4E6)
                         )
                     ) {
                         Row(
@@ -169,10 +191,11 @@ fun JournalScreen(
                                 animate = animate
                             )
                             Column {
-                                Text("All goals smashed! 🎉", fontWeight = FontWeight.Bold)
+                                Text("All goals smashed! 🎉", fontWeight = FontWeight.Bold, color = Color(0xFFA05800))
                                 Text(
                                     "That's a clean set. See you tomorrow.",
-                                    style = MaterialTheme.typography.bodySmall
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = Color(0xFFCC8800)
                                 )
                             }
                         }
@@ -201,7 +224,7 @@ fun JournalScreen(
                         ) {
                             DumbbellCheck(
                                 checked = goal.done,
-                                onToggle = {},
+                                onToggle = { viewModel.toggleGoal(goal) },
                                 animate = animate
                             )
                             Text(
@@ -211,11 +234,13 @@ fun JournalScreen(
                                 color = if (goal.done) MaterialTheme.colorScheme.onSurfaceVariant
                                 else MaterialTheme.colorScheme.onSurface
                             )
-                            IconButton(onClick = {
-                                view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                                viewModel.deleteGoal(goal.id)
-                            }) {
-                                Icon(Icons.Filled.Close, "Delete goal")
+                            if (!goal.done) {
+                                IconButton(onClick = {
+                                    view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                                    viewModel.deleteGoal(goal.id)
+                                }) {
+                                    Icon(Icons.Filled.Close, "Delete goal")
+                                }
                             }
                         }
                     }
@@ -245,39 +270,53 @@ fun JournalScreen(
             // ---- Evening: gratitude ----
             item {
                 Spacer(Modifier.height(12.dp))
-                Text("🌙 Evening gratitude", style = MaterialTheme.typography.titleLarge)
-                Text(
-                    "A 2-minute check-in. What are you grateful for today?",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(Modifier.height(6.dp))
-                GratitudeEditor(
-                    initial = gratitudeToday?.text ?: "",
-                    onSave = viewModel::saveGratitude
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text("🌙 Evening gratitude", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            "A 2-minute check-in. What are you grateful for today?",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(6.dp))
+                        GratitudeEditor(
+                            initial = gratitudeToday?.text ?: "",
+                            onSave = viewModel::saveGratitude
+                        )
+                    }
+                }
             }
 
             if (recent.isNotEmpty()) {
                 item {
                     Spacer(Modifier.height(8.dp))
                     Text("Recent reflections", style = MaterialTheme.typography.titleMedium)
-                }
-                items(recent, key = { "g_${it.id}" }) { entry ->
-                    Card(
-                        Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
+                    Spacer(Modifier.height(4.dp))
+                    Card(Modifier.fillMaxWidth()) {
                         Column(Modifier.padding(12.dp)) {
-                            Text(
-                                DateUtils.prettyMedium(entry.date),
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Spacer(Modifier.height(2.dp))
-                            Text(entry.text)
+                            recent.take(3).forEach { entry ->
+                                Text(
+                                    DateUtils.prettyMedium(entry.date),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                Spacer(Modifier.height(2.dp))
+                                Text(entry.text)
+                                if (entry != recent.take(3).last()) {
+                                    Spacer(Modifier.height(8.dp))
+                                }
+                            }
+                            if (recent.size > 3) {
+                                Spacer(Modifier.height(4.dp))
+                                TextButton(onClick = { /* TODO: navigate to full history */ }) {
+                                    Text("See all")
+                                }
+                            }
                         }
                     }
                 }
@@ -285,11 +324,15 @@ fun JournalScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
     }
+    }
 }
 
 @Composable
 private fun GratitudeEditor(initial: String, onSave: (String) -> Unit) {
-    var text by remember(initial) { mutableStateOf(initial) }
+    var text by remember { mutableStateOf("") }
+    LaunchedEffect(initial) {
+        if (text.isBlank() && initial.isNotBlank()) text = initial
+    }
     val dirty = text != initial
     Column {
         OutlinedTextField(

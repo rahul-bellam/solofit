@@ -559,6 +559,7 @@ fun DashboardScreen(
         }
     }
     }
+    }
 }
 
 @Composable

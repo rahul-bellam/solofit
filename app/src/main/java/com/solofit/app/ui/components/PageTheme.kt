@@ -56,4 +56,11 @@ fun StrengthTheme(content: @Composable () -> Unit) {
     }
 }
 
+@Composable
+fun JournalTheme(content: @Composable () -> Unit) {
+    CompositionLocalProvider(LocalPageAccent provides DefaultAccent) {
+        MaterialTheme(typography = NutritionTypography) { content() }
+    }
+}
+
 

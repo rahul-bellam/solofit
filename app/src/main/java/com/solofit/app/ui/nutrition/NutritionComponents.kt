@@ -32,6 +32,9 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.solofit.app.ui.theme.ProteinColor
+import com.solofit.app.ui.theme.CarbsColor
+import com.solofit.app.ui.theme.FatsColor
 
 private val green = Color(0xFF5F8E5A)
 private val lightGreen = Color(0xFFa3c9a1)
@@ -50,7 +53,8 @@ data class NutritionColors(
     val iconBg: Color,
     val border: Color,
     val green: Color,
-    val greenLight: Color
+    val greenLight: Color,
+    val trackColor: Color
 )
 
 fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
@@ -62,8 +66,9 @@ fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
     cardBg = Color(0xFF2A2A2A),
     iconBg = Color(0xFF333333),
     border = Color(0xFF444444),
-    green = Color(0xFF7AB87A),
-    greenLight = Color(0xFF2A3A2A)
+    green = Color(0xFF9CC99C),
+    greenLight = Color(0xFF2A3A2A),
+    trackColor = muted.copy(alpha = 0.2f)
 ) else NutritionColors(
     bg = Color(0xFFF8F6F1),
     surface = Color.White,
@@ -74,7 +79,8 @@ fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
     iconBg = Color(0xFFE8E4D9),
     border = Color(0xFFD4D1C4),
     green = Color(0xFF5F8E5A),
-    greenLight = Color(0xFFF1F7EB)
+    greenLight = Color(0xFFF1F7EB),
+    trackColor = muted.copy(alpha = 0.2f)
 )
 
 // ─── Header ───
@@ -156,7 +162,7 @@ fun DailyProgressCard(
                         val arcSize = size.width - stroke
                         val tl = Offset(stroke / 2, stroke / 2)
                         drawArc(
-                            color = Color(0xFFF1EDE4),
+                            color = colors.trackColor,
                             startAngle = -90f,
                             sweepAngle = 360f,
                             useCenter = false,
@@ -225,7 +231,7 @@ fun DailyProgressCard(
                             .fillMaxWidth()
                             .height(10.dp)
                             .clip(RoundedCornerShape(5.dp))
-                            .background(Color(0xFFF1EDE4))
+                            .background(colors.trackColor)
                     ) {
                         Box(
                             Modifier
@@ -242,9 +248,9 @@ fun DailyProgressCard(
                         Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
-                        MacroChip("Protein", "${protein}g", "/ ${proteinGoal}g", colors)
-                        MacroChip("Carbs", "${carbs}g", "/ ${carbsGoal}g", colors)
-                        MacroChip("Fat", "${fat}g", "/ ${fatGoal}g", colors)
+                        MacroChip("Protein", "${protein}g", "/ ${proteinGoal}g", colors, ProteinColor)
+                        MacroChip("Carbs", "${carbs}g", "/ ${carbsGoal}g", colors, CarbsColor)
+                        MacroChip("Fat", "${fat}g", "/ ${fatGoal}g", colors, FatsColor)
                     }
                 }
             }
@@ -253,9 +259,12 @@ fun DailyProgressCard(
 }
 
 @Composable
-private fun MacroChip(label: String, current: String, goal: String, colors: NutritionColors) {
+private fun MacroChip(label: String, current: String, goal: String, colors: NutritionColors, dotColor: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(label, color = colors.textMuted, fontSize = 11.sp)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Box(Modifier.size(6.dp).clip(CircleShape).background(dotColor))
+            Text(label, color = colors.textMuted, fontSize = 11.sp)
+        }
         Spacer(Modifier.height(2.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(current, color = colors.textPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
@@ -289,7 +298,7 @@ fun QuickAddButton(
         ) {
             Text("+", color = colors.green, fontSize = 18.sp, fontWeight = FontWeight.Bold)
             Text(
-                "LOG TODAY'S MEAL",
+                "Add to today's log",
                 color = colors.green,
                 fontWeight = FontWeight.Medium,
                 fontSize = 14.sp
@@ -375,7 +384,7 @@ fun NutritionSectionHeader(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            title.uppercase(),
+            title,
             color = colors.textMuted,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
@@ -476,7 +485,7 @@ fun NutritionEmptyState(
         Spacer(Modifier.height(12.dp))
         Text("No meals logged yet", color = colors.textMuted, fontSize = 14.sp)
         Spacer(Modifier.height(4.dp))
-        Text("tap to add a sample breakfast", color = colors.green, fontSize = 12.sp)
+        Text("Tap to log your first meal", color = colors.green, fontSize = 12.sp)
     }
 }
 

@@ -64,8 +64,14 @@ Focus on proteins, carbs, fats, and fibers. Default estimatedGrams to 200 if uns
 """.trimIndent()
 
 private fun bitmapToBase64(bitmap: Bitmap): String {
+    val maxDimension = 1024
+    val scale = minOf(maxDimension.toFloat() / bitmap.width, maxDimension.toFloat() / bitmap.height, 1f)
+    val scaled = if (scale < 1f) {
+        Bitmap.createScaledBitmap(bitmap, (bitmap.width * scale).toInt(), (bitmap.height * scale).toInt(), true)
+    } else bitmap
     val stream = ByteArrayOutputStream()
-    bitmap.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+    scaled.compress(Bitmap.CompressFormat.JPEG, 85, stream)
+    if (scaled != bitmap) scaled.recycle()
     return Base64.encodeToString(stream.toByteArray(), Base64.NO_WRAP)
 }
 
@@ -211,6 +217,7 @@ class AiFoodScanViewModel @Inject constructor(
                 _scanResult.tryEmit(AiScanResult.Error("AI scan failed. Try again."))
             } finally {
                 _isScanning.value = false
+                bitmap.recycle()
             }
         }
     }

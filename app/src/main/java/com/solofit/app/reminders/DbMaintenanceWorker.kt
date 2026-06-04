@@ -7,6 +7,8 @@ import androidx.work.WorkerParameters
 import com.solofit.app.core.perf.PerfTrace
 import com.solofit.app.data.local.SoloFitDatabase
 import com.solofit.app.data.local.UserPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 
@@ -32,9 +34,11 @@ class DbMaintenanceWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result = PerfTrace.measureSuspend("db.maintenance") {
         try {
-            val db = database.openHelper.writableDatabase
-            db.query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
-            db.execSQL("VACUUM")
+            withContext(Dispatchers.IO) {
+                val db = database.openHelper.writableDatabase
+                db.query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
+                db.execSQL("VACUUM")
+            }
             userPreferences.pruneOldWaterKeys()
             Result.success()
         } catch (e: Exception) {

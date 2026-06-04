@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.solofit.app.core.DateUtils
 import com.solofit.app.core.FitnessMath
+import com.solofit.app.core.StreakCalculator
 import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.relation.SessionWithSets
@@ -15,6 +16,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -33,6 +35,7 @@ data class ActiveWorkoutUiState(
     val restTimerRunning: Boolean = false,
     val restSecondsRemaining: Int = 0,
     val restDuration: Int = 90,
+    val isPaused: Boolean = false,
     val prCelebrationMessage: String? = null
 )
 
@@ -50,6 +53,13 @@ class ActiveWorkoutViewModel @Inject constructor(
 
     val animationsEnabled = profileRepository.animationsEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+
+    val streak = repository.observeHistory()
+        .map { history ->
+            val dates = history.map { it.session.date }
+            StreakCalculator.currentStreak(dates, java.time.LocalDate.now())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private var timerJob: Job? = null
 
@@ -117,16 +127,44 @@ class ActiveWorkoutViewModel @Inject constructor(
         _uiState.update { it.copy(restDuration = seconds) }
     }
 
+    fun togglePause() {
+        val wasPaused = _uiState.value.isPaused
+        _uiState.update { it.copy(isPaused = !wasPaused) }
+        if (_uiState.value.restTimerRunning) {
+            if (!wasPaused) {
+                timerJob?.cancel()
+            } else {
+                resumeRestTimer()
+            }
+        }
+    }
+
+    private fun resumeRestTimer() {
+        timerJob?.cancel()
+        val remaining = _uiState.value.restSecondsRemaining
+        timerJob = viewModelScope.launch {
+            for (i in remaining - 1 downTo 0) {
+                if (_uiState.value.isPaused) break
+                kotlinx.coroutines.delay(1000L)
+                _uiState.update { it.copy(restSecondsRemaining = i) }
+            }
+            if (!_uiState.value.isPaused) {
+                _uiState.update { it.copy(restTimerRunning = false) }
+            }
+        }
+    }
+
     private fun startRestTimer() {
         timerJob?.cancel()
         val duration = _uiState.value.restDuration
         _uiState.update { it.copy(restTimerRunning = true, restSecondsRemaining = duration) }
+        if (_uiState.value.isPaused) return
         timerJob = viewModelScope.launch {
-            for (i in duration downTo 1) {
+            for (i in duration - 1 downTo 0) {
                 kotlinx.coroutines.delay(1000L)
                 _uiState.update { it.copy(restSecondsRemaining = i) }
             }
-            _uiState.update { it.copy(restTimerRunning = false, restSecondsRemaining = 0) }
+            _uiState.update { it.copy(restTimerRunning = false) }
         }
     }
 

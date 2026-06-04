@@ -1,7 +1,10 @@
 package com.solofit.app.ui.workout
 
-import android.os.Build
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -22,28 +25,28 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.Cyan
 import com.solofit.app.ui.theme.Emerald
 import com.solofit.app.ui.theme.Moss
 import com.solofit.app.ui.theme.Sage
 import com.solofit.app.ui.theme.SageDark
-
-private val glassShape = RoundedCornerShape(28.dp)
-private val innerShape = RoundedCornerShape(27.dp)
+import kotlinx.coroutines.delay
 
 // ─── Intensity ───
 
@@ -53,12 +56,6 @@ private fun intensityForName(name: String): IntensityLevel = when {
     name.contains("bench", true) || name.contains("dips", true) -> IntensityLevel.HIGH
     name.contains("fly", true) || name.contains("plank", true) -> IntensityLevel.LOW
     else -> IntensityLevel.MED
-}
-
-private fun intensityGradient(level: IntensityLevel): Pair<Color, Color> = when (level) {
-    IntensityLevel.HIGH -> Moss to SageDark
-    IntensityLevel.MED -> Emerald to SageDark
-    IntensityLevel.LOW -> Sage to Amber
 }
 
 // ─── Progress Ring ───
@@ -160,34 +157,6 @@ fun ProgressRing(
     }
 }
 
-// ─── Intensity Bar ───
-
-@Composable
-fun IntensityBar(
-    level: IntensityLevel,
-    isActive: Boolean,
-    modifier: Modifier = Modifier
-) {
-    val (from, to) = intensityGradient(level)
-    Box(modifier = modifier) {
-        Box(
-            modifier = Modifier
-                .width(6.dp)
-                .height(80.dp)
-                .clip(RoundedCornerShape(3.dp))
-                .background(brush = Brush.verticalGradient(listOf(from, to)))
-        )
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.8f))
-                .graphicsLayer { alpha = if (isActive) 1f else 0.6f }
-                .align(Alignment.TopCenter)
-        )
-    }
-}
-
 // ─── Tag Chip ───
 
 @Composable
@@ -232,6 +201,7 @@ fun WorkoutExerciseCard(
     kcal: Int,
     progress: Float,
     state: RingState,
+    restSecondsRemaining: Int = 0,
     onStartSet: () -> Unit,
     onCompleteSet: () -> Unit,
     onSkip: () -> Unit,
@@ -240,44 +210,28 @@ fun WorkoutExerciseCard(
 ) {
     val isActive = state == RingState.ACTIVE
     val isComplete = state == RingState.COMPLETE
-    val intensity = intensityForName(exerciseName)
-
-    val borderGlow = if (isActive) Sage.copy(alpha = 0.6f) else Color.White.copy(alpha = 0.06f)
-    val borderOuter = if (isActive) Sage.copy(alpha = 0.25f) else Color.White.copy(alpha = 0.1f)
 
     val cardModifier = modifier
         .fillMaxWidth()
-        .shadow(
-            elevation = if (isActive) 12.dp else 6.dp,
-            shape = glassShape
-        )
-        .clip(glassShape)
-        .background(
-            if (isActive) Color.White.copy(alpha = 0.04f) else Color.White.copy(alpha = 0.01f),
-            glassShape
-        )
-        .border(1.dp, borderOuter, glassShape)
-        .then(
-            if (Build.VERSION.SDK_INT >= 31)
-                Modifier.background(Color.Transparent, glassShape)
-            else Modifier
-        )
+        .clip(RoundedCornerShape(24.dp))
+        .background(Color(0xFF1A1A1A))
+        .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(24.dp))
+        .drawBehind {
+            val accentColor = when (intensityForName(exerciseName)) {
+                IntensityLevel.HIGH -> Color(0xFFFF6B6B)
+                IntensityLevel.MED -> Amber
+                IntensityLevel.LOW -> Cyan
+            }
+            drawRect(
+                color = if (isActive) accentColor else accentColor.copy(alpha = 0.3f),
+                topLeft = Offset.Zero,
+                size = Size(3.dp.toPx(), size.height)
+            )
+        }
 
-    val innerModifier = Modifier
-        .fillMaxWidth()
-        .clip(innerShape)
-        .background(Color(0xFF141414))
-        .border(1.dp, borderGlow, innerShape)
-
-    Column(modifier = cardModifier) {
-        Column(modifier = innerModifier.padding(16.dp)) {
+    Column(modifier = cardModifier.padding(start = 4.dp)) {
+        Column(modifier = Modifier.padding(16.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IntensityBar(
-                    level = intensity,
-                    isActive = isActive,
-                    modifier = Modifier.align(Alignment.Top)
-                )
-
                 Column(Modifier.weight(1f)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -290,21 +244,28 @@ fun WorkoutExerciseCard(
                             borderColor = Color.White.copy(alpha = 0.1f)
                         )
                         when {
-                            isActive -> TagChip(
-                                text = "LIVE",
-                                textColor = Color(0xFFFF8A3D),
-                                bgColor = Amber.copy(alpha = 0.15f),
-                                borderColor = Amber.copy(alpha = 0.3f),
-                                dotColor = Amber
-                            )
+                            isActive -> {
+                                val pulse by rememberInfiniteTransition(label = "livePulse").animateFloat(
+                                    initialValue = 0.5f, targetValue = 1f,
+                                    animationSpec = infiniteRepeatable(tween(800), RepeatMode.Reverse),
+                                    label = "livePulse"
+                                )
+                                TagChip(
+                                    text = "Active",
+                                    textColor = Color(0xFFA8A29E),
+                                    bgColor = Amber.copy(alpha = 0.15f),
+                                    borderColor = Amber.copy(alpha = 0.3f),
+                                    dotColor = Amber.copy(alpha = pulse)
+                                )
+                            }
                             isComplete -> TagChip(
-                                text = "DONE",
+                                text = "Done",
                                 textColor = Color(0xFF22C55E),
                                 bgColor = Color(0xFF22C55E).copy(alpha = 0.15f),
                                 borderColor = Color(0xFF22C55E).copy(alpha = 0.3f)
                             )
                             state == RingState.REST -> TagChip(
-                                text = "REST",
+                                text = "Rest",
                                 textColor = Amber,
                                 bgColor = Amber.copy(alpha = 0.15f),
                                 borderColor = Amber.copy(alpha = 0.3f)
@@ -318,7 +279,8 @@ fun WorkoutExerciseCard(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.White,
-                        maxLines = 1
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
 
                     Spacer(Modifier.height(6.dp))
@@ -397,11 +359,17 @@ fun WorkoutExerciseCard(
                         }
 
                         state == RingState.REST -> {
+                            val restDisplay = if (restSecondsRemaining > 0) {
+                                val m = restSecondsRemaining / 60
+                                val s = restSecondsRemaining % 60
+                                "%d:%02d".format(m, s)
+                            } else "REST"
                             Row(
                                 Modifier.fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(Amber.copy(alpha = 0.05f))
                                     .border(1.dp, Amber.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                                    .clickable(onClick = onRest)
                                     .padding(horizontal = 12.dp, vertical = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
@@ -419,7 +387,7 @@ fun WorkoutExerciseCard(
                                     )
                                 }
                                 Text(
-                                    "00:45",
+                                    restDisplay,
                                     color = Amber,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp
@@ -490,8 +458,17 @@ fun SessionHeader(
     subtitle: String,
     title: String,
     streak: Int,
+    startedAt: Long = 0L,
     modifier: Modifier = Modifier
 ) {
+    val elapsed by produceState(0L, startedAt) {
+        if (startedAt > 0L) {
+            while (true) {
+                value = System.currentTimeMillis() - startedAt
+                delay(1000L)
+            }
+        }
+    }
     Column(modifier = modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth(),
@@ -513,6 +490,8 @@ fun SessionHeader(
                     color = Color.White,
                     letterSpacing = (-0.3).sp
                 )
+                Spacer(Modifier.height(2.dp))
+                Text(formatElapsed((elapsed / 1000).toInt()), color = Color(0xFFA8A29E), fontSize = 11.sp, letterSpacing = 0.5.sp)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -522,7 +501,7 @@ fun SessionHeader(
                     Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(brush = Brush.verticalGradient(listOf(Moss, SageDark))),
+                        .background(brush = Brush.verticalGradient(listOf(Amber, Color(0xFFFF8A3D)))),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("🔥", fontSize = 18.sp)
@@ -562,13 +541,7 @@ fun SessionProgressBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Session Progress",
-                fontSize = 12.sp,
-                letterSpacing = 1.sp,
-                color = Color(0xFFA8A29E)
-            )
-            Text(
-                "$completed / $total COMPLETE",
+                "$completed / $total",
                 fontSize = 12.sp,
                 color = Color.White,
                 fontWeight = FontWeight.SemiBold
@@ -639,13 +612,11 @@ private fun PauseFinishButton(
 ) {
     val bgMod = if (isPrimary) {
         Modifier.background(
-            Brush.verticalGradient(listOf(Moss, SageDark)),
+            Brush.horizontalGradient(listOf(Color(0xFFF5F1EB), Color(0xFFE8E4D9))),
             RoundedCornerShape(16.dp)
         )
     } else {
-        Modifier
-            .background(Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp))
+        Modifier.border(1.dp, Color(0x33FFFFFF), RoundedCornerShape(16.dp))
     }
 
     Box(
@@ -658,7 +629,7 @@ private fun PauseFinishButton(
     ) {
         Text(
             text,
-            color = if (isPrimary) Color.White else Color(0xFFF5F1EB),
+            color = if (isPrimary) Color(0xFF1A1A1A) else Color(0xFFF5F1EB),
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp
         )
@@ -669,14 +640,16 @@ private fun PauseFinishButton(
 
 @Composable
 fun UpNextCard(
+    nextExerciseName: String? = null,
     modifier: Modifier = Modifier
 ) {
+    val name = nextExerciseName ?: return
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .clip(glassShape)
-            .background(Color.White.copy(alpha = 0.01f), glassShape)
-            .border(1.dp, Color.White.copy(alpha = 0.1f), glassShape)
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color.White.copy(alpha = 0.01f), RoundedCornerShape(28.dp))
+            .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(28.dp))
             .padding(20.dp)
     ) {
         Row(
@@ -693,16 +666,10 @@ fun UpNextCard(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "COOLDOWN & STRETCH",
+                    name,
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(
-                    "5 min • Lower heart rate",
-                    fontSize = 14.sp,
-                    color = Color(0xFFA8A29E)
                 )
             }
             Box(
@@ -717,4 +684,11 @@ fun UpNextCard(
             }
         }
     }
+}
+
+private fun formatElapsed(totalSeconds: Int): String {
+    val h = totalSeconds / 3600
+    val m = (totalSeconds % 3600) / 60
+    val s = totalSeconds % 60
+    return if (h > 0) "%d:%02d:%02d".format(h, m, s) else "%02d:%02d".format(m, s)
 }

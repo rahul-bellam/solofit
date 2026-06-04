@@ -6,6 +6,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.UserPreferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
@@ -26,7 +28,7 @@ class HydrationWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, params) {
 
     override suspend fun doWork(): Result {
-        val settings = prefs.reminderSettings.first()
+        val settings = withContext(Dispatchers.IO) { prefs.reminderSettings.first() }
         if (!settings.hydrationEnabled) return Result.success()
 
         val now = Calendar.getInstance()
@@ -37,8 +39,8 @@ class HydrationWorker @AssistedInject constructor(
 
         // Skip if already hydrated enough today.
         val today = DateUtils.today()
-        val current = prefs.waterMl(today).first()
-        val goal = prefs.waterGoalMl.first()
+        val current = withContext(Dispatchers.IO) { prefs.waterMl(today).first() }
+        val goal = withContext(Dispatchers.IO) { prefs.waterGoalMl.first() }
         if (current >= goal) return Result.success()
 
         val remaining = goal - current
