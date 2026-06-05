@@ -206,6 +206,18 @@ fun DashboardScreen(
         Spacer(Modifier.height(16.dp))
 
         // ════════════════════════════════════════════════════════════
+        // WEEKLY REFLECTION (Sundays only)
+        // ════════════════════════════════════════════════════════════
+        if (solState.isSunday) {
+            WeeklyReflection(
+                workoutCount = solState.weeklyWorkoutCount,
+                proteinDays = solState.weeklyProteinDays,
+                walkingTrend = solState.weeklyWalkingTrend
+            )
+            Spacer(Modifier.height(16.dp))
+        }
+
+        // ════════════════════════════════════════════════════════════
         // SUPPORTING SECTION: Phase, Streak, Recovery, Today's Plan
         // ════════════════════════════════════════════════════════════
         Card(

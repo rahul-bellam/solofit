@@ -35,12 +35,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.Settings
 import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.PageBg
 import com.solofit.app.ui.theme.CardCream
+import com.solofit.app.ui.theme.DarkSuccess
+import com.solofit.app.ui.theme.DarkWarning
+import com.solofit.app.ui.theme.DarkError
 
 @Composable
 fun SolCard(
@@ -55,8 +56,8 @@ fun SolCard(
 
     val recColor = when {
         state.type == InsightType.MORNING_GREETING && state.detail.contains("strong", ignoreCase = true) -> Amber
-        state.type == InsightType.MORNING_GREETING && state.detail.contains("lower", ignoreCase = true) -> Color(0xFFC19148)
-        state.type == InsightType.OVERTRAINING -> Color(0xFFA26B57)
+        state.type == InsightType.MORNING_GREETING && state.detail.contains("lower", ignoreCase = true) -> DarkWarning
+        state.type == InsightType.OVERTRAINING -> DarkError
         else -> Amber
     }
 
@@ -67,7 +68,8 @@ fun SolCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
-            // SOL header
+
+            // SOL header + narrator style
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(40.dp).clip(CircleShape)
@@ -79,154 +81,116 @@ fun SolCard(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(
-                        Modifier.size(14.dp).clip(CircleShape).background(Amber)
-                    )
+                    Box(Modifier.size(14.dp).clip(CircleShape).background(Amber))
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
                     Text("SOL", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
-                    Text(
-                        state.personality.displayName,
-                        fontSize = 11.sp,
-                        color = SecondaryText
-                    )
+                    Text(state.personality.displayName, fontSize = 11.sp, color = SecondaryText)
                 }
                 Spacer(Modifier.weight(1f))
                 Icon(
-                    Icons.Filled.Settings, null,
-                    tint = SecondaryText,
-                    modifier = Modifier.size(20.dp).clickable(onClick = onPersonalityChange)
+                    Icons.AutoMirrored.Filled.VolumeUp, null,
+                    tint = if (state.isSpeaking) Amber else SecondaryText,
+                    modifier = Modifier.size(20.dp).clickable(onClick = onListen)
                 )
             }
 
             Spacer(Modifier.height(16.dp))
 
-            // Greeting
-            if (state.greeting.isNotBlank()) {
-                Text(
-                    state.greeting,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = PrimaryText
-                )
-                Spacer(Modifier.height(4.dp))
-            }
-
-            // Headline
-            if (state.headline.isNotBlank()) {
-                Text(
-                    state.headline,
-                    fontSize = 15.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = recColor
-                )
-                Spacer(Modifier.height(4.dp))
-            }
-
-            // Detail
+            // Greeting with name
+            val namePart = if (state.userName.isNotBlank()) " ${state.userName}" else ""
             Text(
-                state.detail,
-                fontSize = 13.sp,
-                color = SecondaryText,
-                lineHeight = 18.sp
+                "${state.greeting.trimEnd('.')}$namePart.",
+                fontSize = 20.sp, fontWeight = FontWeight.Medium, color = PrimaryText
+            )
+
+            Spacer(Modifier.height(2.dp))
+
+            // Rotating header
+            Text(
+                state.briefingHeader,
+                fontSize = 13.sp, color = Amber, fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // Primary headline + detail
+            if (state.headline.isNotBlank()) {
+                Text(state.headline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = recColor)
+                Spacer(Modifier.height(4.dp))
+            }
+            Text(state.detail, fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp)
+
+            // Supplementary insights
+            if (state.supplementaryHeadlines.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                state.supplementaryHeadlines.forEach { sh ->
+                    Text("• $sh", fontSize = 12.sp, color = SecondaryText, lineHeight = 16.sp)
+                }
+            }
+
+            Spacer(Modifier.height(14.dp))
+
+            // Signal summary row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                state.signals.forEach { signal ->
+                    val chipColor = when (signal.status) {
+                        SignalStatus.GOOD -> DarkSuccess
+                        SignalStatus.ON_TRACK -> DarkWarning
+                        SignalStatus.LOW -> DarkError
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(chipColor.copy(alpha = 0.08f))
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(signal.label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                        Text(signal.detail, fontSize = 10.sp, color = SecondaryText)
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(10.dp))
+
+            // Day label
+            val labelColor = when (state.dayLabel) {
+                DayLabel.HIGH_ENERGY -> DarkSuccess
+                DayLabel.BALANCED -> Amber
+                DayLabel.RECOVERY_FOCUS -> DarkWarning
+            }
+            Text(
+                "Overall: ${state.dayLabel.displayName}",
+                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = labelColor
             )
 
             Spacer(Modifier.height(14.dp))
 
-            // Action buttons
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (state.reasoning.isNotEmpty()) {
-                    ActionChip("Why?", onClick = onToggleWhy, expanded = state.expandedWhy)
+            // Always-visible: Why? reasoning
+            if (state.reasoning.isNotEmpty()) {
+                Text("Why?", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                Spacer(Modifier.height(4.dp))
+                state.reasoning.forEach { reason ->
+                    Text("• $reason", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
                 }
-                if (state.recommendations.isNotEmpty()) {
-                    ActionChip("What Should I Do?", onClick = onToggleWhat, expanded = state.expandedWhat)
-                }
-                Box(
-                    Modifier.size(36.dp).clip(CircleShape)
-                        .background(if (state.isSpeaking) Amber else Color(0xFFF3F4F6))
-                        .clickable(onClick = onListen),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.VolumeUp, null,
-                        tint = if (state.isSpeaking) Color.White else SecondaryText,
-                        modifier = Modifier.size(18.dp)
-                    )
-                }
+                Spacer(Modifier.height(10.dp))
             }
 
-            // Expanded Why?
-            AnimatedVisibility(
-                visible = state.expandedWhy,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(Modifier.padding(top = 12.dp)) {
-                    Text(
-                        "Why?",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = PrimaryText
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    state.reasoning.forEach { reason ->
-                        Text(
-                            "• $reason",
-                            fontSize = 12.sp,
-                            color = SecondaryText,
-                            lineHeight = 17.sp
-                        )
-                    }
-                }
-            }
-
-            // Expanded What Should I Do?
-            AnimatedVisibility(
-                visible = state.expandedWhat,
-                enter = expandVertically() + fadeIn(),
-                exit = shrinkVertically() + fadeOut()
-            ) {
-                Column(Modifier.padding(top = 12.dp)) {
-                    Text(
-                        "Recommended",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = PrimaryText
-                    )
-                    Spacer(Modifier.height(4.dp))
-                    state.recommendations.forEach { rec ->
-                        Text(
-                            "✓ $rec",
-                            fontSize = 12.sp,
-                            color = SecondaryText,
-                            lineHeight = 17.sp
-                        )
-                    }
+            // Always-visible: recommendations
+            if (state.recommendations.isNotEmpty()) {
+                Text("Recommended", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                Spacer(Modifier.height(4.dp))
+                state.recommendations.forEach { rec ->
+                    Text("✓ $rec", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ActionChip(label: String, onClick: () -> Unit, expanded: Boolean) {
-    Box(
-        Modifier
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (expanded) Amber.copy(alpha = 0.1f) else Color(0xFFF3F4F6))
-            .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp)
-    ) {
-        Text(
-            label,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            color = if (expanded) Amber else SecondaryText
-        )
     }
 }
 
@@ -243,8 +207,7 @@ fun PersonalityDialog(
             Column {
                 VoicePersonality.entries.forEach { p ->
                     Row(
-                        Modifier
-                            .fillMaxWidth()
+                        Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
                             .background(if (p == current) Amber.copy(alpha = 0.1f) else Color.Transparent)
                             .clickable { onSelect(p) }
@@ -253,9 +216,7 @@ fun PersonalityDialog(
                     ) {
                         Text(p.displayName, fontSize = 15.sp, color = PrimaryText)
                         Spacer(Modifier.weight(1f))
-                        if (p == current) {
-                            Text("Active", fontSize = 12.sp, color = Amber)
-                        }
+                        if (p == current) Text("Active", fontSize = 12.sp, color = Amber)
                     }
                 }
             }

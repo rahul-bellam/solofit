@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.Locale
@@ -29,6 +30,8 @@ import kotlin.math.roundToInt
 
 data class SolUiState(
     val visible: Boolean = true,
+    val userName: String = "",
+    val briefingHeader: String = "Today's Focus",
     val greeting: String = "",
     val headline: String = "",
     val detail: String = "",
@@ -36,10 +39,28 @@ data class SolUiState(
     val recommendations: List<String> = emptyList(),
     val voiceLine: String = "",
     val type: InsightType = InsightType.MORNING_GREETING,
+    val dayLabel: DayLabel = DayLabel.BALANCED,
+    val signals: List<SignalSummary> = emptyList(),
+    val supplementaryHeadlines: List<String> = emptyList(),
     val expandedWhy: Boolean = false,
     val expandedWhat: Boolean = false,
     val isSpeaking: Boolean = false,
-    val personality: VoicePersonality = VoicePersonality.COMPANION
+    val personality: VoicePersonality = VoicePersonality.COMPANION,
+    val hasStreakMilestone: Boolean = false,
+    val streakMilestone: Int = 0,
+    val isSunday: Boolean = false,
+    val weeklyWorkoutCount: Int = 0,
+    val weeklyProteinDays: Int = 0,
+    val weeklyWalkingTrend: String = ""
+)
+
+private val BRIEFING_HEADERS = listOf(
+    "Today's Focus",
+    "Daily Briefing",
+    "Morning Check-In",
+    "Recovery Update",
+    "Wellness Summary",
+    "Today's Overview"
 )
 
 @HiltViewModel
@@ -82,14 +103,14 @@ class SolViewModel @Inject constructor(
             val now = LocalDate.now()
 
             val previousRecovery = prevMetric?.let {
-                com.solofit.app.core.FitnessMath.recoveryScore(
+                FitnessMath.recoveryScore(
                     sleepHours = it.sleepHours, steps = it.steps,
                     workoutDone = null, waterMl = null,
                     waterGoalMl = 3000, energyScore = it.energyScore
                 )
             }
             val recoveryScore = metric?.let {
-                com.solofit.app.core.FitnessMath.recoveryScore(
+                FitnessMath.recoveryScore(
                     sleepHours = it.sleepHours, steps = it.steps,
                     workoutDone = dates.contains(today), waterMl = null,
                     waterGoalMl = 3000, energyScore = it.energyScore
@@ -115,7 +136,6 @@ class SolViewModel @Inject constructor(
             val yesterdayMetric = prevMetric
             val prevSleep = yesterdayMetric?.sleepHours
             val prevSteps = yesterdayMetric?.steps
-            val prevStress = null
 
             val journalSentiment: JournalSentiment? = null
 
@@ -137,7 +157,7 @@ class SolViewModel @Inject constructor(
                 waterGoalMl = 3000,
                 energyScore = metric?.energyScore,
                 stressLevel = wellness.stressLevel,
-                previousStressLevel = prevStress,
+                previousStressLevel = null,
                 moodScore = metric?.moodScore,
                 meditationMinutes = wellness.meditationMinutes,
                 journalDays = recentEntries.size,
@@ -150,21 +170,53 @@ class SolViewModel @Inject constructor(
                 recentTrainingVolumeIncrease = volumeIncrease
             )
 
-            val insight = insightEngine.compute(input)
-            val transformedVoice = VoicePersonalityTransformer.transform(insight.voiceLine, personality)
+            val briefing = insightEngine.computeBriefing(input)
+            val transformedVoice = VoicePersonalityTransformer.transform(briefing.primary.voiceLine, personality)
+
+            val streakMilestone = when (input.streakDays) {
+                7 -> 7; 30 -> 30; 100 -> 100; else -> 0
+            }
+
+            val headerIndex = (now.dayOfYear % BRIEFING_HEADERS.size).coerceIn(0, BRIEFING_HEADERS.size - 1)
+
+            val isSunday = now.dayOfWeek == DayOfWeek.SUNDAY
+
+            val weeklyWorkoutCount = StreakCalculator.daysActiveInWindow(dates, now, 7)
+            val weeklyProteinDays = calculateProteinDays(history, totals, profile?.targetProtein ?: 150)
+            val weeklyWalkingTrend = calculateWeeklySteps(bodyRepository, now)
 
             _state.value = SolUiState(
                 visible = true,
-                greeting = insight.greeting,
-                headline = insight.headline,
-                detail = insight.detail,
-                reasoning = insight.reasoning,
-                recommendations = insight.recommendations,
+                userName = profile?.name ?: "",
+                briefingHeader = BRIEFING_HEADERS[headerIndex],
+                greeting = briefing.greeting,
+                headline = briefing.primary.headline,
+                detail = briefing.primary.detail,
+                reasoning = briefing.primary.reasoning,
+                recommendations = briefing.primary.recommendations,
                 voiceLine = transformedVoice,
-                type = insight.type,
-                personality = personality
+                type = briefing.primary.type,
+                dayLabel = briefing.dayLabel,
+                signals = briefing.signals,
+                supplementaryHeadlines = briefing.supplementary.map { it.headline },
+                expandedWhy = true,
+                personality = personality,
+                hasStreakMilestone = streakMilestone > 0,
+                streakMilestone = streakMilestone,
+                isSunday = isSunday,
+                weeklyWorkoutCount = weeklyWorkoutCount,
+                weeklyProteinDays = weeklyProteinDays,
+                weeklyWalkingTrend = weeklyWalkingTrend
             )
         }
+    }
+
+    private suspend fun calculateProteinDays(history: List<*>, totals: Any, targetProtein: Int): Int {
+        return 0
+    }
+
+    private suspend fun calculateWeeklySteps(bodyRepository: BodyRepository, now: LocalDate): String {
+        return ""
     }
 
     fun toggleWhy() {

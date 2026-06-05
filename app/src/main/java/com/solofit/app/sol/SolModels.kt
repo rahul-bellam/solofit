@@ -35,6 +35,12 @@ enum class JournalSentiment {
     POSITIVE, NEUTRAL, CHALLENGING
 }
 
+enum class DayLabel(val displayName: String, val description: String) {
+    HIGH_ENERGY("High Energy Day", "Everything is trending well"),
+    BALANCED("Balanced Day", "Small consistent actions compound"),
+    RECOVERY_FOCUS("Recovery Focus Day", "Prioritise rest today")
+}
+
 data class SolInsight(
     val greeting: String,
     val headline: String,
@@ -44,6 +50,14 @@ data class SolInsight(
     val voiceLine: String,
     val type: InsightType
 )
+
+data class SignalSummary(
+    val label: String,
+    val status: SignalStatus,
+    val detail: String
+)
+
+enum class SignalStatus { GOOD, ON_TRACK, LOW }
 
 enum class InsightType {
     MORNING_GREETING,
