@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 data class WeightState(
     val entries: List<WeightEntryEntity> = emptyList(),
-    val goal: FitnessGoal = FitnessGoal.MAINTAIN,
+    val goal: FitnessGoal = FitnessGoal.IMPROVE_FITNESS,
     val startWeight: Double? = null,
     val latestWeight: Double? = null
 ) {
@@ -28,9 +28,9 @@ data class WeightState(
         get() {
             val c = changeKg ?: return null
             return when (goal) {
-                FitnessGoal.LOSE_WEIGHT -> c <= 0.0
-                FitnessGoal.GAIN_MUSCLE -> c >= 0.0
-                FitnessGoal.MAINTAIN -> kotlin.math.abs(c) <= 1.0
+                FitnessGoal.LOSE_FAT -> c <= 0.0
+                FitnessGoal.BUILD_MUSCLE -> c >= 0.0
+                FitnessGoal.BODY_RECOMPOSITION, FitnessGoal.IMPROVE_FITNESS, FitnessGoal.STAY_HEALTHY -> kotlin.math.abs(c) <= 1.0
             }
         }
 }
@@ -47,7 +47,7 @@ class WeightViewModel @Inject constructor(
     ) { entries, profile ->
         WeightState(
             entries = entries,
-            goal = profile?.goal ?: FitnessGoal.MAINTAIN,
+            goal = profile?.goal ?: FitnessGoal.IMPROVE_FITNESS,
             startWeight = entries.firstOrNull()?.weightKg,
             latestWeight = entries.lastOrNull()?.weightKg
         )

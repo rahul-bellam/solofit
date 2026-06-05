@@ -1,5 +1,8 @@
 package com.solofit.app.ui.nutrition
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -17,8 +20,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -35,11 +41,9 @@ import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.ProteinColor
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
-
-private val green = Color(0xFF5F8E5A)
-private val lightGreen = Color(0xFFa3c9a1)
-private val muted = Color(0xFF7a786d)
-private val darkText = Color(0xFF3f3e36)
+import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.PrimaryText
+import com.solofit.app.ui.theme.SecondaryText
 
 // ─── Nutrition Colors (light/dark aware) ───
 
@@ -68,19 +72,19 @@ fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
     border = Color(0xFF444444),
     green = Color(0xFF9CC99C),
     greenLight = Color(0xFF2A3A2A),
-    trackColor = muted.copy(alpha = 0.2f)
+    trackColor = SecondaryText.copy(alpha = 0.2f)
 ) else NutritionColors(
-    bg = Color(0xFFF8F6F1),
+    bg = Color(0xFFF8F7F2),
     surface = Color.White,
-    textPrimary = Color(0xFF3F3E36),
-    textMuted = Color(0xFF7A786D),
-    headerBg = Brush.verticalGradient(listOf(Color(0xFFF1F7EB), Color(0xFFE8F0E0))),
+    textPrimary = PrimaryText,
+    textMuted = SecondaryText,
+    headerBg = Brush.verticalGradient(listOf(Color(0xFFF0F5EB), Color(0xFFE8F0E0))),
     cardBg = Color.White,
-    iconBg = Color(0xFFE8E4D9),
-    border = Color(0xFFD4D1C4),
-    green = Color(0xFF5F8E5A),
-    greenLight = Color(0xFFF1F7EB),
-    trackColor = muted.copy(alpha = 0.2f)
+    iconBg = Color(0xFFF0EFEA),
+    border = Color(0xFFE5E3D9),
+    green = Amber,
+    greenLight = Amber.copy(alpha = 0.15f),
+    trackColor = SecondaryText.copy(alpha = 0.2f)
 )
 
 // ─── Header ───
@@ -101,21 +105,20 @@ fun NutritionHeader(
         Text(
             greeting,
             color = colors.textMuted,
-            fontSize = 12.sp,
-            fontWeight = FontWeight.Medium,
-            letterSpacing = 1.sp
+            fontSize = 14.sp,
+            fontWeight = FontWeight.Medium
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(6.dp))
         Text(
             tagline,
             color = colors.textPrimary,
-            fontSize = 28.sp,
-            fontWeight = FontWeight.SemiBold
+            fontSize = 32.sp,
+            fontWeight = FontWeight.Bold
         )
     }
 }
 
-// ─── Daily Progress Card ───
+// ─── Calories Remaining Hero ───
 
 @Composable
 fun DailyProgressCard(
@@ -131,7 +134,13 @@ fun DailyProgressCard(
     fatGoal: Int,
     modifier: Modifier = Modifier
 ) {
+    val remaining = (caloriesGoal - calories).coerceAtLeast(0)
     val progressFraction = calories.toFloat() / caloriesGoal.coerceAtLeast(1)
+    val animatedProgress by animateFloatAsState(
+        targetValue = progressFraction,
+        animationSpec = tween(700, easing = LinearEasing),
+        label = "calProgress"
+    )
 
     Box(
         modifier = modifier
@@ -145,130 +154,115 @@ fun DailyProgressCard(
                 .clip(RoundedCornerShape(24.dp))
                 .background(colors.cardBg)
                 .border(1.dp, colors.border.copy(alpha = 0.3f), RoundedCornerShape(24.dp))
-                .padding(20.dp)
+                .padding(24.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(20.dp),
-                verticalAlignment = Alignment.CenterVertically
+            Text(
+                "Calories Remaining",
+                color = colors.textMuted,
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "$remaining",
+                color = colors.textPrimary,
+                fontSize = 48.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                "$calories consumed today",
+                color = colors.textMuted,
+                fontSize = 14.sp
+            )
+            Spacer(Modifier.height(16.dp))
+
+            // Main progress track
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(12.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(colors.trackColor)
             ) {
-                // Circular progress
                 Box(
-                    modifier = Modifier.size(80.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    androidx.compose.foundation.Canvas(Modifier.size(80.dp)) {
-                        val stroke = 6.dp.toPx()
-                        val arcSize = size.width - stroke
-                        val tl = Offset(stroke / 2, stroke / 2)
-                        drawArc(
-                            color = colors.trackColor,
-                            startAngle = -90f,
-                            sweepAngle = 360f,
-                            useCenter = false,
-                            topLeft = tl,
-                            size = Size(arcSize, arcSize),
-                            style = Stroke(stroke)
-                        )
-                        drawArc(
-                            color = colors.green,
-                            startAngle = -90f,
-                            sweepAngle = 360f * progressFraction,
-                            useCenter = false,
-                            topLeft = tl,
-                            size = Size(arcSize, arcSize),
-                            style = Stroke(stroke, cap = StrokeCap.Round)
-                        )
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            "$progressPercent",
-                            color = colors.textPrimary,
-                            fontSize = 28.sp,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                        Text(
-                            "%",
-                            color = colors.textMuted,
-                            fontSize = 10.sp,
-                            modifier = Modifier.offset(y = (-4).dp)
-                        )
-                    }
-                }
-
-                // Calorie bar + macros
-                Column(Modifier.weight(1f)) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("🔥", fontSize = 12.sp)
-                            Text(
-                                "CALORIES",
-                                color = colors.textMuted,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Medium
+                    Modifier
+                        .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
+                        .height(12.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            Brush.horizontalGradient(
+                                listOf(colors.green, colors.green.copy(alpha = 0.7f))
                             )
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                "$calories",
-                                color = colors.textPrimary,
-                                fontSize = 14.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Text(
-                                " / $caloriesGoal",
-                                color = colors.textMuted,
-                                fontSize = 12.sp
-                            )
-                        }
-                    }
-                    Spacer(Modifier.height(6.dp))
-                    Box(
-                        Modifier
-                            .fillMaxWidth()
-                            .height(10.dp)
-                            .clip(RoundedCornerShape(5.dp))
-                            .background(colors.trackColor)
-                    ) {
-                        Box(
-                            Modifier
-                                .fillMaxWidth(progressFraction.coerceIn(0f, 1f))
-                                .height(10.dp)
-                                .clip(RoundedCornerShape(5.dp))
-                                .background(colors.green)
                         )
-                    }
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        MacroChip("Protein", "${protein}g", "/ ${proteinGoal}g", colors, ProteinColor)
-                        MacroChip("Carbs", "${carbs}g", "/ ${carbsGoal}g", colors, CarbsColor)
-                        MacroChip("Fat", "${fat}g", "/ ${fatGoal}g", colors, FatsColor)
-                    }
-                }
+                )
             }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Macro bars
+            MacroBar("Protein", protein, proteinGoal, ProteinColor, "g")
+            Spacer(Modifier.height(10.dp))
+            MacroBar("Carbs", carbs, carbsGoal, CarbsColor, "g")
+            Spacer(Modifier.height(10.dp))
+            MacroBar("Fat", fat, fatGoal, FatsColor, "g")
         }
     }
 }
 
 @Composable
-private fun MacroChip(label: String, current: String, goal: String, colors: NutritionColors, dotColor: Color) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Box(Modifier.size(6.dp).clip(CircleShape).background(dotColor))
-            Text(label, color = colors.textMuted, fontSize = 11.sp)
+private fun MacroBar(
+    label: String,
+    current: Int,
+    goal: Int,
+    color: Color,
+    unit: String
+) {
+    val fraction = current.toFloat() / goal.coerceAtLeast(1).coerceAtLeast(current)
+    val animated by animateFloatAsState(
+        targetValue = fraction.coerceIn(0f, 1f),
+        animationSpec = tween(600, easing = LinearEasing),
+        label = "macroBar_$label"
+    )
+    Column {
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                Box(Modifier.size(8.dp).clip(CircleShape).background(color))
+                Text(
+                    label,
+                    color = PrimaryText,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+            Text(
+                "$current / $goal$unit",
+                color = SecondaryText,
+                fontSize = 12.sp
+            )
         }
-        Spacer(Modifier.height(2.dp))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(current, color = colors.textPrimary, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-            Text(goal, color = colors.green, fontSize = 10.sp)
+        Spacer(Modifier.height(4.dp))
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(6.dp)
+                .clip(RoundedCornerShape(3.dp))
+                .background(color.copy(alpha = 0.15f))
+        ) {
+            Box(
+                Modifier
+                    .fillMaxWidth(animated)
+                    .height(6.dp)
+                    .clip(RoundedCornerShape(3.dp))
+                    .background(color)
+            )
         }
     }
 }
@@ -316,52 +310,106 @@ fun NutritionActionCard(
     title: String,
     subtitle: String,
     badge: String? = null,
+    hero: Boolean = false,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(24.dp))
-            .background(colors.cardBg)
-            .border(1.dp, colors.border.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick)
-            .padding(20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            if (badge != null) {
+    if (hero) {
+        // Full-width hero card for AI Food Scan
+        Box(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .clip(RoundedCornerShape(24.dp))
+                .background(colors.greenLight)
+                .border(1.dp, colors.green.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+                .clickable(onClick = onClick)
+                .padding(20.dp)
+        ) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 Box(
                     Modifier
-                        .align(Alignment.End)
-                        .offset(x = 4.dp, y = (-4).dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFE8A17E))
-                        .padding(horizontal = 8.dp, vertical = 2.dp)
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(18.dp))
+                        .background(colors.green.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(badge, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                    Text(icon, fontSize = 32.sp)
+                }
+                Column(Modifier.weight(1f)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            title,
+                            color = colors.textPrimary,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 18.sp
+                        )
+                        if (badge != null) {
+                            Box(
+                                Modifier
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(colors.green.copy(alpha = 0.2f))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(badge, color = colors.green, fontSize = 10.sp, fontWeight = FontWeight.Medium)
+                            }
+                        }
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        subtitle,
+                        color = colors.textMuted,
+                        fontSize = 13.sp
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = onClick,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = colors.green,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(14.dp)
+                    ) {
+                        Text("Scan Food", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
-
-            Box(
-                Modifier
-                    .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(colors.greenLight),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(icon, fontSize = 28.sp)
+        }
+    } else {
+        Box(
+            modifier = modifier
+                .clip(RoundedCornerShape(24.dp))
+                .background(colors.cardBg)
+                .border(1.dp, colors.border.copy(alpha = 0.2f), RoundedCornerShape(24.dp))
+                .clickable(onClick = onClick)
+                .padding(20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(colors.greenLight),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(icon, fontSize = 28.sp)
+                }
+                Spacer(Modifier.height(12.dp))
+                Text(title, color = colors.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    subtitle,
+                    color = colors.textMuted,
+                    fontSize = 11.sp,
+                    lineHeight = 16.sp,
+                    modifier = Modifier.padding(horizontal = 4.dp)
+                )
             }
-
-            Spacer(Modifier.height(12.dp))
-            Text(title, color = colors.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                subtitle,
-                color = colors.textMuted,
-                fontSize = 11.sp,
-                lineHeight = 16.sp,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
         }
     }
 }
@@ -481,11 +529,35 @@ fun NutritionEmptyState(
             .padding(vertical = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("🍽️", fontSize = 40.sp, modifier = Modifier.alpha(0.3f))
+        Text("🍽️", fontSize = 48.sp, modifier = Modifier.alpha(0.4f))
         Spacer(Modifier.height(12.dp))
-        Text("No meals logged yet", color = colors.textMuted, fontSize = 14.sp)
+        Text(
+            "No meals logged yet",
+            color = colors.textPrimary,
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold
+        )
         Spacer(Modifier.height(4.dp))
-        Text("Tap to log your first meal", color = colors.green, fontSize = 12.sp)
+        Text(
+            "Tap to log your first meal — scan a barcode,",
+            color = colors.textMuted,
+            fontSize = 12.sp
+        )
+        Text(
+            "snap a photo, or search our database.",
+            color = colors.textMuted,
+            fontSize = 12.sp
+        )
+        Spacer(Modifier.height(16.dp))
+        Box(
+            Modifier
+                .clip(RoundedCornerShape(14.dp))
+                .background(colors.green.copy(alpha = 0.1f))
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text("+ Log a meal", color = colors.green, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+        }
     }
 }
 

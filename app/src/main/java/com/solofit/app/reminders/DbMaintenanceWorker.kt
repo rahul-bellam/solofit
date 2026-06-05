@@ -39,7 +39,7 @@ class DbMaintenanceWorker @AssistedInject constructor(
                 db.query("PRAGMA wal_checkpoint(TRUNCATE)").use { it.moveToFirst() }
                 db.execSQL("VACUUM")
             }
-            userPreferences.pruneOldWaterKeys()
+            userPreferences.pruneOldData()
             Result.success()
         } catch (e: Exception) {
             Result.success()

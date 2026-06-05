@@ -75,7 +75,7 @@ fun ScanScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             when (val s = state) {
-                ScanUiState.Idle, is ScanUiState.Error -> {
+                ScanUiState.Idle -> {
                     Icon(
                         Icons.Filled.QrCodeScanner,
                         contentDescription = null,
@@ -88,10 +88,6 @@ fun ScanScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    if (s is ScanUiState.Error) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(s.message, color = MaterialTheme.colorScheme.error)
-                    }
                     Spacer(Modifier.height(20.dp))
                     Button(onClick = { viewModel.startScan(context) }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Filled.QrCodeScanner, null)
@@ -101,13 +97,41 @@ fun ScanScreen(
                     ManualBarcodeEntry(onLookup = viewModel::lookupManual)
                 }
 
-                ScanUiState.Scanning, ScanUiState.LookingUp -> {
+                is ScanUiState.Error -> {
+                    Icon(
+                        Icons.Filled.QrCodeScanner,
+                        contentDescription = null,
+                        modifier = Modifier.height(96.dp),
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        s.message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                    Spacer(Modifier.height(20.dp))
+                    Button(onClick = { viewModel.retry(context) }, modifier = Modifier.fillMaxWidth()) {
+                        Text("Retry")
+                    }
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
+                        Text("Cancel")
+                    }
+                    Spacer(Modifier.height(24.dp))
+                    ManualBarcodeEntry(onLookup = viewModel::lookupManual)
+                }
+
+                ScanUiState.Preparing, ScanUiState.Scanning, ScanUiState.LookingUp -> {
                     Spacer(Modifier.height(60.dp))
                     CircularProgressIndicator()
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        if (s == ScanUiState.Scanning) "Opening scanner…"
-                        else "Looking up in Open Food Facts…"
+                        when (s) {
+                            ScanUiState.Preparing -> "Preparing scanner…"
+                            ScanUiState.Scanning -> "Opening scanner…"
+                            else -> "Looking up in Open Food Facts…"
+                        }
                     )
                 }
 

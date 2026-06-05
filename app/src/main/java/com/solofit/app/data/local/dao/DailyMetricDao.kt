@@ -20,4 +20,7 @@ interface DailyMetricDao {
 
     @Query("SELECT * FROM daily_metrics ORDER BY date ASC")
     fun observeAll(): Flow<List<DailyMetricEntity>>
+
+    @Query("SELECT * FROM daily_metrics WHERE date >= :startDate ORDER BY date ASC")
+    fun observeSince(startDate: String): Flow<List<DailyMetricEntity>>
 }

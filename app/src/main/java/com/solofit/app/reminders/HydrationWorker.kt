@@ -13,12 +13,6 @@ import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 import java.util.Calendar
 
-/**
- * Periodic hydration nudge. Posts a SILENT notification unless:
- *  - hydration reminders are disabled,
- *  - we're inside quiet hours, or
- *  - the daily water goal is already met.
- */
 @HiltWorker
 class HydrationWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -37,7 +31,6 @@ class HydrationWorker @AssistedInject constructor(
             return Result.success()
         }
 
-        // Skip if already hydrated enough today.
         val today = DateUtils.today()
         val current = withContext(Dispatchers.IO) { prefs.waterMl(today).first() }
         val goal = withContext(Dispatchers.IO) { prefs.waterGoalMl.first() }
@@ -47,8 +40,8 @@ class HydrationWorker @AssistedInject constructor(
         notifier.notify(
             channelId = SoloNotifier.CHANNEL_HYDRATION,
             notificationId = SoloNotifier.ID_HYDRATION,
-            title = "Time for water 💧",
-            message = "You've had ${current} ml today. About ${remaining} ml to go — sip and log it."
+            title = "Hydration Check",
+            message = "You've logged ${current}ml of ${goal}ml today. Staying hydrated supports recovery."
         )
         return Result.success()
     }

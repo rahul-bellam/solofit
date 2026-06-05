@@ -2,11 +2,13 @@ package com.solofit.app.data.local
 
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
+import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ReminderSettings
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.model.TrainingGoal
@@ -27,7 +29,7 @@ private val Context.dataStore by preferencesDataStore(name = "solofit_prefs")
  */
 @Singleton
 class UserPreferences @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
     private val onboardingCompleteKey = booleanPreferencesKey("onboarding_complete")
     private val themeModeKey = stringPreferencesKey("theme_mode")
@@ -37,6 +39,7 @@ class UserPreferences @Inject constructor(
     private val phaseStartDateKey = stringPreferencesKey("phase_start_date")
     private val phaseTargetDaysKey = intPreferencesKey("phase_target_days")
     private val trainingGoalKey = stringPreferencesKey("training_goal")
+    private val voicePersonalityKey = stringPreferencesKey("voice_personality")
 
     // Reminder keys
     private val hydrationEnabledKey = booleanPreferencesKey("rem_hydration_enabled")
@@ -50,6 +53,7 @@ class UserPreferences @Inject constructor(
     private val waterGoalMlKey = intPreferencesKey("water_goal_ml")
     private val quietStartKey = intPreferencesKey("rem_quiet_start")
     private val quietEndKey = intPreferencesKey("rem_quiet_end")
+    private val stepGoalKey = intPreferencesKey("step_goal")
 
     val onboardingComplete: Flow<Boolean> =
         context.dataStore.data.map { it[onboardingCompleteKey] ?: false }
@@ -112,6 +116,17 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { it[trainingGoalKey] = goal.name }
     }
 
+    val voicePersonality: Flow<com.solofit.app.sol.VoicePersonality> =
+        context.dataStore.data.map { prefs ->
+            prefs[voicePersonalityKey]?.let {
+                runCatching { com.solofit.app.sol.VoicePersonality.valueOf(it) }.getOrNull()
+            } ?: com.solofit.app.sol.VoicePersonality.COMPANION
+        }
+
+    suspend fun setVoicePersonality(personality: com.solofit.app.sol.VoicePersonality) {
+        context.dataStore.edit { it[voicePersonalityKey] = personality.name }
+    }
+
     /** Water intake in millilitres for a given ISO date. */
     fun waterMl(date: String): Flow<Int> {
         val key = intPreferencesKey("water_$date")
@@ -136,6 +151,13 @@ class UserPreferences @Inject constructor(
 
     suspend fun setWaterGoalMl(ml: Int) {
         context.dataStore.edit { it[waterGoalMlKey] = ml.coerceIn(250, 10000) }
+    }
+
+    val stepGoal: Flow<Int> =
+        context.dataStore.data.map { it[stepGoalKey] ?: 8000 }
+
+    suspend fun setStepGoal(goal: Int) {
+        context.dataStore.edit { it[stepGoalKey] = goal.coerceIn(1000, 50000) }
     }
 
     // ---- Reminders ----
@@ -171,19 +193,200 @@ class UserPreferences @Inject constructor(
         }
     }
 
+    // ──────────────────────────────────────────────
+    //  Module System
+    // ──────────────────────────────────────────────
+
+    private val enabledModulesKey = stringPreferencesKey("enabled_modules")
+    private val moduleSelectionCompleteKey = booleanPreferencesKey("module_selection_complete")
+    private val moduleOrderKey = stringPreferencesKey("module_order")
+
+    val moduleSelectionComplete: Flow<Boolean> =
+        context.dataStore.data.map { it[moduleSelectionCompleteKey] ?: false }
+
+    suspend fun setModuleSelectionComplete(value: Boolean) {
+        context.dataStore.edit { it[moduleSelectionCompleteKey] = value }
+    }
+
+    val enabledModules: Flow<List<SoloFitModule>> =
+        context.dataStore.data.map { prefs ->
+            val raw = prefs[enabledModulesKey] ?: return@map SoloFitModule.DEFAULT_ENABLED
+            raw.split(",").mapNotNull { SoloFitModule.fromId(it.trim()) }
+                .ifEmpty { SoloFitModule.DEFAULT_ENABLED }
+        }
+
+    suspend fun setEnabledModules(modules: List<SoloFitModule>) {
+        context.dataStore.edit { it[enabledModulesKey] = modules.joinToString(",") { it.id } }
+    }
+
+    val moduleOrder: Flow<List<SoloFitModule>> =
+        context.dataStore.data.map { prefs ->
+            val raw = prefs[moduleOrderKey] ?: return@map emptyList()
+            raw.split(",").mapNotNull { SoloFitModule.fromId(it.trim()) }
+        }
+
+    suspend fun setModuleOrder(modules: List<SoloFitModule>) {
+        context.dataStore.edit { it[moduleOrderKey] = modules.joinToString(",") { it.id } }
+    }
+
+    suspend fun clearModulePreferences() {
+        context.dataStore.edit {
+            it.remove(enabledModulesKey)
+            it.remove(moduleSelectionCompleteKey)
+            it.remove(moduleOrderKey)
+        }
+    }
+
+    // ──────────────────────────────────────────────
+    //  Wellness / Daily Check-In
+    // ──────────────────────────────────────────────
+
+    /** Sleep hours for a given ISO date. */
+    fun sleepHours(date: String): Flow<Float> {
+        val key = stringPreferencesKey("sleep_$date")
+        return context.dataStore.data.map { it[key]?.toFloatOrNull() ?: 0f }
+    }
+
+    suspend fun setSleepHours(date: String, hours: Float) {
+        val key = stringPreferencesKey("sleep_$date")
+        context.dataStore.edit { it[key] = hours.coerceIn(0f, 24f).toString() }
+    }
+
+    /** Stress level 1–5 for a given ISO date. */
+    fun stressLevel(date: String): Flow<Int> {
+        val key = intPreferencesKey("stress_$date")
+        return context.dataStore.data.map { it[key]?.coerceIn(1, 5) ?: 3 }
+    }
+
+    suspend fun setStressLevel(date: String, level: Int) {
+        val key = intPreferencesKey("stress_$date")
+        context.dataStore.edit { it[key] = level.coerceIn(1, 5) }
+    }
+
+    /** Mood level 1–5 for a given ISO date. */
+    fun moodLevel(date: String): Flow<Int> {
+        val key = intPreferencesKey("mood_$date")
+        return context.dataStore.data.map { it[key]?.coerceIn(1, 5) ?: 3 }
+    }
+
+    suspend fun setMoodLevel(date: String, level: Int) {
+        val key = intPreferencesKey("mood_$date")
+        context.dataStore.edit { it[key] = level.coerceIn(1, 5) }
+    }
+
+    /** Energy level 1–5 for a given ISO date. */
+    fun energyLevel(date: String): Flow<Int> {
+        val key = intPreferencesKey("energy_$date")
+        return context.dataStore.data.map { it[key]?.coerceIn(1, 5) ?: 3 }
+    }
+
+    suspend fun setEnergyLevel(date: String, level: Int) {
+        val key = intPreferencesKey("energy_$date")
+        context.dataStore.edit { it[key] = level.coerceIn(1, 5) }
+    }
+
+    /** Meditation minutes for a given ISO date. */
+    fun meditationMinutes(date: String): Flow<Int> {
+        val key = intPreferencesKey("meditation_$date")
+        return context.dataStore.data.map { it[key] ?: 0 }
+    }
+
+    suspend fun setMeditationMinutes(date: String, minutes: Int) {
+        val key = intPreferencesKey("meditation_$date")
+        context.dataStore.edit { it[key] = minutes.coerceAtLeast(0) }
+    }
+
+    private val customHabitsKey = stringPreferencesKey("custom_habits")
+
+    /** Habit completed flag for a given date + habit id. */
+    fun habitCompleted(date: String, habitId: String): Flow<Boolean> {
+        val key = booleanPreferencesKey("habit_${date}_$habitId")
+        return context.dataStore.data.map { it[key] ?: false }
+    }
+
+    suspend fun setHabitCompleted(date: String, habitId: String, completed: Boolean) {
+        val key = booleanPreferencesKey("habit_${date}_$habitId")
+        context.dataStore.edit { it[key] = completed }
+    }
+
+    val customHabits: Flow<List<Pair<String, String>>> =
+        context.dataStore.data.map { prefs ->
+            prefs[customHabitsKey]?.split("|")?.mapNotNull { entry ->
+                val parts = entry.split(":", limit = 2)
+                if (parts.size == 2) parts[0] to parts[1] else null
+            } ?: emptyList()
+        }
+
+    suspend fun addCustomHabit(habitId: String, displayName: String) {
+        context.dataStore.edit { prefs ->
+            val existing = prefs[customHabitsKey].orEmpty()
+            val updated = if (existing.isNotEmpty()) "$existing|$habitId:$displayName" else "$habitId:$displayName"
+            prefs[customHabitsKey] = updated
+        }
+    }
+
+    suspend fun removeCustomHabit(habitId: String) {
+        context.dataStore.edit { prefs ->
+            val entries = prefs[customHabitsKey]?.split("|")?.filter {
+                !it.startsWith("$habitId:")
+            } ?: emptyList()
+            prefs[customHabitsKey] = entries.joinToString("|")
+        }
+    }
+
+    /** All wellness data for a date packed into a single snapshot. */
+    data class DailyWellness(
+        val sleepHours: Float = 0f,
+        val stressLevel: Int = 3,
+        val moodLevel: Int = 3,
+        val energyLevel: Int = 3,
+        val meditationMinutes: Int = 0
+    )
+
+    fun dailyWellness(date: String): Flow<DailyWellness> {
+        val sleepKey = stringPreferencesKey("sleep_$date")
+        val stressKey = intPreferencesKey("stress_$date")
+        val moodKey = intPreferencesKey("mood_$date")
+        val energyKey = intPreferencesKey("energy_$date")
+        val meditationKey = intPreferencesKey("meditation_$date")
+        return context.dataStore.data.map { prefs ->
+            DailyWellness(
+                sleepHours = prefs[sleepKey]?.toFloatOrNull() ?: 0f,
+                stressLevel = (prefs[stressKey] ?: 3).coerceIn(1, 5),
+                moodLevel = (prefs[moodKey] ?: 3).coerceIn(1, 5),
+                energyLevel = (prefs[energyKey] ?: 3).coerceIn(1, 5),
+                meditationMinutes = prefs[meditationKey] ?: 0
+            )
+        }
+    }
+
+    /** Compute a readiness score 0–100 from today's wellness data. */
+    fun readinessScore(date: String): Flow<Int> = dailyWellness(date).map { w ->
+        val sleep = ((w.sleepHours / 8f).coerceAtMost(1f) * 30).toInt()
+        val stress = ((5 - w.stressLevel) / 4f * 20).toInt()
+        val mood = (w.moodLevel / 5f * 20).toInt()
+        val energy = (w.energyLevel / 5f * 30).toInt()
+        (sleep + stress + mood + energy).coerceIn(0, 100)
+    }
+
     /**
-     * Remove stale per-day water keys older than [keepDays] to prevent
-     * DataStore file bloat over years of use.
+     * Remove stale per-day wellness keys older than [keepDays] to prevent
+     * DataStore file bloat.
      */
-    suspend fun pruneOldWaterKeys(keepDays: Long = 7) {
+    suspend fun pruneOldData(keepDays: Long = 90) {
         val cutoff = LocalDate.now().minusDays(keepDays)
         context.dataStore.edit { prefs ->
             prefs.asMap().keys
-                .filter { it.name.startsWith("water_") && it.name != "water_goal_ml" }
                 .filter { key ->
-                    runCatching {
-                        LocalDate.parse(key.name.removePrefix("water_")).isBefore(cutoff)
-                    }.getOrDefault(false)
+                    val datePrefix = listOf("water_", "sleep_", "stress_", "mood_", "energy_", "meditation_", "habit_")
+                        .firstOrNull { key.name.startsWith(it) }
+                    if (datePrefix != null) {
+                        val dateStr = key.name.removePrefix(datePrefix)
+                        val datePart = if (datePrefix == "habit_") {
+                            dateStr.substringBefore("_")
+                        } else dateStr
+                        runCatching { LocalDate.parse(datePart).isBefore(cutoff) }.getOrDefault(false)
+                    } else false
                 }
                 .forEach { prefs.remove(it) }
         }

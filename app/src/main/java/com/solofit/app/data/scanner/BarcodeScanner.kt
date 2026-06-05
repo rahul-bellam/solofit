@@ -1,6 +1,8 @@
 package com.solofit.app.data.scanner
 
 import android.content.Context
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
@@ -16,14 +18,6 @@ sealed interface ScanOutcome {
     data class Failure(val message: String) : ScanOutcome
 }
 
-/**
- * Thin wrapper over Google Code Scanner (Play Services). It launches Google's own
- * fullscreen scanning UI (camera, autofocus, highlight all handled by the module),
- * so the app needs no custom camera preview. Scanning itself runs on-device; the
- * resulting string is then handed to the OFF lookup.
- *
- * Requires an Activity context — scanning uses startActivityForResult internally.
- */
 @Singleton
 class BarcodeScanner @Inject constructor() {
 
@@ -37,6 +31,23 @@ class BarcodeScanner @Inject constructor() {
         )
         .enableAutoZoom()
         .build()
+
+    fun isAvailable(context: Context): String? {
+        val result = GoogleApiAvailability.getInstance()
+            .isGooglePlayServicesAvailable(context)
+        return when (result) {
+            ConnectionResult.SUCCESS -> null
+            ConnectionResult.SERVICE_MISSING ->
+                "Google Play Services is not installed on this device."
+            ConnectionResult.SERVICE_VERSION_UPDATE_REQUIRED ->
+                "Google Play Services needs to be updated."
+            ConnectionResult.SERVICE_DISABLED ->
+                "Google Play Services is disabled."
+            ConnectionResult.SERVICE_INVALID ->
+                "Google Play Services is not functioning correctly."
+            else -> "Scanner unavailable (code $result)."
+        }
+    }
 
     suspend fun scan(context: Context): ScanOutcome = suspendCancellableCoroutine { cont ->
         try {
@@ -54,10 +65,25 @@ class BarcodeScanner @Inject constructor() {
                 }
                 .addOnCanceledListener { once(ScanOutcome.Cancelled) }
                 .addOnFailureListener { e ->
-                    once(ScanOutcome.Failure(e.message ?: "Scanner error."))
+                    val msg = e.message ?: ""
+                    val friendly = when {
+                        msg.contains("module", ignoreCase = true) &&
+                            msg.contains("download", ignoreCase = true) ->
+                            "Barcode scanner module could not be downloaded. Check your internet and try again."
+                        msg.contains("network", ignoreCase = true) ||
+                            msg.contains("timeout", ignoreCase = true) ->
+                            "Network error. Check your connection and try again."
+                        msg.contains("permission", ignoreCase = true) ||
+                            msg.contains("camera", ignoreCase = true) ->
+                            "Camera permission is required for scanning."
+                        else -> "Scanner unavailable. Tap Retry to try again."
+                    }
+                    once(ScanOutcome.Failure(friendly))
                 }
         } catch (e: Exception) {
-            if (!cont.isCancelled) cont.resume(ScanOutcome.Failure(e.message ?: "Scanner unavailable."))
+            if (!cont.isCancelled) cont.resume(
+                ScanOutcome.Failure("Scanner unavailable. Tap Retry to try again.")
+            )
         }
     }
 }

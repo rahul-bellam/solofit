@@ -11,9 +11,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 
-/**
- * Evening 2-minute gratitude prompt (silent). Self-reschedules for tomorrow.
- */
 @HiltWorker
 class EveningGratitudeWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -29,8 +26,8 @@ class EveningGratitudeWorker @AssistedInject constructor(
             notifier.notify(
                 channelId = SoloNotifier.CHANNEL_JOURNAL,
                 notificationId = SoloNotifier.ID_EVENING,
-                title = "Evening reflection 🌙",
-                message = "2-minute check-in: what are 3 things you're grateful for today?"
+                title = "Evening Check-In",
+                message = "Today included meaningful progress. Small consistent actions tend to compound over time."
             )
         }
         scheduler.scheduleEveningGratitude(settings)

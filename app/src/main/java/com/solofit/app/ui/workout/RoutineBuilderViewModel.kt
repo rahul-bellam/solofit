@@ -10,8 +10,10 @@ import com.solofit.app.data.local.seed.WorkoutTemplates
 import com.solofit.app.domain.model.ExercisePlan
 import com.solofit.app.domain.repository.WorkoutRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -21,6 +23,7 @@ data class RoutineBuilderState(
     val name: String = "",
     val notes: String = "",
     val selected: List<ExercisePlan> = emptyList(),
+    val isSaving: Boolean = false,
     val catalog: List<ExerciseTemplate> = ExerciseSeedData.exercises,
     val muscleGroups: List<String> = ExerciseSeedData.muscleGroups,
     val activeGroup: String? = null,
@@ -29,7 +32,7 @@ data class RoutineBuilderState(
     val showTemplates: Boolean = false,
     val templates: List<WorkoutTemplate> = WorkoutTemplates.templates
 ) {
-    val canSave: Boolean get() = name.isNotBlank() && selected.isNotEmpty()
+    val canSave: Boolean get() = !isSaving && name.isNotBlank() && selected.isNotEmpty()
 
     val filteredCatalog: List<ExerciseTemplate>
         get() = catalog.filter { template ->
@@ -47,6 +50,9 @@ class RoutineBuilderViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(RoutineBuilderState())
     val state = _state.asStateFlow()
+
+    private val _snackbar = Channel<String>(Channel.CONFLATED)
+    val snackbar = _snackbar.receiveAsFlow()
 
     init {
         val id = savedStateHandle.get<Long>("routineId") ?: -1L
@@ -109,9 +115,16 @@ class RoutineBuilderViewModel @Inject constructor(
     fun save(onDone: () -> Unit) {
         val s = _state.value
         if (!s.canSave) return
+        _state.update { it.copy(isSaving = true) }
         viewModelScope.launch {
-            repository.saveRoutine(s.name.trim(), s.notes.trim(), s.selected, s.routineId)
-            onDone()
+            try {
+                repository.saveRoutine(s.name.trim(), s.notes.trim(), s.selected, s.routineId)
+                _snackbar.send("Routine saved")
+                onDone()
+            } catch (e: Exception) {
+                _snackbar.send("Failed to save: ${e.localizedMessage ?: "unknown error"}")
+                _state.update { it.copy(isSaving = false) }
+            }
         }
     }
 }

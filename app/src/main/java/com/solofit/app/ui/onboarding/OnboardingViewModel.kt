@@ -2,11 +2,13 @@ package com.solofit.app.ui.onboarding
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.domain.model.ActivityLevel
 import com.solofit.app.domain.model.FitnessGoal
 import com.solofit.app.domain.model.Gender
 import com.solofit.app.domain.model.NutritionTargets
+import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.usecase.CalculateNutritionTargetsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -17,16 +19,17 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class OnboardingState(
+    val step: Int = 0,
     val name: String = "",
     val age: String = "",
     val gender: Gender = Gender.MALE,
     val weight: String = "",
     val height: String = "",
-    val activityLevel: ActivityLevel = ActivityLevel.MODERATE,
-    val goal: FitnessGoal = FitnessGoal.MAINTAIN,
+    val goal: FitnessGoal? = null,
+    val selectedModules: Set<SoloFitModule> = SoloFitModule.DEFAULT_ENABLED.toSet(),
     val preview: NutritionTargets? = null
 ) {
-    val isValid: Boolean
+    val isPersonalInfoValid: Boolean
         get() = name.isNotBlank() &&
             age.toIntOrNull()?.let { it in 1..120 } == true &&
             weight.toDoubleOrNull()?.let { it in 20.0..400.0 } == true &&
@@ -36,19 +39,38 @@ data class OnboardingState(
 @HiltViewModel
 class OnboardingViewModel @Inject constructor(
     private val repository: ProfileRepository,
-    private val calculate: CalculateNutritionTargetsUseCase
+    private val calculate: CalculateNutritionTargetsUseCase,
+    private val prefs: UserPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OnboardingState())
     val state = _state.asStateFlow()
 
-    fun onName(v: String) = _state.update { it.copy(name = v).recompute() }
-    fun onAge(v: String) = _state.update { it.copy(age = v.filter { c -> c.isDigit() }).recompute() }
-    fun onGender(v: Gender) = _state.update { it.copy(gender = v).recompute() }
-    fun onWeight(v: String) = _state.update { it.copy(weight = v.filterDecimal()).recompute() }
-    fun onHeight(v: String) = _state.update { it.copy(height = v.filterDecimal()).recompute() }
-    fun onActivity(v: ActivityLevel) = _state.update { it.copy(activityLevel = v).recompute() }
-    fun onGoal(v: FitnessGoal) = _state.update { it.copy(goal = v).recompute() }
+    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(4)) }
+    fun previousStep() = _state.update { it.copy(step = (it.step - 1).coerceAtLeast(0)) }
+
+    fun onName(v: String) = _state.update { it.copy(name = v) }
+    fun onAge(v: String) = _state.update { it.copy(age = v.filter { c -> c.isDigit() }) }
+    fun onGender(v: Gender) = _state.update { it.copy(gender = v) }
+    fun onWeight(v: String) = _state.update { it.copy(weight = v.filterDecimal()) }
+    fun onHeight(v: String) = _state.update { it.copy(height = v.filterDecimal()) }
+
+    fun onGoal(v: FitnessGoal) {
+        _state.update {
+            it.copy(goal = v).recompute()
+        }
+    }
+
+    fun toggleModule(module: SoloFitModule) {
+        _state.update {
+            it.copy(
+                selectedModules = if (module in it.selectedModules)
+                    it.selectedModules - module
+                else
+                    it.selectedModules + module
+            )
+        }
+    }
 
     private fun String.filterDecimal(): String {
         val filtered = filterIndexed { i, c -> c.isDigit() || (c == '.' && !substring(0, i).contains('.')) }
@@ -56,6 +78,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun OnboardingState.recompute(): OnboardingState {
+        val g = goal ?: return this
         val a = age.toIntOrNull()
         val w = weight.toDoubleOrNull()
         val h = height.toDoubleOrNull()
@@ -65,7 +88,7 @@ class OnboardingViewModel @Inject constructor(
                 preview = calculate(
                     CalculateNutritionTargetsUseCase.Params(
                         age = a, gender = gender, weightKg = w, heightCm = h,
-                        activityLevel = activityLevel, goal = goal
+                        activityLevel = ActivityLevel.MODERATE, goal = g
                     )
                 )
             )
@@ -74,9 +97,10 @@ class OnboardingViewModel @Inject constructor(
         }
     }
 
-    fun save(onDone: () -> Unit) {
+    fun finish(onDone: () -> Unit) {
         val s = _state.value
         val targets = s.preview ?: return
+        val g = s.goal ?: return
         viewModelScope.launch {
             repository.saveProfile(
                 UserProfileEntity(
@@ -85,8 +109,8 @@ class OnboardingViewModel @Inject constructor(
                     gender = s.gender,
                     weightKg = s.weight.toDouble(),
                     heightCm = s.height.toDouble(),
-                    activityLevel = s.activityLevel,
-                    goal = s.goal,
+                    activityLevel = ActivityLevel.MODERATE,
+                    goal = g,
                     targetCalories = targets.targetCalories,
                     targetProtein = targets.targetProteinG,
                     targetCarbs = targets.targetCarbsG,
@@ -96,6 +120,10 @@ class OnboardingViewModel @Inject constructor(
                 )
             )
             repository.setOnboardingComplete(true)
+            val modules = s.selectedModules.toList().ifEmpty { SoloFitModule.DEFAULT_ENABLED }
+            prefs.setEnabledModules(modules)
+            prefs.setModuleOrder(SoloFitModule.entries.filter { it in modules })
+            prefs.setModuleSelectionComplete(true)
             onDone()
         }
     }

@@ -17,5 +17,5 @@ class Converters {
 
     @TypeConverter fun fromGoal(value: FitnessGoal): String = value.name
     @TypeConverter fun toGoal(value: String): FitnessGoal =
-        runCatching { FitnessGoal.valueOf(value) }.getOrDefault(FitnessGoal.MAINTAIN)
+        runCatching { FitnessGoal.valueOf(value) }.getOrDefault(FitnessGoal.IMPROVE_FITNESS)
 }

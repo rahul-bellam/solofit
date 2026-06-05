@@ -50,6 +50,7 @@ fun CalorieRing(
     strokeWidth: Dp = 18.dp,
     waveFill: Boolean = true,
     animate: Boolean = true,
+    accentColor: Color = MaterialTheme.colorScheme.primary,
     onClick: (() -> Unit)? = null
 ) {
     val progress = if (target > 0) (consumed.toFloat() / target).coerceIn(0f, 1f) else 0f
@@ -63,7 +64,7 @@ fun CalorieRing(
     val pct = if (target > 0) ((consumed.toFloat() / target) * 100).toInt().coerceIn(0, 100) else 0
 
     val trackColor = MaterialTheme.colorScheme.surfaceVariant
-    val ringColor = if (over > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    val ringColor = if (over > 0) MaterialTheme.colorScheme.error else accentColor
     val fillColor = ringColor.copy(alpha = 0.18f)
 
     // Wave phase for the liquid fill (only animates when enabled).
@@ -171,7 +172,7 @@ fun CalorieRing(
             } else {
                 Text(
                     "$remaining left",
-                    color = MaterialTheme.colorScheme.primary,
+                    color = accentColor,
                     fontWeight = FontWeight.SemiBold
                 )
             }

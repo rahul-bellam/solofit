@@ -26,7 +26,7 @@ data class EditProfileState(
     val weight: String = "",
     val height: String = "",
     val activityLevel: ActivityLevel = ActivityLevel.MODERATE,
-    val goal: FitnessGoal = FitnessGoal.MAINTAIN,
+    val goal: FitnessGoal = FitnessGoal.IMPROVE_FITNESS,
     val preview: NutritionTargets? = null,
     val saved: Boolean = false
 ) {

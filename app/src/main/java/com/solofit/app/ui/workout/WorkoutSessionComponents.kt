@@ -41,11 +41,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.Cyan
-import com.solofit.app.ui.theme.Emerald
-import com.solofit.app.ui.theme.Moss
-import com.solofit.app.ui.theme.Sage
-import com.solofit.app.ui.theme.SageDark
+import com.solofit.app.ui.theme.HighGreen
+import com.solofit.app.ui.theme.MidAmber
 import kotlinx.coroutines.delay
 
 // ─── Intensity ───
@@ -79,9 +76,9 @@ fun ProgressRing(
     )
 
     val color = when (state) {
-        RingState.COMPLETE -> Emerald
+        RingState.COMPLETE -> HighGreen
         RingState.ACTIVE -> Amber
-        RingState.REST -> Sage
+        RingState.REST -> MidAmber
         RingState.UPCOMING -> Color.White.copy(alpha = 0.2f)
     }
 
@@ -220,7 +217,7 @@ fun WorkoutExerciseCard(
             val accentColor = when (intensityForName(exerciseName)) {
                 IntensityLevel.HIGH -> Color(0xFFFF6B6B)
                 IntensityLevel.MED -> Amber
-                IntensityLevel.LOW -> Cyan
+                IntensityLevel.LOW -> Color(0xFFA8A5A0)
             }
             drawRect(
                 color = if (isActive) accentColor else accentColor.copy(alpha = 0.3f),
@@ -317,7 +314,7 @@ fun WorkoutExerciseCard(
                                         .height(8.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .background(
-                                            Brush.horizontalGradient(listOf(Moss, SageDark))
+                                            Brush.horizontalGradient(listOf(Amber, Amber))
                                         )
                                 )
                             }
@@ -335,7 +332,7 @@ fun WorkoutExerciseCard(
                                 SessionActionButton(
                                     text = "Done",
                                     onClick = onCompleteSet,
-                                    gradient = Moss to SageDark,
+                                    gradient = Amber to Amber,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -399,7 +396,7 @@ fun WorkoutExerciseCard(
                             SessionActionButton(
                                 text = "Start Set",
                                 onClick = onStartSet,
-                                gradient = Moss to SageDark,
+                                gradient = Amber to Amber,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -562,7 +559,7 @@ fun SessionProgressBar(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(
-                        Brush.horizontalGradient(listOf(Moss, SageDark, Amber))
+                        Brush.horizontalGradient(listOf(Amber, Amber, Amber))
                     )
             )
         }

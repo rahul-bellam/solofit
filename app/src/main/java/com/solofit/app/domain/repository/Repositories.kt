@@ -61,6 +61,8 @@ interface BodyRepository {
     fun observeMetric(date: String): Flow<com.solofit.app.data.local.entity.DailyMetricEntity?>
     suspend fun getMetric(date: String): com.solofit.app.data.local.entity.DailyMetricEntity?
     suspend fun saveMetric(entry: com.solofit.app.data.local.entity.DailyMetricEntity): Long
+
+    fun observeMetricsSince(startDate: String): Flow<List<com.solofit.app.data.local.entity.DailyMetricEntity>>
 }
 
 interface FoodRepository {

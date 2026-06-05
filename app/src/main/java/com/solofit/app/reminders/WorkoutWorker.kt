@@ -13,10 +13,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 
-/**
- * Daily workout reminder (silent). Skips if a workout was already completed today,
- * then reschedules itself for the next day's chosen time.
- */
 @HiltWorker
 class WorkoutWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -39,12 +35,11 @@ class WorkoutWorker @AssistedInject constructor(
             notifier.notify(
                 channelId = SoloNotifier.CHANNEL_WORKOUT,
                 notificationId = SoloNotifier.ID_WORKOUT,
-                title = "Workout time 🏋️",
-                message = "No session logged yet today. A quick routine keeps your streak alive."
+                title = "Movement Check",
+                message = "A short walk or session can still contribute to your goals today."
             )
         }
 
-        // Re-arm for tomorrow.
         scheduler.scheduleWorkout(settings)
         return Result.success()
     }

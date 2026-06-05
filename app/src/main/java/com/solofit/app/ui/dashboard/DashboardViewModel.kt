@@ -143,7 +143,7 @@ class DashboardViewModel @Inject constructor(
             val firsts = byDate.values.firstOrNull()?.maxOfOrNull {
                 FitnessMath.epley1RM(it.weightKg, it.reps)
             } ?: return@mapNotNull null
-            val bests = byDate.values.maxOf { day -> day.maxOf { FitnessMath.epley1RM(it.weightKg, it.reps) } }
+            val bests = byDate.values.maxOf { day -> day.maxOf { set -> FitnessMath.epley1RM(set.weightKg, set.reps) } }
             if (firsts <= 0) null else ((bests - firsts) / firsts)
         }
         val avgGain = if (gains.isEmpty()) 0.0 else gains.average()
@@ -208,6 +208,7 @@ class DashboardViewModel @Inject constructor(
 
     // ---- Weekly plan for today ----
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     private val todayPlan: Flow<WeeklyPlanEntity?> =
         dayFlow.flatMapLatest { weeklyPlanRepository.observePlanForDay(it) }
 

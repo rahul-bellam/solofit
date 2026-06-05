@@ -12,10 +12,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -25,12 +29,19 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Home
 import com.solofit.app.ui.dashboard.DashboardScreen
 import com.solofit.app.ui.foodlookup.FoodLookupScreen
+import com.solofit.app.ui.meditation.MeditationScreen
+import com.solofit.app.ui.modules.ModuleManagementScreen
+import com.solofit.app.ui.modules.ModuleSelectionScreen
+import com.solofit.app.ui.modules.ModuleViewModel
 import com.solofit.app.ui.navigation.BottomDestination
 import com.solofit.app.ui.navigation.GradientNavBar
 import com.solofit.app.ui.navigation.Routes
 import com.solofit.app.ui.nutrition.NutritionScreen
+import com.solofit.app.ui.recovery.RecoveryScreen
 import com.solofit.app.ui.scan.ScanScreen
 import com.solofit.app.ui.settings.EditProfileScreen
 import com.solofit.app.ui.settings.SettingsScreen
@@ -48,11 +59,41 @@ import com.solofit.app.ui.workout.HistoryScreen
 import com.solofit.app.ui.workout.RoutineBuilderScreen
 import com.solofit.app.ui.workout.plan.WorkoutPlannerScreen
 import com.solofit.app.ui.workout.WorkoutScreen
+import com.solofit.app.ui.progress.ProgressScreen
+import com.solofit.app.ui.walking.WalkingScreen
+import com.solofit.app.ui.habits.HabitsScreen
+import com.solofit.app.domain.model.SoloFitModule
+import com.solofit.app.ui.theme.CardCream
+import com.solofit.app.ui.theme.DarkSurface
+import com.solofit.app.ui.theme.NutritionCard
+import com.solofit.app.ui.theme.RecoveryCard
+import com.solofit.app.ui.theme.ProgressBg
+
+private fun navBarColorForRoute(route: String?): Color = when (route) {
+    Routes.DASHBOARD -> CardCream
+    Routes.NUTRITION -> NutritionCard
+    Routes.WORKOUT -> DarkSurface
+    Routes.RECOVERY -> RecoveryCard
+    Routes.MEDITATION -> CardCream
+    Routes.JOURNAL -> CardCream
+    Routes.PROGRESS -> ProgressBg
+    Routes.WALKING -> CardCream
+    Routes.HABITS -> CardCream
+    else -> Color.White
+}
+
+private val SNAV_ROUTES = setOf(
+    Routes.DASHBOARD, Routes.WORKOUT, Routes.NUTRITION, Routes.RECOVERY,
+    Routes.MEDITATION, Routes.JOURNAL, Routes.BODY, Routes.PROGRESS, Routes.WALKING, Routes.HABITS
+)
+
+private fun hasScreen(module: SoloFitModule): Boolean = module.route in SNAV_ROUTES
 
 @Composable
 fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
     val startState by rootViewModel.startState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
+    val moduleViewModel: ModuleViewModel = hiltViewModel()
 
     when (startState) {
         StartState.Loading -> {
@@ -61,20 +102,41 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
             }
         }
         else -> {
-            val start = if (startState == StartState.Onboarding)
-                Routes.ONBOARDING else Routes.DASHBOARD
+            val start = when (startState) {
+                StartState.Onboarding -> Routes.ONBOARDING
+                StartState.ModuleSelection -> Routes.MODULE_SELECTION
+                else -> Routes.DASHBOARD
+            }
 
             val backStackEntry by navController.currentBackStackEntryAsState()
             val currentRoute = backStackEntry?.destination?.route
-            val bottomRoutes = remember { BottomDestination.entries.map { it.route } }
-            val showBottomBar = currentRoute in bottomRoutes
-            val selectedDestination = BottomDestination.entries.firstOrNull { it.route == currentRoute }
+            val enabledModules by moduleViewModel.enabledModules.collectAsState()
+            val suggestions by moduleViewModel.suggestions.collectAsState()
+            val navModules = remember(enabledModules) {
+                enabledModules.filter { hasScreen(it) }
+            }
+            val navDestinations = remember(navModules) {
+                navModules.map { module ->
+                    BottomDestination(
+                        route = module.route,
+                        label = module.displayName,
+                        icon = com.solofit.app.ui.modules.moduleIcon(module),
+                        gradientFrom = com.solofit.app.ui.theme.Amber,
+                        gradientTo = com.solofit.app.ui.theme.Amber
+                    )
+                }
+            }
+            val allDestinations = remember(navDestinations) {
+                listOf(BottomDestination.HOME) + navDestinations
+            }
+            val showBottomBar = currentRoute in allDestinations.map { it.route }
+            val selectedDestination = allDestinations.firstOrNull { it.route == currentRoute }
 
             Scaffold(
                 bottomBar = {
                     if (showBottomBar) {
                         GradientNavBar(
-                            destinations = BottomDestination.entries,
+                            destinations = allDestinations,
                             selectedDestination = selectedDestination,
                             onDestinationSelected = { dest ->
                                 navController.navigate(dest.route) {
@@ -84,7 +146,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                                     launchSingleTop = true
                                     restoreState = true
                                 }
-                            }
+                            },
+                            barColor = navBarColorForRoute(currentRoute)
                         )
                     }
                 }
@@ -107,8 +170,35 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             }
                         )
                     }
+                    composable(Routes.MODULE_SELECTION) {
+                        val moduleVm: ModuleViewModel = hiltViewModel()
+                        val selected = remember {
+                            mutableStateOf(SoloFitModule.DEFAULT_ENABLED.toSet())
+                        }
+                        ModuleSelectionScreen(
+                            selected = selected.value,
+                            onToggle = { module ->
+                                selected.value = if (module in selected.value)
+                                    selected.value - module
+                                else
+                                    selected.value + module
+                            },
+                            onContinue = {
+                                val modules = selected.value.toList().ifEmpty {
+                                    SoloFitModule.DEFAULT_ENABLED
+                                }
+                                moduleVm.selectModules(modules)
+                                navController.navigate(Routes.DASHBOARD) {
+                                    popUpTo(Routes.MODULE_SELECTION) { inclusive = true }
+                                }
+                            }
+                        )
+                    }
                     composable(Routes.DASHBOARD) {
                         DashboardScreen(
+                            enabledModules = enabledModules,
+                            suggestions = suggestions,
+                            onEnableModule = { moduleViewModel.enableModule(it) },
                             onLogMeal = {
                                 navController.navigate(Routes.NUTRITION) {
                                     popUpTo(Routes.DASHBOARD) { saveState = true }
@@ -129,7 +219,15 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
                             onOpenProfile = { navController.navigate(Routes.EDIT_PROFILE) },
                             onOpenReminders = { navController.navigate(Routes.REMINDERS) },
-                            onOpenWeight = { navController.navigate(Routes.WEIGHT) }
+                            onOpenWeight = { navController.navigate(Routes.WEIGHT) },
+                            onOpenRecovery = {
+                                navController.navigate(Routes.RECOVERY) {
+                                    popUpTo(Routes.DASHBOARD) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            onOpenMeditation = { navController.navigate(Routes.MEDITATION) }
                         )
                     }
                     composable(Routes.NUTRITION) {
@@ -150,8 +248,12 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     composable(Routes.SETTINGS) {
                         SettingsScreen(
                             onBack = { navController.popBackStack() },
-                            onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) }
+                            onEditProfile = { navController.navigate(Routes.EDIT_PROFILE) },
+                            onManageModules = { navController.navigate(Routes.MODULE_MANAGEMENT) }
                         )
+                    }
+                    composable(Routes.MODULE_MANAGEMENT) {
+                        ModuleManagementScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.EDIT_PROFILE) {
                         EditProfileScreen(onDone = { navController.popBackStack() })
@@ -180,6 +282,21 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     }
                     composable(Routes.JOURNAL) {
                         JournalScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.RECOVERY) {
+                        RecoveryScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.MEDITATION) {
+                        MeditationScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.WALKING) {
+                        WalkingScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.HABITS) {
+                        HabitsScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.PROGRESS) {
+                        ProgressScreen()
                     }
                     if (BuildConfig.DEBUG) {
                         composable(Routes.PERF) {

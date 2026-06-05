@@ -43,7 +43,6 @@ import com.solofit.app.ui.components.WorkoutTheme
 import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.components.rememberAnimationsActive
 import com.solofit.app.ui.components.VaporizeCelebration
-import com.solofit.app.ui.theme.Emerald
 
 @Composable
 fun ActiveWorkoutScreen(

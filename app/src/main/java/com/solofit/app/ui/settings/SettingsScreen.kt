@@ -51,6 +51,7 @@ import com.solofit.app.ui.theme.ProteinColor
 fun SettingsScreen(
     onBack: () -> Unit,
     onEditProfile: () -> Unit,
+    onManageModules: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -156,6 +157,29 @@ fun SettingsScreen(
                         )
                     }
                     AnimationPreview(animate = rememberAnimationsActive(animationsEnabled))
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ---- Modules ----
+            SectionTitle("Wellness System")
+            Card(
+                Modifier.fillMaxWidth().clickable(onClick = onManageModules)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("Manage Modules", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Enable, disable, and reorder your wellness modules",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text("Edit", color = MaterialTheme.colorScheme.primary)
                 }
             }
 

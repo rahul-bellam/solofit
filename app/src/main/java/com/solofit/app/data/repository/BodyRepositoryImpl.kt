@@ -34,4 +34,7 @@ class BodyRepositoryImpl @Inject constructor(
         metricDao.getForDate(date)
 
     override suspend fun saveMetric(entry: DailyMetricEntity): Long = metricDao.upsert(entry)
+
+    override fun observeMetricsSince(startDate: String): Flow<List<DailyMetricEntity>> =
+        metricDao.observeSince(startDate)
 }

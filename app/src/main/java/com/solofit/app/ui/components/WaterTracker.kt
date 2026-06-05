@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.drawscope.Stroke
 import android.view.HapticFeedbackConstants
@@ -43,7 +44,8 @@ fun WaterTracker(
     onRemove: (Int) -> Unit,
     modifier: Modifier = Modifier,
     glassMl: Int = 250,
-    animate: Boolean = true
+    animate: Boolean = true,
+    accentColor: Color = MaterialTheme.colorScheme.secondary
 ) {
     val fraction = if (goalMl > 0) (currentMl.toFloat() / goalMl).coerceIn(0f, 1f) else 0f
     val goalHit = goalMl > 0 && currentMl >= goalMl
@@ -80,10 +82,11 @@ fun WaterTracker(
                 WaterGlass(
                     fraction = fraction,
                     animate = animate,
+                    waterColor = accentColor,
                     modifier = Modifier.size(width = 44.dp, height = 64.dp)
                 )
                 if (ripple.value > 0f && ripple.value < 1f) {
-                    val rippleColor = MaterialTheme.colorScheme.secondary
+                    val rippleColor = accentColor
                     Canvas(Modifier.size(64.dp)) {
                         val r = size.minDimension / 2f * ripple.value
                         drawCircle(
@@ -101,7 +104,7 @@ fun WaterTracker(
                     Icon(
                         Icons.Filled.WaterDrop,
                         contentDescription = null,
-                        tint = MaterialTheme.colorScheme.secondary
+                        tint = accentColor
                     )
                     Text(
                         if (goalHit) "  Water · goal hit! 🎉" else "  Water",

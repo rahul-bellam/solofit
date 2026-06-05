@@ -28,7 +28,9 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
+import java.io.IOException
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -211,10 +213,46 @@ class AiFoodScanViewModel @Inject constructor(
                         estimatedGrams = aiFood.estimatedGrams
                     )
                 )
-            } catch (e: java.net.SocketTimeoutException) {
-                _scanResult.tryEmit(AiScanResult.Error("Request timed out. Check your internet."))
+            } catch (e: HttpException) {
+                val code = e.code()
+                val body = try { e.response()?.errorBody()?.string() } catch (_: Exception) { null }
+                val msg = when {
+                    code == 400 && body?.contains("API_KEY_INVALID", ignoreCase = true) == true ->
+                        "Invalid API key. Check the GEMINI_API_KEY in your .env file."
+                    code == 400 || code == 403 ->
+                        "AI service rejected the request (HTTP $code). Check your API key."
+                    code == 429 ->
+                        "AI service rate limit exceeded. Wait a moment and try again."
+                    code in 500..599 ->
+                        "AI service temporarily unavailable (HTTP $code). Try again later."
+                    else ->
+                        "AI service error (HTTP $code). Try again."
+                }
+                _scanResult.tryEmit(AiScanResult.Error(msg))
+            } catch (e: IOException) {
+                val msg = when {
+                    e.message?.contains("timeout", ignoreCase = true) == true ->
+                        "Request timed out. Check your internet connection."
+                    e.message?.contains("Unable to resolve host", ignoreCase = true) == true ||
+                        e.message?.contains("network", ignoreCase = true) == true ->
+                        "Network connection lost. Check your internet."
+                    else ->
+                        "Unable to upload image. Check your connection."
+                }
+                _scanResult.tryEmit(AiScanResult.Error(msg))
+            } catch (e: kotlinx.serialization.SerializationException) {
+                _scanResult.tryEmit(AiScanResult.Error("Food could not be identified. Try a clearer photo."))
             } catch (e: Exception) {
-                _scanResult.tryEmit(AiScanResult.Error("AI scan failed. Try again."))
+                val msg = when {
+                    e.message?.contains("No response", ignoreCase = true) == true ->
+                        "AI could not analyze this image. Try a different angle or lighting."
+                    e.message?.contains("parse", ignoreCase = true) == true ||
+                        e.message?.contains("JSON", ignoreCase = true) == true ->
+                        "Food could not be identified. Try a clearer photo."
+                    else ->
+                        "AI scan failed. Try again."
+                }
+                _scanResult.tryEmit(AiScanResult.Error(msg))
             } finally {
                 _isScanning.value = false
                 bitmap.recycle()

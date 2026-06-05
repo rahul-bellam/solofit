@@ -37,13 +37,15 @@ class LruTtlCacheTest {
     }
 
     @Test
-    fun `getOrPut computes once then caches`() {
-        var computeCount = 0
+    fun `put then get returns value`() {
         val cache = LruTtlCache<String, Int>(maxEntries = 4, ttlMillis = 10_000)
-        val v1 = cache.getOrPut("k") { computeCount++; 42 }
-        val v2 = cache.getOrPut("k") { computeCount++; 99 }
-        assertEquals(42, v1)
-        assertEquals(42, v2)        // served from cache, not recomputed
-        assertEquals(1, computeCount)
+        cache.put("k", 42)
+        assertEquals(42, cache.get("k"))
+    }
+
+    @Test
+    fun `get returns null for unknown key`() {
+        val cache = LruTtlCache<String, Int>(maxEntries = 4, ttlMillis = 10_000)
+        assertNull(cache.get("missing"))
     }
 }

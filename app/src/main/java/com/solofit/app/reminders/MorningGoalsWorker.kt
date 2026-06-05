@@ -11,9 +11,6 @@ import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import kotlinx.coroutines.flow.first
 
-/**
- * Morning "plan your day" prompt (silent). Self-reschedules for tomorrow.
- */
 @HiltWorker
 class MorningGoalsWorker @AssistedInject constructor(
     @Assisted appContext: Context,
@@ -29,8 +26,8 @@ class MorningGoalsWorker @AssistedInject constructor(
             notifier.notify(
                 channelId = SoloNotifier.CHANNEL_JOURNAL,
                 notificationId = SoloNotifier.ID_MORNING,
-                title = "Good morning ☀️ Plan your day",
-                message = "Take a minute to set 3 goals for today. Small wins build momentum."
+                title = "Good Morning",
+                message = "Recovery looks solid today. A normal training session should feel comfortable."
             )
         }
         scheduler.scheduleMorningGoals(settings)

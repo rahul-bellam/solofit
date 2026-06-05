@@ -22,10 +22,10 @@ import javax.inject.Inject
 /** UI state for the barcode scan + lookup + log flow. */
 sealed interface ScanUiState {
     data object Idle : ScanUiState
+    data object Preparing : ScanUiState
     data object Scanning : ScanUiState
     data object LookingUp : ScanUiState
     data class Found(val food: ScannedFood) : ScanUiState
-    /** Open Food Facts had no usable entry -> show manual fallback form. */
     data class ManualEntry(val barcode: String) : ScanUiState
     data class Error(val message: String) : ScanUiState
     data object Logged : ScanUiState
@@ -42,6 +42,11 @@ class ScanViewModel @Inject constructor(
     val state = _state.asStateFlow()
 
     fun startScan(context: Context) {
+        val reason = scanner.isAvailable(context)
+        if (reason != null) {
+            _state.update { ScanUiState.Error(reason) }
+            return
+        }
         _state.update { ScanUiState.Scanning }
         viewModelScope.launch {
             when (val outcome = scanner.scan(context)) {
@@ -52,7 +57,8 @@ class ScanViewModel @Inject constructor(
         }
     }
 
-    /** Allows manual barcode entry too (e.g., damaged label). */
+    fun retry(context: Context) = startScan(context)
+
     fun lookupManual(barcode: String) {
         if (barcode.isBlank()) return
         viewModelScope.launch { lookup(barcode.trim()) }
@@ -68,7 +74,6 @@ class ScanViewModel @Inject constructor(
         }
     }
 
-    /** Persist a manually-entered product, then move to the Found (confirm) state. */
     fun submitManual(
         barcode: String,
         name: String,
@@ -85,7 +90,6 @@ class ScanViewModel @Inject constructor(
         }
     }
 
-    /** Final step: save (cache) the product and write the daily log entry. */
     fun logFood(food: ScannedFood, grams: Double, category: MealCategory) {
         viewModelScope.launch {
             val foodId = barcodeRepository.saveScannedFood(food)

@@ -20,14 +20,16 @@ enum class ActivityLevel(val displayName: String, val factor: Double, val descri
 
 /**
  * Fitness goal that applies a caloric offset to TDEE.
- *  - Lose Weight: -500 kcal/day
- *  - Maintain:      0 kcal/day
- *  - Gain Muscle: +300 kcal/day
+ *  - Lose Fat:   -500 kcal/day
+ *  - Stay Healthy / Improve Fitness / Body Recomposition: 0 kcal/day
+ *  - Build Muscle: +300 kcal/day
  */
 enum class FitnessGoal(val displayName: String, val calorieOffset: Int) {
-    LOSE_WEIGHT("Lose Weight", -500),
-    MAINTAIN("Maintain", 0),
-    GAIN_MUSCLE("Gain Muscle", 300)
+    BUILD_MUSCLE("Build Muscle", 300),
+    LOSE_FAT("Lose Fat", -500),
+    BODY_RECOMPOSITION("Body Recomposition", 0),
+    IMPROVE_FITNESS("Improve Fitness", 0),
+    STAY_HEALTHY("Stay Healthy", 0)
 }
 
 /** Meal categories for the daily nutrition diary. */

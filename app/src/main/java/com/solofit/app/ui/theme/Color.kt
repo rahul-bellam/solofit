@@ -2,37 +2,66 @@ package com.solofit.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// Earthy green tones
-val Sage = Color(0xFF7AA88A)
-val SageDark = Color(0xFF5A8A6A)
-val Moss = Color(0xFF6B9A7A)
+// ─── Foundation (shared across all screens) ───
+val PageBg = Color(0xFFF7F1E8)
+val CardCream = Color(0xFFFCFAF7)
+val PrimaryText = Color(0xFF4A4741)
+val SecondaryText = Color(0xFFA8A5A0)
+val Hairline = Color(0xFFE5E7EB)
 
-// Page-specific accents
-val Emerald = Color(0xFF12B886)
-val EmeraldLight = Color(0xFFE6F9F2)
-val Amber = Color(0xFFFFA94D)
-val AmberLight = Color(0xFFFFF4E6)
-val Cyan = Color(0xFF00BCD4)
+// ─── Global Signature Color ───
+val Amber = Color(0xFFAF751B)
+val AmberSoft = Color(0xFFE8D5B0)
 
-// Surfaces
-val DarkBackground = Color(0xFF000000)
-val DarkSurface = Color(0xFF1A1A1A)
-val DarkSurfaceVariant = Color(0xFF2A2A2A)
+// ─── Screen-Specific Temperatures (Light) ───
+val NutritionBg = Color(0xFFF4F0E4)
+val NutritionCard = Color(0xFFFBF8F3)
+val NutritionAccent = Color(0xFF7A7B52)
 
-val LightBackground = Color(0xFFF5F5F5)
-val LightSurface = Color(0xFFFFFFFF)
-val LightSurfaceVariant = Color(0xFFE8E8E8)
+val RecoveryBg = Color(0xFFF2EFE9)
+val RecoveryCard = Color(0xFFFAF8F4)
+val RecoveryAccent = Color(0xFF7D8478)
 
-// Text
-val OnDarkBackground = Color(0xFFFFFFFF)
-val OnDarkSurface = Color(0xFFE0E0E0)
-val OnDarkSurfaceVariant = Color(0xFF9E9E9E)
+val MeditationBg = Color(0xFFF4EEE6)
+val MeditationAccent = Color(0xFF8A7763)
 
-val OnLightBackground = Color(0xFF000000)
-val OnLightSurface = Color(0xFF1A1A1A)
-val OnLightSurfaceVariant = Color(0xFF6B6B6B)
+val JournalBg = Color(0xFFF2EBE3)
+val JournalAccent = Color(0xFF7A6756)
 
-// Macro colors
-val ProteinColor = Color(0xFFFF6B6B)
-val CarbsColor = Color(0xFF4DABF7)
-val FatsColor = Color(0xFFFFD43B)
+val ProgressBg = Color(0xFFF5EFE4)
+val ProgressAccent = Color(0xFFB38632)
+
+val WalkingBg = Color(0xFFF0F4F7)
+val WalkingCard = Color(0xFFF7FAFC)
+val WalkingAccent = Color(0xFF4A8B9E)
+
+// ─── Warm Dark Mode Palette ───
+val DarkBg = Color(0xFF1C1917)
+val DarkSurface = Color(0xFF27231F)
+val DarkCard = Color(0xFF302B26)
+val DarkText = Color(0xFFF3EEE6)
+val DarkTextSecondary = Color(0xFFB7B0A7)
+val DarkHairline = Color(0xFF3A3530)
+val DarkAccent = Color(0xFFAF751B)
+
+val DarkSuccess = Color(0xFF8C9A6A)
+val DarkWarning = Color(0xFFC19148)
+val DarkError = Color(0xFFA26B57)
+
+// ─── Dark Screen-Specific Accents ───
+val DarkWorkoutAccent = Color(0xFFAF751B)
+val DarkRecoveryAccent = Color(0xFF7D8478)
+val DarkMeditationAccent = Color(0xFF8A7763)
+val DarkJournalAccent = Color(0xFF7A6756)
+val DarkWalkingAccent = Color(0xFF5A8B9E)
+val DarkNutritionAccent = Color(0xFF7A7B52)
+
+// ─── Semantic Health Signals ───
+val HighGreen = Color(0xFF4A9E5E)
+val MidAmber = Color(0xFFD4A017)
+val LowRed = Color(0xFFC85A5A)
+
+// ─── Macro Colors ───
+val ProteinColor = Color(0xFFE88080)
+val CarbsColor = Color(0xFF6AAEC8)
+val FatsColor = Color(0xFFE8C860)

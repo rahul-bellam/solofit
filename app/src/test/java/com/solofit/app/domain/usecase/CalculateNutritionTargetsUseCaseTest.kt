@@ -17,7 +17,7 @@ class CalculateNutritionTargetsUseCaseTest {
         val r = useCase(
             CalculateNutritionTargetsUseCase.Params(
                 age = 30, gender = Gender.MALE, weightKg = 80.0, heightCm = 180.0,
-                activityLevel = ActivityLevel.MODERATE, goal = FitnessGoal.MAINTAIN
+                activityLevel = ActivityLevel.MODERATE, goal = FitnessGoal.STAY_HEALTHY
             )
         )
         assertEquals(1780, r.bmr)
@@ -35,7 +35,7 @@ class CalculateNutritionTargetsUseCaseTest {
         val r = useCase(
             CalculateNutritionTargetsUseCase.Params(
                 age = 25, gender = Gender.FEMALE, weightKg = 60.0, heightCm = 165.0,
-                activityLevel = ActivityLevel.SEDENTARY, goal = FitnessGoal.LOSE_WEIGHT
+                activityLevel = ActivityLevel.SEDENTARY, goal = FitnessGoal.LOSE_FAT
             )
         )
         assertEquals(1345, r.bmr)
@@ -50,7 +50,7 @@ class CalculateNutritionTargetsUseCaseTest {
         val r = useCase(
             CalculateNutritionTargetsUseCase.Params(
                 age = 22, gender = Gender.MALE, weightKg = 75.0, heightCm = 178.0,
-                activityLevel = ActivityLevel.ACTIVE, goal = FitnessGoal.GAIN_MUSCLE
+                activityLevel = ActivityLevel.ACTIVE, goal = FitnessGoal.BUILD_MUSCLE
             )
         )
         assertEquals(r.tdee + 300, r.targetCalories)
@@ -61,7 +61,7 @@ class CalculateNutritionTargetsUseCaseTest {
         useCase(
             CalculateNutritionTargetsUseCase.Params(
                 age = 200, gender = Gender.MALE, weightKg = 75.0, heightCm = 178.0,
-                activityLevel = ActivityLevel.ACTIVE, goal = FitnessGoal.MAINTAIN
+                activityLevel = ActivityLevel.ACTIVE, goal = FitnessGoal.STAY_HEALTHY
             )
         )
     }

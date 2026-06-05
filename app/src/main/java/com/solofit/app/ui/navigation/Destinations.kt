@@ -1,22 +1,22 @@
 package com.solofit.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.Emerald
-import com.solofit.app.ui.theme.Sage
 
 object Routes {
     const val ONBOARDING = "onboarding"
+    const val MODULE_SELECTION = "module_selection"
+    const val MODULE_MANAGEMENT = "module_management"
     const val DASHBOARD = "dashboard"
     const val NUTRITION = "nutrition"
     const val WORKOUT = "workout"
     const val HISTORY = "history"
+    const val WALKING = "walking"
+    const val YOGA = "yoga"
+    const val HABITS = "habits"
 
     const val ROUTINE_BUILDER = "routine_builder"
     const val ACTIVE_WORKOUT = "active_workout"
@@ -35,17 +35,24 @@ object Routes {
     const val PHOTOS = "photos"
     const val FOOD_LOOKUP = "food_lookup"
     const val WEEKLY_PLANNER = "weekly_planner"
+    const val RECOVERY = "recovery"
+    const val MEDITATION = "meditation"
+    const val WELLNESS = "wellness"
+    const val PROGRESS = "progress"
 }
 
-enum class BottomDestination(
+data class BottomDestination(
     val route: String,
     val label: String,
     val icon: ImageVector,
-    val gradientFrom: Color,
-    val gradientTo: Color
+    val gradientFrom: Color = Amber,
+    val gradientTo: Color = Amber
 ) {
-    DASHBOARD(Routes.DASHBOARD, "Home", Icons.Filled.Home, Sage, Sage),
-    NUTRITION(Routes.NUTRITION, "Nutrition", Icons.Filled.Restaurant, Sage, Sage),
-    WORKOUT(Routes.WORKOUT, "Workouts", Icons.Filled.FitnessCenter, Sage, Sage),
-    HISTORY(Routes.HISTORY, "History", Icons.Filled.CalendarMonth, Sage, Sage)
+    companion object {
+        val HOME = BottomDestination(
+            route = Routes.DASHBOARD,
+            label = "Home",
+            icon = Icons.Filled.Home
+        )
+    }
 }

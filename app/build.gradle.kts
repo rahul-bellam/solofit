@@ -18,7 +18,7 @@ val usdaApiKey = envValue("USDA_API_KEY")
 
 android {
     namespace = "com.solofit.app"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.solofit.app"
@@ -126,6 +126,9 @@ dependencies {
     implementation(libs.retrofit.kotlinx.serialization)
     implementation(libs.okhttp.logging)
     implementation(libs.kotlinx.serialization.json)
+
+    // Health Connect
+    implementation(libs.androidx.health.connect.client)
 
     // --- Photo classification (on-device) ---
 
