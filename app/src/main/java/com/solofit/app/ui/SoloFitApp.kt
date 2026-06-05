@@ -63,6 +63,7 @@ import com.solofit.app.ui.progress.ProgressScreen
 import com.solofit.app.ui.walking.WalkingScreen
 import com.solofit.app.ui.habits.HabitsScreen
 import com.solofit.app.domain.model.SoloFitModule
+import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.ui.theme.CardCream
 import com.solofit.app.ui.theme.DarkSurface
 import com.solofit.app.ui.theme.NutritionCard
@@ -162,7 +163,10 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     popExitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { it / 4 } }
                 ) {
                     composable(Routes.ONBOARDING) {
+                        val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
                         OnboardingScreen(
+                            themeMode = themeMode,
+                            onSetThemeMode = rootViewModel::setThemeMode,
                             onComplete = {
                                 navController.navigate(Routes.DASHBOARD) {
                                     popUpTo(Routes.ONBOARDING) { inclusive = true }

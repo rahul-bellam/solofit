@@ -32,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -51,12 +52,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.domain.model.FitnessGoal
 import com.solofit.app.domain.model.Gender
 import com.solofit.app.domain.model.SoloFitModule
+import com.solofit.app.domain.model.ThemeMode
+import com.solofit.app.ui.components.AnimatedThemeToggle
 import com.solofit.app.ui.modules.moduleIcon
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.PageBg
-import com.solofit.app.ui.theme.PrimaryText
-import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.CardCream
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.CheckCircle
@@ -64,16 +63,18 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 
 @Composable
 fun OnboardingScreen(
+    themeMode: ThemeMode,
+    onSetThemeMode: (ThemeMode) -> Unit,
     onComplete: () -> Unit,
     viewModel: OnboardingViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Box(Modifier.fillMaxSize().background(PageBg)) {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         if (state.step > 0 && state.step < 4) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack, null,
-                tint = PrimaryText,
+                tint = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier
                     .padding(16.dp)
                     .size(28.dp)
@@ -95,7 +96,11 @@ fun OnboardingScreen(
             modifier = Modifier.fillMaxSize()
         ) { step ->
             when (step) {
-                0 -> HeroStep(onGetStarted = viewModel::nextStep)
+                 0 -> HeroStep(
+                        onGetStarted = viewModel::nextStep,
+                        themeMode = themeMode,
+                        onSetThemeMode = onSetThemeMode
+                    )
                 1 -> PersonalInfoStep(
                     name = state.name, age = state.age, gender = state.gender,
                     weight = state.weight, height = state.height,
@@ -126,76 +131,91 @@ fun OnboardingScreen(
 // ───────────────────────────── STEP 1: HERO ─────────────────────────────
 
 @Composable
-private fun HeroStep(onGetStarted: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
-    ) {
-        Spacer(Modifier.weight(0.6f))
-
-        Text(
-            "Your Wellness.",
-            fontSize = 36.sp, fontWeight = FontWeight.Bold,
-            color = PrimaryText, lineHeight = 42.sp
-        )
-        Text(
-            "Your Data.",
-            fontSize = 36.sp, fontWeight = FontWeight.Bold,
-            color = PrimaryText, lineHeight = 42.sp
-        )
-        Text(
-            "Your Rules.",
-            fontSize = 36.sp, fontWeight = FontWeight.Bold,
-            color = Amber, lineHeight = 42.sp
+private fun HeroStep(
+    onGetStarted: () -> Unit,
+    themeMode: ThemeMode,
+    onSetThemeMode: (ThemeMode) -> Unit
+) {
+    Box(Modifier.fillMaxSize().padding(32.dp)) {
+        AnimatedThemeToggle(
+            isDark = themeMode == ThemeMode.DARK,
+            onToggle = {
+                onSetThemeMode(
+                    if (themeMode == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK
+                )
+            },
+            modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
         )
 
-        Spacer(Modifier.height(20.dp))
-
-        Text(
-            "Build a private wellness system that helps you train, eat, recover, and improve.\n\nEverything stays on your device.",
-            fontSize = 15.sp, color = SecondaryText,
-            lineHeight = 22.sp,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(Modifier.weight(1f))
-
-        // App preview mockup
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
+        Column(
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
-            listOf(
-                Icons.Filled.FitnessCenter to "Workout",
-                Icons.AutoMirrored.Filled.ArrowBack to "Recovery"
-            ).forEach { (icon, label) ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))
-                            .background(Amber.copy(alpha = 0.1f)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(icon, null, tint = Amber, modifier = Modifier.size(28.dp))
+            Spacer(Modifier.weight(0.6f))
+
+            Text(
+                "Your Wellness.",
+                fontSize = 36.sp, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground, lineHeight = 42.sp
+            )
+            Text(
+                "Your Data.",
+                fontSize = 36.sp, fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground, lineHeight = 42.sp
+            )
+            Text(
+                "Your Rules.",
+                fontSize = 36.sp, fontWeight = FontWeight.Bold,
+                color = Amber, lineHeight = 42.sp
+            )
+
+            Spacer(Modifier.height(20.dp))
+
+            Text(
+                "Build a private wellness system that helps you train, eat, recover, and improve.\n\nEverything stays on your device.",
+                fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                lineHeight = 22.sp,
+                textAlign = TextAlign.Center
+            )
+
+            Spacer(Modifier.weight(1f))
+
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                listOf(
+                    Icons.Filled.FitnessCenter to "Workout",
+                    Icons.AutoMirrored.Filled.ArrowBack to "Recovery"
+                ).forEach { (icon, label) ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Box(
+                            Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))
+                                .background(Amber.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(icon, null, tint = Amber, modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
                     }
-                    Spacer(Modifier.height(6.dp))
-                    Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
                 }
             }
+
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = onGetStarted,
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Amber)
+            ) {
+                Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            }
+
+            Spacer(Modifier.height(16.dp))
         }
-
-        Spacer(Modifier.height(32.dp))
-
-        Button(
-            onClick = onGetStarted,
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber)
-        ) {
-            Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-        }
-
-        Spacer(Modifier.height(16.dp))
     }
 }
 
@@ -217,11 +237,11 @@ private fun PersonalInfoStep(
     ) {
         Spacer(Modifier.height(72.dp))
 
-        Text("Let's personalise SoloFit", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
+        Text("Let's personalise SoloFit", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
         Text(
             "A few details help us create more accurate recommendations.",
-            fontSize = 14.sp, color = SecondaryText
+            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(32.dp))
 
@@ -268,7 +288,7 @@ private fun PersonalInfoStep(
         )
         Spacer(Modifier.height(20.dp))
 
-        Text("Gender", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+        Text("Gender", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Gender.entries.forEach { g ->
@@ -276,9 +296,9 @@ private fun PersonalInfoStep(
                 Box(
                     Modifier
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) Amber else CardCream)
+                        .background(if (selected) Amber else MaterialTheme.colorScheme.surface)
                         .border(
-                            BorderStroke(if (selected) 0.dp else 1.dp, Color(0xFFE5E7EB)),
+                            BorderStroke(if (selected) 0.dp else 1.dp, MaterialTheme.colorScheme.outlineVariant),
                             RoundedCornerShape(12.dp)
                         )
                         .clickable { onGender(g) }
@@ -287,7 +307,7 @@ private fun PersonalInfoStep(
                     Text(
                         g.displayName,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (selected) Color.White else PrimaryText
+                        color = if (selected) Color.White else MaterialTheme.colorScheme.onBackground
                     )
                 }
             }
@@ -321,11 +341,11 @@ private fun GoalStep(
     ) {
         Spacer(Modifier.height(72.dp))
 
-        Text("What's your current goal?", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
+        Text("What's your current goal?", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(8.dp))
         Text(
             "We'll tailor your nutrition and recommendations.",
-            fontSize = 14.sp, color = SecondaryText
+            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
         )
         Spacer(Modifier.height(28.dp))
 
@@ -377,11 +397,11 @@ private fun GoalCard(
         Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) Amber.copy(alpha = 0.08f) else CardCream)
+            .background(if (isSelected) Amber.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface)
             .border(
                 BorderStroke(
                     if (isSelected) 1.5.dp else 1.dp,
-                    if (isSelected) Amber else Color(0xFFE5E7EB)
+                    if (isSelected) Amber else MaterialTheme.colorScheme.outlineVariant
                 ),
                 RoundedCornerShape(16.dp)
             )
@@ -391,15 +411,15 @@ private fun GoalCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 Modifier.size(48.dp).clip(CircleShape)
-                    .background(if (isSelected) Amber.copy(alpha = 0.12f) else Color(0xFFF3F4F6)),
+                    .background(if (isSelected) Amber.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(icon, null, tint = if (isSelected) Amber else SecondaryText, modifier = Modifier.size(24.dp))
+                Icon(icon, null, tint = if (isSelected) Amber else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                Text(description, fontSize = 12.sp, color = SecondaryText)
+                Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (isSelected) {
                 Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(22.dp))
@@ -417,23 +437,24 @@ private fun ModuleSelectionStep(
     onContinue: () -> Unit
 ) {
     Column(
-        Modifier.fillMaxSize().background(PageBg)
+        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
     ) {
         Spacer(Modifier.height(72.dp))
         Text(
             "Build Your Wellness System",
             fontSize = 26.sp, fontWeight = FontWeight.Bold,
-            color = PrimaryText, modifier = Modifier.padding(horizontal = 24.dp)
+            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 24.dp)
         )
         Spacer(Modifier.height(8.dp))
         Text(
             "Choose what matters most right now.",
-            fontSize = 14.sp, color = SecondaryText,
+            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 24.dp)
         )
         Spacer(Modifier.height(28.dp))
 
         LazyColumn(
+            modifier = Modifier.weight(1f),
             contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -472,9 +493,9 @@ private fun ModuleCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(CardCream)
+            .background(MaterialTheme.colorScheme.surface)
             .border(
-                border = if (isSelected) BorderStroke(1.5.dp, Amber) else BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                border = if (isSelected) BorderStroke(1.5.dp, Amber) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onToggle)
@@ -482,20 +503,20 @@ private fun ModuleCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(48.dp).clip(CircleShape).background(if (isSelected) Amber.copy(alpha = 0.12f) else Color(0xFFF3F4F6)),
+                Modifier.size(48.dp).clip(CircleShape).background(if (isSelected) Amber.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     moduleIcon(module),
                     null,
-                    tint = if (isSelected) Amber else SecondaryText,
+                    tint = if (isSelected) Amber else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(24.dp)
                 )
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text(module.displayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                Text(module.description, fontSize = 12.sp, color = SecondaryText)
+                Text(module.displayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                Text(module.description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             if (isSelected) {
                 Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(22.dp))
@@ -515,7 +536,7 @@ private fun ReadyStep(onEnter: () -> Unit) {
     ) {
         Spacer(Modifier.weight(0.7f))
 
-        Text("You're Ready", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
+        Text("You're Ready", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(32.dp))
 
         val benefits = listOf(
@@ -532,8 +553,8 @@ private fun ReadyStep(onEnter: () -> Unit) {
                 Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(24.dp))
                 Spacer(Modifier.width(14.dp))
                 Column {
-                    Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                    Text(desc, fontSize = 13.sp, color = SecondaryText)
+                    Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
+                    Text(desc, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }

@@ -39,6 +39,10 @@ class RootViewModel @Inject constructor(
     val themeMode: StateFlow<ThemeMode> = prefs.themeMode
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
 
+    fun setThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { prefs.setThemeMode(mode) }
+    }
+
     fun applyReducedMotionOnce(osAnimatorScale: Float) {
         viewModelScope.launch {
             val alreadyApplied = prefs.reducedMotionApplied.first()
