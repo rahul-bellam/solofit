@@ -228,7 +228,23 @@ class SolViewModel @Inject constructor(
                 weeklyProteinPct = weeklyProteinPct
             )
 
-            val briefing = insightEngine.computeBriefing(input)
+            val weeklyRecoveryMap = weeklyMetrics.associate { m ->
+                m.date to (FitnessMath.recoveryScore(
+                    sleepHours = m.sleepHours, steps = m.steps,
+                    workoutDone = dates.contains(m.date), waterMl = null,
+                    waterGoalMl = 3000, energyScore = m.energyScore
+                ) ?: 0)
+            }
+            val weeklyProteinMap = dateStrings.zip(weeklyTotals).associate { (date, totals) ->
+                date to (if (targetProtein > 0) totals.proteinG / targetProtein else 0.0)
+            }
+            val memoryEngine = SolMemoryEngine()
+            val memory = memoryEngine.compute(
+                historySessions = dates,
+                weeklyRecovery = weeklyRecoveryMap,
+                weeklyProtein = weeklyProteinMap
+            )
+            val briefing = insightEngine.computeBriefing(input, memory)
             val transformedVoice = VoicePersonalityTransformer.transform(briefing.primary.voiceLine, personality)
 
             val streakMilestone = when (input.streakDays) {

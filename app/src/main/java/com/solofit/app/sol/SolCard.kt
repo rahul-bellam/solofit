@@ -1,5 +1,10 @@
 package com.solofit.app.sol
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -53,200 +58,211 @@ fun SolCard(
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardCream),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
 
-            // ── SOL header (amber only on glow + icon) ──
+            // ── SOL header ──
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
-                    Modifier.size(40.dp).clip(CircleShape)
+                    Modifier.size(36.dp).clip(CircleShape)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(Amber.copy(alpha = 0.25f), Amber.copy(alpha = 0.05f)),
-                                radius = 24f
+                                colors = listOf(Amber.copy(alpha = 0.2f), Amber.copy(alpha = 0.04f)),
+                                radius = 20f
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(Modifier.size(14.dp).clip(CircleShape).background(Amber))
+                    Box(Modifier.size(12.dp).clip(CircleShape).background(Amber))
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text("SOL", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
-                    Text(state.personality.displayName, fontSize = 11.sp, color = SecondaryText)
+                    Text("SOL", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
+                    Text(state.personality.displayName, fontSize = 10.sp, color = SecondaryText)
                 }
                 Spacer(Modifier.weight(1f))
                 Icon(
                     Icons.AutoMirrored.Filled.VolumeUp, null,
                     tint = if (state.isSpeaking) Amber else SecondaryText,
-                    modifier = Modifier.size(20.dp).clickable(onClick = onListen)
+                    modifier = Modifier.size(18.dp).clickable(onClick = onListen)
                 )
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            if (!state.hasSufficientData) {
-                // ── Empty State ──
-                Text(
-                    state.headline.ifEmpty { "You're still building your wellness profile." },
-                    fontSize = 16.sp, fontWeight = FontWeight.Medium, color = PrimaryText
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    state.detail.ifEmpty { "Complete a few days of tracking and I'll begin identifying trends." },
-                    fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
-                )
-                return@Column
-            }
-
-            // ── Greeting with name ──
-            val namePart = if (state.userName.isNotBlank()) " ${state.userName}" else ""
-            Text(
-                "${state.greeting.trimEnd('.')}$namePart.",
-                fontSize = 20.sp, fontWeight = FontWeight.Medium, color = PrimaryText
-            )
-
-            Spacer(Modifier.height(2.dp))
-
-            // Rotating header (no amber)
-            Text(
-                state.briefingHeader,
-                fontSize = 13.sp, color = SecondaryText, fontWeight = FontWeight.SemiBold
-            )
-
-            Spacer(Modifier.height(8.dp))
-
-            // Primary headline + detail
-            val headlineColor = when {
-                state.type == InsightType.OVERTRAINING -> DarkError
-                state.dayLabel == DayLabel.PERFORMANCE -> DarkSuccess
-                else -> PrimaryText
-            }
-            if (state.headline.isNotBlank()) {
-                Text(state.headline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = headlineColor)
-                Spacer(Modifier.height(4.dp))
-            }
-            Text(state.detail, fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp)
-
-            // Supplementary insights
-            if (state.supplementaryHeadlines.isNotEmpty()) {
-                Spacer(Modifier.height(10.dp))
-                state.supplementaryHeadlines.forEach { sh ->
-                    Text("• $sh", fontSize = 12.sp, color = SecondaryText, lineHeight = 16.sp)
-                }
             }
 
             Spacer(Modifier.height(14.dp))
 
-            // Signal summary row
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            AnimatedContent(
+                targetState = state.hashCode(),
+                transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
+                label = "sol_content"
             ) {
-                state.signals.forEach { signal ->
-                    val chipColor = when (signal.status) {
-                        SignalStatus.GOOD -> DarkSuccess
-                        SignalStatus.ON_TRACK -> DarkWarning
-                        SignalStatus.LOW -> DarkError
+                Column {
+                    if (!state.hasSufficientData) {
+                        EmptySolContent(state)
+                        return@Column
                     }
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(chipColor.copy(alpha = 0.08f))
-                            .padding(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(signal.label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                        Text(signal.detail, fontSize = 10.sp, color = SecondaryText)
-                    }
+
+                    MainSolContent(state)
                 }
             }
+        }
+    }
+}
 
-            Spacer(Modifier.height(10.dp))
+@Composable
+private fun EmptySolContent(state: SolUiState) {
+    Text(
+        state.headline.ifEmpty { "You're still building your wellness profile." },
+        fontSize = 16.sp, fontWeight = FontWeight.Medium, color = PrimaryText,
+        lineHeight = 22.sp
+    )
+    Spacer(Modifier.height(10.dp))
+    Text(
+        state.detail.ifEmpty { "Complete a few days of tracking and I'll begin identifying trends." },
+        fontSize = 13.sp, color = SecondaryText, lineHeight = 19.sp
+    )
+    Spacer(Modifier.height(14.dp))
+    Text(
+        "Try logging a workout or your meals to get started.",
+        fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp
+    )
+}
 
-            // Day label with new types
-            val labelColor = when (state.dayLabel) {
-                DayLabel.PERFORMANCE -> DarkSuccess
-                DayLabel.RECOVERY_FOCUS -> DarkWarning
-                DayLabel.NUTRITION_FOCUS -> ProteinColor
-                DayLabel.MINDFULNESS -> RecoveryAccent
-                DayLabel.CONSISTENCY -> DarkWarning
-                DayLabel.BALANCED -> SecondaryText
+@Composable
+private fun MainSolContent(state: SolUiState) {
+    val namePart = if (state.userName.isNotBlank()) " ${state.userName}" else ""
+    Text(
+        "${state.greeting.trimEnd('.')}$namePart.",
+        fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText,
+        lineHeight = 26.sp
+    )
+
+    Spacer(Modifier.height(2.dp))
+
+    Text(
+        state.briefingHeader,
+        fontSize = 12.sp, color = SecondaryText, fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.3.sp
+    )
+
+    Spacer(Modifier.height(10.dp))
+
+    val headlineColor = when {
+        state.type == InsightType.OVERTRAINING -> DarkError
+        state.dayLabel == DayLabel.PERFORMANCE -> DarkSuccess
+        else -> PrimaryText
+    }
+    if (state.headline.isNotBlank()) {
+        Text(state.headline, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = headlineColor, lineHeight = 22.sp)
+        Spacer(Modifier.height(6.dp))
+    }
+    Text(state.detail, fontSize = 13.sp, color = SecondaryText, lineHeight = 19.sp)
+
+    if (state.supplementaryHeadlines.isNotEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        state.supplementaryHeadlines.forEach { sh ->
+            Text("• $sh", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
+        }
+    }
+
+    Spacer(Modifier.height(16.dp))
+
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        state.signals.forEach { signal ->
+            val chipColor = when (signal.status) {
+                SignalStatus.GOOD -> DarkSuccess
+                SignalStatus.ON_TRACK -> DarkWarning
+                SignalStatus.LOW -> DarkError
             }
-            Text(
-                state.dayLabel.displayName,
-                fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = labelColor
-            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(chipColor.copy(alpha = 0.08f))
+                    .padding(vertical = 8.dp, horizontal = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(signal.label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                Spacer(Modifier.height(2.dp))
+                Text(signal.detail, fontSize = 10.sp, color = SecondaryText)
+            }
+        }
+    }
 
-            Spacer(Modifier.height(14.dp))
+    Spacer(Modifier.height(12.dp))
 
-            // ── Trend Visualization (always visible) ──
-            if (state.trends.isNotEmpty()) {
-                Text("Show Trend", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = SecondaryText)
-                Spacer(Modifier.height(6.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+    val labelColor = when (state.dayLabel) {
+        DayLabel.PERFORMANCE -> DarkSuccess
+        DayLabel.RECOVERY_FOCUS -> DarkWarning
+        DayLabel.NUTRITION_FOCUS -> ProteinColor
+        DayLabel.MINDFULNESS -> RecoveryAccent
+        DayLabel.CONSISTENCY -> DarkWarning
+        DayLabel.BALANCED -> SecondaryText
+    }
+    Text(
+        state.dayLabel.displayName,
+        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = labelColor
+    )
+
+    if (state.trends.isNotEmpty()) {
+        Spacer(Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            state.trends.forEach { trend ->
+                val trendColor = when (trend.status) {
+                    SignalStatus.GOOD -> DarkSuccess
+                    SignalStatus.ON_TRACK -> DarkWarning
+                    SignalStatus.LOW -> DarkError
+                }
+                val arrowColor = when (trend.direction) {
+                    TrendDirection.UP -> DarkSuccess
+                    TrendDirection.DOWN -> DarkError
+                    TrendDirection.STABLE -> SecondaryText
+                }
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(trendColor.copy(alpha = 0.06f))
+                        .padding(vertical = 8.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    state.trends.forEach { trend ->
-                        val trendColor = when (trend.status) {
-                            SignalStatus.GOOD -> DarkSuccess
-                            SignalStatus.ON_TRACK -> DarkWarning
-                            SignalStatus.LOW -> DarkError
-                        }
-                        val arrowColor = when (trend.direction) {
-                            TrendDirection.UP -> DarkSuccess
-                            TrendDirection.DOWN -> DarkError
-                            TrendDirection.STABLE -> SecondaryText
-                        }
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(8.dp))
-                                .background(CardCream)
-                                .padding(6.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                "${trend.direction.arrow} ${trend.percentage}%",
-                                fontSize = 13.sp, fontWeight = FontWeight.Bold, color = arrowColor
-                            )
-                            Text(
-                                trend.label,
-                                fontSize = 10.sp, color = trendColor
-                            )
-                            Text(
-                                "Past 7 Days",
-                                fontSize = 8.sp, color = SecondaryText
-                            )
-                        }
-                    }
+                    Text(
+                        "${trend.direction.arrow} ${trend.percentage}%",
+                        fontSize = 14.sp, fontWeight = FontWeight.Bold, color = arrowColor
+                    )
+                    Spacer(Modifier.height(2.dp))
+                    Text(trend.label, fontSize = 10.sp, color = trendColor)
+                    Text("Past 7 Days", fontSize = 8.sp, color = SecondaryText)
                 }
-                Spacer(Modifier.height(10.dp))
             }
+        }
+    }
 
-            // Always-visible: Why? reasoning
-            if (state.reasoning.isNotEmpty()) {
-                Text("Why?", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                Spacer(Modifier.height(4.dp))
-                state.reasoning.forEach { reason ->
-                    Text("• $reason", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
-                }
-                Spacer(Modifier.height(10.dp))
-            }
+    if (state.reasoning.isNotEmpty()) {
+        Spacer(Modifier.height(16.dp))
+        Text("Why?", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText, letterSpacing = 0.2.sp)
+        Spacer(Modifier.height(6.dp))
+        state.reasoning.forEach { reason ->
+            Text("• $reason", fontSize = 12.sp, color = SecondaryText, lineHeight = 18.sp)
+            Spacer(Modifier.height(3.dp))
+        }
+    }
 
-            // Always-visible: recommendations
-            if (state.recommendations.isNotEmpty()) {
-                Text("Recommended", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                Spacer(Modifier.height(4.dp))
-                state.recommendations.forEach { rec ->
-                    Text("✓ $rec", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
-                }
-            }
+    if (state.recommendations.isNotEmpty()) {
+        Spacer(Modifier.height(14.dp))
+        Text("Recommended", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText, letterSpacing = 0.2.sp)
+        Spacer(Modifier.height(6.dp))
+        state.recommendations.forEach { rec ->
+            Text("✓ $rec", fontSize = 12.sp, color = SecondaryText, lineHeight = 18.sp)
+            Spacer(Modifier.height(3.dp))
         }
     }
 }

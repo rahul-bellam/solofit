@@ -2,7 +2,9 @@ package com.solofit.app.ui.dashboard
 
 import android.view.HapticFeedbackConstants
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,16 +27,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Straighten
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -160,40 +158,34 @@ fun DashboardScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
 
         // ── Header ──
         Row(
-            Modifier.fillMaxWidth(),
+            Modifier.fillMaxWidth().padding(bottom = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.Top
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    DateUtils.prettyMedium(state.date),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Row {
-                solState.isSpeaking.let { speaking ->
-                    if (speaking) {
-                        Text("Speaking...", style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary)
-                    }
+            Text(
+                DateUtils.prettyMedium(state.date),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (solState.isSpeaking) {
+                    Text("Speaking…", style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(end = 8.dp))
                 }
                 IconButton(onClick = onOpenSettings) {
-                    Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    Icon(Icons.Filled.Settings, contentDescription = "Settings",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
 
-        Spacer(Modifier.height(12.dp))
-
-        // ════════════════════════════════════════════════════════════
-        // HERO SECTION: Today's Insight (~40-60% of visible screen)
-        // ════════════════════════════════════════════════════════════
+        // ── HERO: Sol Insight ──
         SolCard(
             state = solState,
             onToggleWhy = solViewModel::toggleWhy,
@@ -205,64 +197,53 @@ fun DashboardScreen(
 
         Spacer(Modifier.height(16.dp))
 
-        // ════════════════════════════════════════════════════════════
-        // WEEKLY REFLECTION (Sundays only)
-        // ════════════════════════════════════════════════════════════
-        if (solState.isSunday) {
-            WeeklyReflection(
-                workoutCount = solState.weeklyWorkoutCount,
-                proteinDays = solState.weeklyProteinDays,
-                walkingTrend = solState.weeklyWalkingTrend
-            )
-            Spacer(Modifier.height(16.dp))
+        // ── WEEKLY REFLECTION (Sundays) ──
+        AnimatedVisibility(
+            visible = solState.isSunday,
+            enter = fadeIn() + slideInVertically { it / 2 },
+            exit = fadeOut()
+        ) {
+            Column {
+                WeeklyReflection(
+                    workoutCount = solState.weeklyWorkoutCount,
+                    proteinDays = solState.weeklyProteinDays,
+                    walkingTrend = solState.weeklyWalkingTrend
+                )
+                Spacer(Modifier.height(16.dp))
+            }
         }
 
-        // ════════════════════════════════════════════════════════════
-        // SUPPORTING SECTION: Phase, Streak, Recovery, Today's Plan
-        // ════════════════════════════════════════════════════════════
+        // ── SUPPORTING: Phase + Streak ──
         Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onEditPhase),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onEditPhase),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
         ) {
             Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                Text(
-                    state.phaseName,
+                Text(state.phaseName,
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+                    color = MaterialTheme.colorScheme.onPrimary)
                 Spacer(Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.Bottom) {
-                    Text(
-                        "Day ${state.phaseDay}",
+                    Text("Day ${state.phaseDay}",
                         style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onPrimary
-                    )
-                    Text(
-                        " / ${state.phaseTargetDays}",
+                        color = MaterialTheme.colorScheme.onPrimary)
+                    Text(" / ${state.phaseTargetDays}",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onPrimary,
-                        modifier = Modifier.padding(bottom = 6.dp)
-                    )
+                        modifier = Modifier.padding(bottom = 6.dp))
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (state.streakDays > 0) {
-                        Text(
-                            "${state.streakDays}-day streak",
+                        Text("${state.streakDays}-day streak",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                            color = MaterialTheme.colorScheme.onPrimary)
                         Spacer(Modifier.width(12.dp))
                     }
                     state.recoveryScore?.let { rec ->
-                        Text(
-                            "Recovery $rec%",
+                        Text("Recovery $rec%",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
+                            color = MaterialTheme.colorScheme.onPrimary)
                     }
                 }
             }
@@ -270,28 +251,30 @@ fun DashboardScreen(
 
         Spacer(Modifier.height(12.dp))
 
-        // Today's Plan
+        // ── Today's Plan ──
         AnimatedVisibility(
             visible = planName.isNotEmpty() && !planDismissed,
             exit = fadeOut()
         ) {
             Box {
                 Card(
+                    shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
                 ) {
                     Column(Modifier.padding(16.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.FitnessCenter, contentDescription = "Workout plan", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Filled.FitnessCenter, contentDescription = "Workout plan",
+                                tint = MaterialTheme.colorScheme.primary)
                             Spacer(Modifier.size(8.dp))
-                            Text(planName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                            Text(planName, style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold)
                         }
                         Spacer(Modifier.height(8.dp))
                         exercises.forEach { ex ->
                             val view = LocalView.current
                             Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
+                                modifier = Modifier.fillMaxWidth()
                                     .clickable {
                                         view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
                                         viewModel.toggleExercise(ex)
@@ -299,20 +282,18 @@ fun DashboardScreen(
                                     .padding(vertical = 4.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                            Icon(
-                                if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                                contentDescription = "Exercise status",
+                                Icon(
+                                    if (ex.isCompleted) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
+                                    contentDescription = "Exercise status",
                                     tint = if (ex.isCompleted) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
-                                    modifier = Modifier.size(20.dp)
-                                )
+                                    modifier = Modifier.size(20.dp))
                                 Spacer(Modifier.size(8.dp))
                                 Text(
                                     "${ex.exerciseName}  ${ex.sets}×${ex.reps} @ ${ex.weight}${ex.weightUnit}",
                                     style = MaterialTheme.typography.bodySmall,
                                     color = if (ex.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-                                    else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                    else MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
@@ -328,41 +309,38 @@ fun DashboardScreen(
 
         Spacer(Modifier.height(20.dp))
 
-        // ════════════════════════════════════════════════════════════
-        // SECONDARY SECTION: Nutrition, Water, Quick Tracking
-        // ════════════════════════════════════════════════════════════
+        // ── SECONDARY: Nutrition ──
         Card(
+            shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
         ) {
             Column(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(24.dp),
+                Modifier.fillMaxWidth().padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 val consumedKcal = state.consumed.calories.roundToInt()
                 val targetKcal = profile?.targetCalories ?: 2000
                 Column(
                     Modifier.clearAndSetSemantics {
-                        contentDescription =
-                            "$consumedKcal of $targetKcal kilocalories consumed today"
+                        contentDescription = "$consumedKcal of $targetKcal kilocalories consumed today"
                     },
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     CalorieRing(consumed = consumedKcal, target = targetKcal, animate = animate, onClick = onLogMeal)
                 }
-                Spacer(Modifier.height(28.dp))
+                Spacer(Modifier.height(24.dp))
                 MacroBar("Protein", state.consumed.proteinG.roundToInt(), profile?.targetProtein ?: 0, ProteinColor, animate = animate)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
                 MacroBar("Carbs", state.consumed.carbsG.roundToInt(), profile?.targetCarbs ?: 0, CarbsColor, animate = animate)
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(14.dp))
                 MacroBar("Fats", state.consumed.fatsG.roundToInt(), profile?.targetFats ?: 0, FatsColor, animate = animate)
             }
         }
 
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(16.dp))
+
         WaterTracker(
             currentMl = state.waterMl,
             goalMl = state.waterGoalMl,
@@ -371,74 +349,52 @@ fun DashboardScreen(
             animate = animate
         )
 
+        // ── Tracking Grid ──
         Spacer(Modifier.height(24.dp))
-        Text("Tracking", style = MaterialTheme.typography.titleMedium)
+        Text("Tracking", style = MaterialTheme.typography.titleMedium, color = PrimaryText)
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onOpenProfile),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        val trackingItems = listOf(
+            Triple("Profile", Icons.Filled.Person, onOpenProfile),
+            Triple("Journal", Icons.AutoMirrored.Filled.MenuBook, onOpenJournal),
+            Triple("Body", Icons.Filled.Straighten, onOpenBody),
+            Triple("Weight", Icons.Filled.MonitorWeight, onOpenWeight),
+            Triple("Reminders", Icons.Filled.Notifications, onOpenReminders),
+            Triple("Meal", Icons.Filled.Restaurant, onLogMeal)
+        )
+        val rows = trackingItems.chunked(3)
+        rows.forEach { row ->
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Person, contentDescription = "Profile", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Profile", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                row.forEach { (label, icon, onClick) ->
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.weight(1f).clickable(onClick = onClick),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(vertical = 12.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(icon, contentDescription = label,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp))
+                            Spacer(Modifier.height(6.dp))
+                            Text(label, style = MaterialTheme.typography.labelMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.onSurface)
+                        }
+                    }
+                }
+                if (row.size < 3) {
+                    repeat(3 - row.size) {
+                        Spacer(Modifier.weight(1f))
+                    }
                 }
             }
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onOpenJournal),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.AutoMirrored.Filled.MenuBook, contentDescription = "Journal", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Journal", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onOpenBody),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Straighten, contentDescription = "Body", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Body", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
+            Spacer(Modifier.height(10.dp))
         }
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onOpenWeight),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.MonitorWeight, contentDescription = "Weight", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Weight", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onOpenReminders),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Notifications, contentDescription = "Reminders", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Reminders", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
-            Card(
-                modifier = Modifier.weight(1f).clickable(onClick = onLogMeal),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
-            ) {
-                Column(Modifier.padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Filled.Restaurant, contentDescription = "Meal", tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Meal", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
-                }
-            }
-        }
+
         Spacer(Modifier.height(24.dp))
 
         suggestions.forEach { suggestion ->
@@ -467,7 +423,7 @@ fun DashboardScreen(
 @Composable
 private fun ModuleSuggestionCard(suggestion: ModuleSuggestion, onAdd: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

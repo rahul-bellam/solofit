@@ -30,7 +30,7 @@ class InsightEngine @Inject constructor() {
         )
     }
 
-    fun computeBriefing(input: SolInput): SolBriefing {
+    fun computeBriefing(input: SolInput, memory: SolMemoryData? = null): SolBriefing {
         val timeOfDay = LocalTime.now()
         val morning = timeOfDay.hour < 12
         val evening = timeOfDay.hour >= 17
@@ -69,9 +69,23 @@ class InsightEngine @Inject constructor() {
         val signals = buildSignals(input)
         val trends = buildTrends(input)
 
+        val memoryLine = memory?.let { m ->
+            buildString {
+                if (m.strongestDay.isNotBlank()) append("You usually train on ${m.strongestDay}. ")
+                if (m.bestRecoveryDay.isNotBlank()) append("Your best recovery days are ${m.bestRecoveryDay}. ")
+            }.ifBlank { null }
+        }
+
+        val enrichedPrimary = if (memoryLine != null) {
+            primary.insight.copy(
+                reasoning = primary.insight.reasoning + memoryLine,
+                voiceLine = primary.insight.voiceLine + " " + memoryLine
+            )
+        } else primary.insight
+
         return SolBriefing(
             greeting = greeting,
-            primary = primary.insight,
+            primary = enrichedPrimary,
             supplementary = supplementary.map { it.insight },
             dayLabel = dayLabel,
             signals = signals,

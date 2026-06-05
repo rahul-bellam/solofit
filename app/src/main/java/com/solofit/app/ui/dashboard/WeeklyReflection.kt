@@ -1,32 +1,22 @@
 package com.solofit.app.ui.dashboard
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardCream
-import com.solofit.app.ui.theme.DarkSuccess
-import com.solofit.app.ui.theme.DarkWarning
 
 @Composable
 fun WeeklyReflection(
@@ -37,17 +27,12 @@ fun WeeklyReflection(
 ) {
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = CardCream),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
-            Text(
-                "This Week",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = PrimaryText
-            )
+            Text("This Week", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
 
             Spacer(Modifier.height(14.dp))
 
@@ -72,19 +57,12 @@ fun WeeklyReflection(
                     workoutCount >= 1 -> "Every session counts. Consistency grows one day at a time."
                     else -> "Small steps lead to big changes. Start with one session next week."
                 },
-                fontSize = 13.sp,
-                color = SecondaryText,
-                lineHeight = 18.sp
+                fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
             )
 
             Spacer(Modifier.height(10.dp))
 
-            Text(
-                "Next Week Focus",
-                fontSize = 13.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = PrimaryText
-            )
+            Text("Next Week Focus", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
             Spacer(Modifier.height(4.dp))
             Text(
                 when {
@@ -93,9 +71,7 @@ fun WeeklyReflection(
                     walkingTrend.contains("decreased", ignoreCase = true) -> "Try adding a short walk to your daily routine."
                     else -> "Maintain the momentum. You're on a strong path."
                 },
-                fontSize = 13.sp,
-                color = SecondaryText,
-                lineHeight = 18.sp
+                fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
             )
         }
     }
