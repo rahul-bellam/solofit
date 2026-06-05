@@ -5,6 +5,12 @@ import javax.inject.Inject
 
 class InsightEngine @Inject constructor() {
 
+    companion object {
+        const val MIN_DAYS_FOR_TRENDS = 3
+        const val MIN_DAYS_FOR_WEEKLY = 7
+        const val MIN_DAYS_FOR_PATTERNS = 14
+    }
+
     fun compute(input: SolInput): SolInsight {
         val timeOfDay = LocalTime.now()
         val morning = timeOfDay.hour < 12
@@ -31,6 +37,22 @@ class InsightEngine @Inject constructor() {
         val recovery = input.recoveryScore
         val greeting = if (morning) greetingForRecovery(recovery) else ""
 
+        val hasSufficientData = input.daysTracked > 0
+
+        if (!hasSufficientData) {
+            return SolBriefing(
+                greeting = "Welcome.",
+                primary = EMPTY_STATE_SCRIPT,
+                supplementary = emptyList(),
+                dayLabel = DayLabel.BALANCED,
+                signals = emptyList(),
+                trends = emptyList(),
+                hasSufficientData = false,
+                daysTracked = input.daysTracked,
+                emptyMessage = "Complete a few days of tracking and I'll begin identifying trends."
+            )
+        }
+
         val candidates = mutableListOf<PrioritizedInsight>()
         populateCandidates(input, morning, evening, candidates)
 
@@ -45,29 +67,36 @@ class InsightEngine @Inject constructor() {
 
         val dayLabel = classifyDay(input)
         val signals = buildSignals(input)
+        val trends = buildTrends(input)
 
         return SolBriefing(
             greeting = greeting,
             primary = primary.insight,
             supplementary = supplementary.map { it.insight },
             dayLabel = dayLabel,
-            signals = signals
+            signals = signals,
+            trends = trends,
+            hasSufficientData = true,
+            daysTracked = input.daysTracked
         )
     }
 
-    data class SolBriefing(
-        val greeting: String,
-        val primary: Script,
-        val supplementary: List<Script>,
-        val dayLabel: DayLabel,
-        val signals: List<SignalSummary>
-    )
-
     private fun classifyDay(input: SolInput): DayLabel {
         val rec = input.recoveryScore ?: return DayLabel.BALANCED
+        val sleep = input.sleepHours ?: 6.0
+        val stress = input.stressLevel ?: 3
+        val steps = input.steps ?: 0
+        val proteinPct = if (input.targetProtein > 0) input.consumedProtein.toDouble() / input.targetProtein else 0.0
+
+        val meditated = (input.meditationMinutes ?: 0) > 0
+        val journaled = input.journalDays > 0
+
         return when {
-            rec >= 70 && input.workoutToday && (input.sleepHours ?: 0.0) >= 7.0 -> DayLabel.HIGH_ENERGY
-            rec < 40 || input.recentTrainingVolumeIncrease || (input.sleepHours ?: 8.0) < 5.0 -> DayLabel.RECOVERY_FOCUS
+            rec < 40 || input.recentTrainingVolumeIncrease || sleep < 5.0 -> DayLabel.RECOVERY_FOCUS
+            rec >= 70 && input.workoutToday && sleep >= 7.0 && steps >= 6000 -> DayLabel.PERFORMANCE
+            proteinPct < 0.5 && input.workoutToday -> DayLabel.NUTRITION_FOCUS
+            stress >= 4 && meditated || journaled -> DayLabel.MINDFULNESS
+            input.daysActiveThisWeek >= 4 || input.streakDays >= 7 -> DayLabel.CONSISTENCY
             else -> DayLabel.BALANCED
         }
     }
@@ -107,6 +136,55 @@ class InsightEngine @Inject constructor() {
         return signals
     }
 
+    private fun buildTrends(input: SolInput): List<TrendSummary> {
+        val trends = mutableListOf<TrendSummary>()
+        if (input.daysTracked < MIN_DAYS_FOR_TRENDS) return trends
+
+        if (input.weeklyRecovery.size >= 2) {
+            val first = input.weeklyRecovery.first()
+            val last = input.weeklyRecovery.last()
+            val diff = last - first
+            trends.add(
+                TrendSummary("Recovery",
+                    if (diff > 5) TrendDirection.UP else if (diff < -5) TrendDirection.DOWN else TrendDirection.STABLE,
+                    if (first > 0) ((diff.toDouble() / first) * 100).toInt() else 0,
+                    input.weeklyRecovery,
+                    if (last >= 60) SignalStatus.GOOD else if (last >= 40) SignalStatus.ON_TRACK else SignalStatus.LOW
+                )
+            )
+        }
+
+        if (input.weeklyProteinPct.size >= 2) {
+            val first = input.weeklyProteinPct.first()
+            val last = input.weeklyProteinPct.last()
+            val diff = last - first
+            trends.add(
+                TrendSummary("Protein",
+                    if (diff > 0.1) TrendDirection.UP else if (diff < -0.1) TrendDirection.DOWN else TrendDirection.STABLE,
+                    if (first > 0) ((diff / first) * 100).toInt() else 0,
+                    input.weeklyProteinPct.map { (it * 100).toInt() },
+                    if (last >= 0.9) SignalStatus.GOOD else if (last >= 0.5) SignalStatus.ON_TRACK else SignalStatus.LOW
+                )
+            )
+        }
+
+        if (input.weeklySteps.size >= 2) {
+            val first = input.weeklySteps.first()
+            val last = input.weeklySteps.last()
+            val diff = last - first
+            trends.add(
+                TrendSummary("Walking",
+                    if (diff > 500) TrendDirection.UP else if (diff < -500) TrendDirection.DOWN else TrendDirection.STABLE,
+                    if (first > 0) ((diff.toDouble() / first) * 100).toInt() else 0,
+                    input.weeklySteps,
+                    if (last >= 8000) SignalStatus.GOOD else if (last >= 5000) SignalStatus.ON_TRACK else SignalStatus.LOW
+                )
+            )
+        }
+
+        return trends
+    }
+
     private fun greetingForRecovery(recovery: Int?): String {
         if (recovery == null) return "Good morning."
         return when {
@@ -131,6 +209,9 @@ class InsightEngine @Inject constructor() {
 
     private fun populateCandidates(input: SolInput, morning: Boolean, evening: Boolean, candidates: MutableList<PrioritizedInsight>) {
         val rec = input.recoveryScore
+        val minData = input.daysTracked >= 1
+
+        if (!minData) return
 
         if (input.streakDays == 100) candidates += PrioritizedInsight(STREAK_100, 1000)
         if (input.streakDays == 30) candidates += PrioritizedInsight(STREAK_30, 900)
@@ -234,16 +315,6 @@ class InsightEngine @Inject constructor() {
             else -> EVENING_RECOVERY_FOCUS
         }
     }
-
-    data class Script(
-        val headline: String,
-        val detail: String,
-        val recommendation: String,
-        val reasoning: List<String>,
-        val recommendations: List<String>,
-        val voiceLine: String,
-        val type: InsightType
-    )
 
     // ─── SCRIPT LIBRARY ───
 
@@ -402,4 +473,14 @@ class InsightEngine @Inject constructor() {
     private val EVENING_RECOVERY_FOCUS = Script("Recovery Focus", "A recovery-focused evening may help reset for tomorrow.", "Prioritising sleep and relaxation can support recovery.",
         listOf("Recovery has been lower than usual"), listOf("Prioritise sleep", "Light stretching", "Reduce screen time before bed"),
         "Today may be a good opportunity to prioritise recovery. Tomorrow's performance often starts with tonight's habits.", InsightType.EVENING)
+
+    private val EMPTY_STATE_SCRIPT = Script(
+        "You're still building your wellness profile.",
+        "Complete a few days of tracking and I'll begin identifying trends.",
+        "Track your workouts, meals, and daily metrics to unlock personalised insights.",
+        listOf("No tracking data available yet"),
+        listOf("Log your first workout", "Track your meals", "Record your daily wellness"),
+        "You're still building your wellness profile. Complete a few days of tracking and I'll begin identifying trends.",
+        InsightType.EMPTY_STATE
+    )
 }

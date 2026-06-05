@@ -28,7 +28,11 @@ data class SolInput(
     val phaseDay: Int,
     val phaseTargetDays: Int,
     val historySessionCount: Int,
-    val recentTrainingVolumeIncrease: Boolean
+    val recentTrainingVolumeIncrease: Boolean,
+    val daysTracked: Int = 0,
+    val weeklySteps: List<Int> = emptyList(),
+    val weeklyRecovery: List<Int> = emptyList(),
+    val weeklyProteinPct: List<Double> = emptyList()
 )
 
 enum class JournalSentiment {
@@ -36,9 +40,34 @@ enum class JournalSentiment {
 }
 
 enum class DayLabel(val displayName: String, val description: String) {
-    HIGH_ENERGY("High Energy Day", "Everything is trending well"),
-    BALANCED("Balanced Day", "Small consistent actions compound"),
-    RECOVERY_FOCUS("Recovery Focus Day", "Prioritise rest today")
+    RECOVERY_FOCUS("Recovery Focus Day", "Prioritise rest and recovery today"),
+    PERFORMANCE("Performance Day", "Your body is ready for a strong session"),
+    NUTRITION_FOCUS("Nutrition Focus Day", "Fuel and hydration deserve extra attention today"),
+    CONSISTENCY("Consistency Day", "Small actions compound over time"),
+    MINDFULNESS("Mindfulness Day", "Mental recovery and reflection take centre stage"),
+    BALANCED("Balanced Day", "Everything is within a healthy range")
+}
+
+enum class SignalStatus { GOOD, ON_TRACK, LOW }
+
+data class SignalSummary(
+    val label: String,
+    val status: SignalStatus,
+    val detail: String
+)
+
+data class TrendSummary(
+    val label: String,
+    val direction: TrendDirection,
+    val percentage: Int,
+    val values: List<Int>,
+    val status: SignalStatus
+)
+
+enum class TrendDirection(val arrow: String) {
+    UP("↑"),
+    DOWN("↓"),
+    STABLE("→")
 }
 
 data class SolInsight(
@@ -51,13 +80,27 @@ data class SolInsight(
     val type: InsightType
 )
 
-data class SignalSummary(
-    val label: String,
-    val status: SignalStatus,
-    val detail: String
+data class Script(
+    val headline: String,
+    val detail: String,
+    val recommendation: String,
+    val reasoning: List<String>,
+    val recommendations: List<String>,
+    val voiceLine: String,
+    val type: InsightType
 )
 
-enum class SignalStatus { GOOD, ON_TRACK, LOW }
+data class SolBriefing(
+    val greeting: String,
+    val primary: Script,
+    val supplementary: List<Script>,
+    val dayLabel: DayLabel,
+    val signals: List<SignalSummary>,
+    val trends: List<TrendSummary> = emptyList(),
+    val hasSufficientData: Boolean = true,
+    val daysTracked: Int = 0,
+    val emptyMessage: String = ""
+)
 
 enum class InsightType {
     MORNING_GREETING,
@@ -74,7 +117,8 @@ enum class InsightType {
     WATER,
     EVENING,
     WELLNESS,
-    CONSISTENCY
+    CONSISTENCY,
+    EMPTY_STATE
 }
 
 enum class VoicePersonality(val displayName: String) {

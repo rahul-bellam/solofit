@@ -13,8 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,11 +22,11 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardCream
 import com.solofit.app.ui.theme.DarkSuccess
+import com.solofit.app.ui.theme.DarkWarning
 
 @Composable
 fun WeeklyReflection(
@@ -44,35 +42,24 @@ fun WeeklyReflection(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(
-                    Modifier.size(32.dp).clip(RoundedCornerShape(8.dp))
-                        .background(
-                            Brush.radialGradient(
-                                colors = listOf(Amber.copy(alpha = 0.2f), Amber.copy(alpha = 0.05f)),
-                                radius = 20f
-                            )
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("W", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Amber)
-                }
-                Spacer(Modifier.width(10.dp))
-                Text("This Week", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-            }
+            Text(
+                "This Week",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = PrimaryText
+            )
 
             Spacer(Modifier.height(14.dp))
 
-            if (workoutCount > 0) {
-                Text("$workoutCount workouts completed", fontSize = 14.sp, color = PrimaryText)
-                Spacer(Modifier.height(4.dp))
+            val summaryLines = buildList {
+                if (workoutCount > 0) add("$workoutCount workouts completed")
+                if (proteinDays > 0) add("Protein target reached on $proteinDays days")
+                if (walkingTrend.isNotBlank()) add(walkingTrend.replaceFirstChar { it.lowercase() })
+                if (isEmpty()) add("No data tracked this week yet")
             }
-            if (proteinDays > 0) {
-                Text("Protein goal reached on $proteinDays days", fontSize = 14.sp, color = PrimaryText)
-                Spacer(Modifier.height(4.dp))
-            }
-            if (walkingTrend.isNotBlank()) {
-                Text(walkingTrend, fontSize = 14.sp, color = PrimaryText)
+
+            summaryLines.forEach { line ->
+                Text("• $line", fontSize = 14.sp, color = PrimaryText, lineHeight = 20.sp)
                 Spacer(Modifier.height(4.dp))
             }
 
@@ -80,13 +67,14 @@ fun WeeklyReflection(
 
             Text(
                 when {
-                    workoutCount >= 4 -> "Most consistent week this month."
-                    workoutCount >= 3 -> "Building momentum steadily."
-                    workoutCount >= 1 -> "Every session counts."
-                    else -> "Small steps lead to big changes."
+                    workoutCount >= 4 -> "Most consistent week this month. The routine is becoming a habit."
+                    workoutCount >= 3 -> "Building momentum steadily. Each session reinforces the pattern."
+                    workoutCount >= 1 -> "Every session counts. Consistency grows one day at a time."
+                    else -> "Small steps lead to big changes. Start with one session next week."
                 },
                 fontSize = 13.sp,
-                color = SecondaryText
+                color = SecondaryText,
+                lineHeight = 18.sp
             )
 
             Spacer(Modifier.height(10.dp))
@@ -95,17 +83,19 @@ fun WeeklyReflection(
                 "Next Week Focus",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = Amber
+                color = PrimaryText
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 when {
-                    workoutCount < 3 -> "Aim for 3-4 workouts next week."
-                    proteinDays < 4 -> "Try to hit protein goals more consistently."
-                    else -> "Maintain the momentum."
+                    workoutCount < 3 -> "Aim for 3-4 workouts. Even short sessions count."
+                    proteinDays < 4 -> "Try to hit your protein target more consistently. Meal prep may help."
+                    walkingTrend.contains("decreased", ignoreCase = true) -> "Try adding a short walk to your daily routine."
+                    else -> "Maintain the momentum. You're on a strong path."
                 },
                 fontSize = 13.sp,
-                color = SecondaryText
+                color = SecondaryText,
+                lineHeight = 18.sp
             )
         }
     }

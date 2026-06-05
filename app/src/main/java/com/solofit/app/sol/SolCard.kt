@@ -1,10 +1,5 @@
 package com.solofit.app.sol
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,7 +19,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +36,9 @@ import com.solofit.app.ui.theme.CardCream
 import com.solofit.app.ui.theme.DarkSuccess
 import com.solofit.app.ui.theme.DarkWarning
 import com.solofit.app.ui.theme.DarkError
+import com.solofit.app.ui.theme.ProteinColor
+import com.solofit.app.ui.theme.WalkingAccent
+import com.solofit.app.ui.theme.RecoveryAccent
 
 @Composable
 fun SolCard(
@@ -54,13 +51,6 @@ fun SolCard(
 ) {
     if (!state.visible) return
 
-    val recColor = when {
-        state.type == InsightType.MORNING_GREETING && state.detail.contains("strong", ignoreCase = true) -> Amber
-        state.type == InsightType.MORNING_GREETING && state.detail.contains("lower", ignoreCase = true) -> DarkWarning
-        state.type == InsightType.OVERTRAINING -> DarkError
-        else -> Amber
-    }
-
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
@@ -69,7 +59,7 @@ fun SolCard(
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
 
-            // SOL header + narrator style
+            // ── SOL header (amber only on glow + icon) ──
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(40.dp).clip(CircleShape)
@@ -98,7 +88,21 @@ fun SolCard(
 
             Spacer(Modifier.height(16.dp))
 
-            // Greeting with name
+            if (!state.hasSufficientData) {
+                // ── Empty State ──
+                Text(
+                    state.headline.ifEmpty { "You're still building your wellness profile." },
+                    fontSize = 16.sp, fontWeight = FontWeight.Medium, color = PrimaryText
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    state.detail.ifEmpty { "Complete a few days of tracking and I'll begin identifying trends." },
+                    fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
+                )
+                return@Column
+            }
+
+            // ── Greeting with name ──
             val namePart = if (state.userName.isNotBlank()) " ${state.userName}" else ""
             Text(
                 "${state.greeting.trimEnd('.')}$namePart.",
@@ -107,17 +111,22 @@ fun SolCard(
 
             Spacer(Modifier.height(2.dp))
 
-            // Rotating header
+            // Rotating header (no amber)
             Text(
                 state.briefingHeader,
-                fontSize = 13.sp, color = Amber, fontWeight = FontWeight.SemiBold
+                fontSize = 13.sp, color = SecondaryText, fontWeight = FontWeight.SemiBold
             )
 
             Spacer(Modifier.height(8.dp))
 
             // Primary headline + detail
+            val headlineColor = when {
+                state.type == InsightType.OVERTRAINING -> DarkError
+                state.dayLabel == DayLabel.PERFORMANCE -> DarkSuccess
+                else -> PrimaryText
+            }
             if (state.headline.isNotBlank()) {
-                Text(state.headline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = recColor)
+                Text(state.headline, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = headlineColor)
                 Spacer(Modifier.height(4.dp))
             }
             Text(state.detail, fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp)
@@ -159,18 +168,66 @@ fun SolCard(
 
             Spacer(Modifier.height(10.dp))
 
-            // Day label
+            // Day label with new types
             val labelColor = when (state.dayLabel) {
-                DayLabel.HIGH_ENERGY -> DarkSuccess
-                DayLabel.BALANCED -> Amber
+                DayLabel.PERFORMANCE -> DarkSuccess
                 DayLabel.RECOVERY_FOCUS -> DarkWarning
+                DayLabel.NUTRITION_FOCUS -> ProteinColor
+                DayLabel.MINDFULNESS -> RecoveryAccent
+                DayLabel.CONSISTENCY -> DarkWarning
+                DayLabel.BALANCED -> SecondaryText
             }
             Text(
-                "Overall: ${state.dayLabel.displayName}",
+                state.dayLabel.displayName,
                 fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = labelColor
             )
 
             Spacer(Modifier.height(14.dp))
+
+            // ── Trend Visualization (always visible) ──
+            if (state.trends.isNotEmpty()) {
+                Text("Show Trend", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = SecondaryText)
+                Spacer(Modifier.height(6.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    state.trends.forEach { trend ->
+                        val trendColor = when (trend.status) {
+                            SignalStatus.GOOD -> DarkSuccess
+                            SignalStatus.ON_TRACK -> DarkWarning
+                            SignalStatus.LOW -> DarkError
+                        }
+                        val arrowColor = when (trend.direction) {
+                            TrendDirection.UP -> DarkSuccess
+                            TrendDirection.DOWN -> DarkError
+                            TrendDirection.STABLE -> SecondaryText
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(CardCream)
+                                .padding(6.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                "${trend.direction.arrow} ${trend.percentage}%",
+                                fontSize = 13.sp, fontWeight = FontWeight.Bold, color = arrowColor
+                            )
+                            Text(
+                                trend.label,
+                                fontSize = 10.sp, color = trendColor
+                            )
+                            Text(
+                                "Past 7 Days",
+                                fontSize = 8.sp, color = SecondaryText
+                            )
+                        }
+                    }
+                }
+                Spacer(Modifier.height(10.dp))
+            }
 
             // Always-visible: Why? reasoning
             if (state.reasoning.isNotEmpty()) {

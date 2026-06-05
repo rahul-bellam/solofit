@@ -36,7 +36,8 @@ class InsightEngineTest {
         phaseDay = 0,
         phaseTargetDays = 90,
         historySessionCount = 0,
-        recentTrainingVolumeIncrease = false
+        recentTrainingVolumeIncrease = false,
+        daysTracked = 1
     )
 
     @Test

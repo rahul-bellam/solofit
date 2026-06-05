@@ -41,6 +41,7 @@ data class SolUiState(
     val type: InsightType = InsightType.MORNING_GREETING,
     val dayLabel: DayLabel = DayLabel.BALANCED,
     val signals: List<SignalSummary> = emptyList(),
+    val trends: List<TrendSummary> = emptyList(),
     val supplementaryHeadlines: List<String> = emptyList(),
     val expandedWhy: Boolean = false,
     val expandedWhat: Boolean = false,
@@ -51,7 +52,10 @@ data class SolUiState(
     val isSunday: Boolean = false,
     val weeklyWorkoutCount: Int = 0,
     val weeklyProteinDays: Int = 0,
-    val weeklyWalkingTrend: String = ""
+    val weeklyWalkingTrend: String = "",
+    val hasSufficientData: Boolean = true,
+    val daysTracked: Int = 0,
+    val emptyMessage: String = ""
 )
 
 private val BRIEFING_HEADERS = listOf(
@@ -139,6 +143,56 @@ class SolViewModel @Inject constructor(
 
             val journalSentiment: JournalSentiment? = null
 
+            // ── Weekly data aggregation ──
+            val weekStart = now.minusDays(6)
+            val daysInWeek = (0..6).map { weekStart.plusDays(it.toLong()) }
+            val dateStrings = daysInWeek.map { it.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE) }
+
+            val weeklyMetrics = dateStrings.mapNotNull { date ->
+                runCatching { bodyRepository.getMetric(date) }.getOrNull()
+            }
+            val weeklyTotals = dateStrings.mapNotNull { date ->
+                runCatching { dailyLogRepository.observeTotalsForDate(date).first() }.getOrNull()
+            }
+
+            val weeklySteps = weeklyMetrics.mapNotNull { it.steps }
+            val weeklyRecovery = weeklyMetrics.mapNotNull { m ->
+                FitnessMath.recoveryScore(
+                    sleepHours = m.sleepHours, steps = m.steps,
+                    workoutDone = dates.contains(m.date), waterMl = null,
+                    waterGoalMl = 3000, energyScore = m.energyScore
+                )
+            }
+            val targetProtein = profile?.targetProtein ?: 150
+            val weeklyProteinPct = weeklyTotals.map { t ->
+                if (targetProtein > 0) t.proteinG / targetProtein else 0.0
+            }
+
+            val daysTracked = weeklyMetrics.size
+
+            // ── Count days in last 7 where protein >= target ──
+            val weeklyProteinDays = weeklyTotals.count { t ->
+                targetProtein > 0 && t.proteinG >= targetProtein
+            }
+
+            // ── Calculate weekly step trend ──
+            val prevWeekStart = weekStart.minusDays(7)
+            val prevWeekDates = (0..6).map { prevWeekStart.plusDays(it.toLong()) }
+            val prevWeekMetrics = prevWeekDates.mapNotNull { date ->
+                runCatching { bodyRepository.getMetric(date.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)) }.getOrNull()
+            }
+            val currentWeekTotalSteps = weeklySteps.sum()
+            val prevWeekTotalSteps = prevWeekMetrics.sumOf { it.steps ?: 0 }
+
+            val walkingTrend = if (prevWeekTotalSteps > 0) {
+                val pctChange = ((currentWeekTotalSteps - prevWeekTotalSteps).toDouble() / prevWeekTotalSteps * 100).roundToInt()
+                if (pctChange > 0) "Walking increased $pctChange%"
+                else if (pctChange < 0) "Walking decreased ${kotlin.math.abs(pctChange)}%"
+                else "Walking consistent with last week"
+            } else if (currentWeekTotalSteps > 0) {
+                "Walking tracked this week"
+            } else ""
+
             val input = SolInput(
                 recoveryScore = recoveryScore,
                 previousRecoveryScore = previousRecovery,
@@ -148,7 +202,7 @@ class SolViewModel @Inject constructor(
                 consumedCalories = totals.calories.roundToInt(),
                 consumedProtein = totals.proteinG.roundToInt(),
                 targetCalories = profile?.targetCalories ?: 2000,
-                targetProtein = profile?.targetProtein ?: 150,
+                targetProtein = targetProtein,
                 sleepHours = metric?.sleepHours,
                 previousSleepHours = prevSleep,
                 steps = metric?.steps,
@@ -167,7 +221,11 @@ class SolViewModel @Inject constructor(
                 phaseDay = 1,
                 phaseTargetDays = 365,
                 historySessionCount = history.size,
-                recentTrainingVolumeIncrease = volumeIncrease
+                recentTrainingVolumeIncrease = volumeIncrease,
+                daysTracked = daysTracked,
+                weeklySteps = weeklySteps,
+                weeklyRecovery = weeklyRecovery,
+                weeklyProteinPct = weeklyProteinPct
             )
 
             val briefing = insightEngine.computeBriefing(input)
@@ -182,8 +240,6 @@ class SolViewModel @Inject constructor(
             val isSunday = now.dayOfWeek == DayOfWeek.SUNDAY
 
             val weeklyWorkoutCount = StreakCalculator.daysActiveInWindow(dates, now, 7)
-            val weeklyProteinDays = calculateProteinDays(history, totals, profile?.targetProtein ?: 150)
-            val weeklyWalkingTrend = calculateWeeklySteps(bodyRepository, now)
 
             _state.value = SolUiState(
                 visible = true,
@@ -198,7 +254,8 @@ class SolViewModel @Inject constructor(
                 type = briefing.primary.type,
                 dayLabel = briefing.dayLabel,
                 signals = briefing.signals,
-                supplementaryHeadlines = briefing.supplementary.map { it.headline },
+                trends = briefing.trends,
+                supplementaryHeadlines = briefing.supplementary.map { s -> s.headline },
                 expandedWhy = true,
                 personality = personality,
                 hasStreakMilestone = streakMilestone > 0,
@@ -206,17 +263,12 @@ class SolViewModel @Inject constructor(
                 isSunday = isSunday,
                 weeklyWorkoutCount = weeklyWorkoutCount,
                 weeklyProteinDays = weeklyProteinDays,
-                weeklyWalkingTrend = weeklyWalkingTrend
+                weeklyWalkingTrend = walkingTrend,
+                hasSufficientData = briefing.hasSufficientData,
+                daysTracked = daysTracked,
+                emptyMessage = briefing.emptyMessage
             )
         }
-    }
-
-    private suspend fun calculateProteinDays(history: List<*>, totals: Any, targetProtein: Int): Int {
-        return 0
-    }
-
-    private suspend fun calculateWeeklySteps(bodyRepository: BodyRepository, now: LocalDate): String {
-        return ""
     }
 
     fun toggleWhy() {

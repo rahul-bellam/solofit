@@ -468,7 +468,7 @@ fun DashboardScreen(
 private fun ModuleSuggestionCard(suggestion: ModuleSuggestion, onAdd: () -> Unit) {
     Row(
         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
-            .background(Amber.copy(alpha = 0.06f)).padding(16.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
