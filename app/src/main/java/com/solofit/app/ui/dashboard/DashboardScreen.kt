@@ -78,8 +78,6 @@ import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.ui.modules.ModuleSuggestion
 import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.HighGreen
-import com.solofit.app.ui.theme.PrimaryText
-import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
 import com.solofit.app.ui.theme.ProteinColor
@@ -161,9 +159,23 @@ fun DashboardScreen(
                 .padding(horizontal = 16.dp, vertical = 16.dp)
         ) {
 
-        // ── Header ──
+        // ── HERO: Sol Insight ──
+        SolCard(
+            state = solState,
+            onToggleWhy = solViewModel::toggleWhy,
+            onToggleWhat = solViewModel::toggleWhat,
+            onListen = solViewModel::speak,
+            onPersonalityChange = { },
+            onLogMeal = onLogMeal,
+            onLogWorkout = onLogWorkout,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(Modifier.height(12.dp))
+
+        // ── Header (below Sol) ──
         Row(
-            Modifier.fillMaxWidth().padding(bottom = 8.dp),
+            Modifier.fillMaxWidth().padding(bottom = 4.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -185,17 +197,7 @@ fun DashboardScreen(
             }
         }
 
-        // ── HERO: Sol Insight ──
-        SolCard(
-            state = solState,
-            onToggleWhy = solViewModel::toggleWhy,
-            onToggleWhat = solViewModel::toggleWhat,
-            onListen = solViewModel::speak,
-            onPersonalityChange = { },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(4.dp))
 
         // ── WEEKLY REFLECTION (Sundays) ──
         AnimatedVisibility(
@@ -209,7 +211,7 @@ fun DashboardScreen(
                     proteinDays = solState.weeklyProteinDays,
                     walkingTrend = solState.weeklyWalkingTrend
                 )
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(12.dp))
             }
         }
 
@@ -217,34 +219,43 @@ fun DashboardScreen(
         Card(
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.fillMaxWidth().clickable(onClick = onEditPhase),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
         ) {
             Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                Text(state.phaseName,
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onPrimary)
-                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(state.phaseName,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.width(8.dp))
+                }
+                Spacer(Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text("Day ${state.phaseDay}",
                         style = MaterialTheme.typography.headlineLarge,
-                        color = MaterialTheme.colorScheme.onPrimary)
-                    Text(" / ${state.phaseTargetDays}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onPrimary,
+                        color = MaterialTheme.colorScheme.onSurface)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Building Foundations",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(bottom = 6.dp))
                 }
+                Spacer(Modifier.height(6.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     if (state.streakDays > 0) {
                         Text("${state.streakDays}-day streak",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary)
-                        Spacer(Modifier.width(12.dp))
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(16.dp))
                     }
                     state.recoveryScore?.let { rec ->
                         Text("Recovery $rec%",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onPrimary)
-                    }
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } ?: Text("Building baseline",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -330,11 +341,34 @@ fun DashboardScreen(
                 ) {
                     CalorieRing(consumed = consumedKcal, target = targetKcal, animate = animate, onClick = onLogMeal)
                 }
-                Spacer(Modifier.height(24.dp))
-                MacroBar("Protein", state.consumed.proteinG.roundToInt(), profile?.targetProtein ?: 0, ProteinColor, animate = animate)
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(20.dp))
+
+                Text("Protein", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ProteinColor)
+                Spacer(Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text("${state.consumed.proteinG.roundToInt()}", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = ProteinColor)
+                    Spacer(Modifier.width(6.dp))
+                    Text("g", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = ProteinColor.copy(alpha = 0.7f))
+                    Spacer(Modifier.weight(1f))
+                    Text("${profile?.targetProtein ?: 0}g goal", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                Spacer(Modifier.height(8.dp))
+                val proteinFrac = (state.consumed.proteinG.toFloat() / (profile?.targetProtein ?: 1).coerceAtLeast(1)).coerceAtMost(1f)
+                Box(
+                    Modifier.fillMaxWidth().height(10.dp)
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth(proteinFrac).height(10.dp)
+                            .clip(RoundedCornerShape(5.dp))
+                            .background(ProteinColor)
+                    )
+                }
+
+                Spacer(Modifier.height(20.dp))
                 MacroBar("Carbs", state.consumed.carbsG.roundToInt(), profile?.targetCarbs ?: 0, CarbsColor, animate = animate)
-                Spacer(Modifier.height(14.dp))
+                Spacer(Modifier.height(12.dp))
                 MacroBar("Fats", state.consumed.fatsG.roundToInt(), profile?.targetFats ?: 0, FatsColor, animate = animate)
             }
         }
@@ -351,7 +385,7 @@ fun DashboardScreen(
 
         // ── Tracking Grid ──
         Spacer(Modifier.height(24.dp))
-        Text("Tracking", style = MaterialTheme.typography.titleMedium, color = PrimaryText)
+        Text("Tracking", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
         Spacer(Modifier.height(12.dp))
         val trackingItems = listOf(
             Triple("Profile", Icons.Filled.Person, onOpenProfile),
@@ -429,9 +463,9 @@ private fun ModuleSuggestionCard(suggestion: ModuleSuggestion, onAdd: () -> Unit
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(Modifier.weight(1f)) {
-            Text(suggestion.reason, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+            Text(suggestion.reason, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
             Spacer(Modifier.height(2.dp))
-            Text(suggestion.detail, fontSize = 12.sp, color = SecondaryText)
+            Text(suggestion.detail, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Box(
             Modifier.clip(RoundedCornerShape(10.dp)).background(Amber).clickable(onClick = onAdd)

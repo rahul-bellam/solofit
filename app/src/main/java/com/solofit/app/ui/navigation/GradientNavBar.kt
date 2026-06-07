@@ -23,8 +23,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.PrimaryText
 
 @Composable
 fun GradientNavBar(
@@ -43,14 +43,13 @@ fun GradientNavBar(
     ) {
         destinations.forEach { dest ->
             val selected = selectedDestination == dest
-            val accent = dest.gradientFrom
             val iconTint by animateColorAsState(
-                targetValue = if (selected) accent else SecondaryText,
+                targetValue = if (selected) Amber else SecondaryText,
                 animationSpec = tween(250),
                 label = "navIcon"
             )
             val labelColor by animateColorAsState(
-                targetValue = if (selected) PrimaryText else SecondaryText,
+                targetValue = if (selected) Amber else SecondaryText,
                 animationSpec = tween(250),
                 label = "navLabel"
             )
@@ -70,7 +69,7 @@ fun GradientNavBar(
                 Text(
                     dest.label,
                     fontSize = 11.sp,
-                    fontWeight = if (selected) FontWeight.Medium else FontWeight.Normal,
+                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                     color = labelColor,
                     modifier = Modifier.padding(top = 2.dp)
                 )

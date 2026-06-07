@@ -3,8 +3,8 @@ package com.solofit.app.ui.theme
 import androidx.compose.ui.graphics.Color
 
 // ─── Foundation (shared across all screens) ───
-val PageBg = Color(0xFFF7F1E8)
-val CardCream = Color(0xFFFCFAF7)
+val PageBg = Color(0xFFF2EBE0)
+val CardCream = Color(0xFFFFFCF9)
 val PrimaryText = Color(0xFF4A4741)
 val SecondaryText = Color(0xFFA8A5A0)
 val Hairline = Color(0xFFE5E7EB)
@@ -14,8 +14,8 @@ val Amber = Color(0xFFAF751B)
 val AmberSoft = Color(0xFFE8D5B0)
 
 // ─── Screen-Specific Temperatures (Light) ───
-val NutritionBg = Color(0xFFF4F0E4)
-val NutritionCard = Color(0xFFFBF8F3)
+val NutritionBg = Color(0xFFEFEADB)
+val NutritionCard = Color(0xFFFFFCF9)
 val NutritionAccent = Color(0xFF7A7B52)
 
 val RecoveryBg = Color(0xFFF2EFE9)

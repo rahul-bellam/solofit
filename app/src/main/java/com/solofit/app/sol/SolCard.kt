@@ -19,9 +19,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,9 +39,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.PrimaryText
-import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.CardCream
 import com.solofit.app.ui.theme.DarkSuccess
 import com.solofit.app.ui.theme.DarkWarning
 import com.solofit.app.ui.theme.DarkError
@@ -52,6 +53,8 @@ fun SolCard(
     onToggleWhat: () -> Unit,
     onListen: () -> Unit,
     onPersonalityChange: () -> Unit,
+    onLogMeal: () -> Unit = {},
+    onLogWorkout: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     if (!state.visible) return
@@ -59,7 +62,7 @@ fun SolCard(
     Card(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = CardCream),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
@@ -80,13 +83,13 @@ fun SolCard(
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
-                    Text("SOL", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
-                    Text(state.personality.displayName, fontSize = 10.sp, color = SecondaryText)
+                    Text("SOL", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+                    Text(state.personality.displayName, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Spacer(Modifier.weight(1f))
                 Icon(
                     Icons.AutoMirrored.Filled.VolumeUp, null,
-                    tint = if (state.isSpeaking) Amber else SecondaryText,
+                    tint = if (state.isSpeaking) Amber else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp).clickable(onClick = onListen)
                 )
             }
@@ -100,7 +103,7 @@ fun SolCard(
             ) {
                 Column {
                     if (!state.hasSufficientData) {
-                        EmptySolContent(state)
+                        EmptySolContent(state, onLogMeal, onLogWorkout)
                         return@Column
                     }
 
@@ -112,22 +115,38 @@ fun SolCard(
 }
 
 @Composable
-private fun EmptySolContent(state: SolUiState) {
+private fun EmptySolContent(state: SolUiState, onLogMeal: () -> Unit, onLogWorkout: () -> Unit) {
     Text(
         state.headline.ifEmpty { "You're still building your wellness profile." },
-        fontSize = 16.sp, fontWeight = FontWeight.Medium, color = PrimaryText,
+        fontSize = 16.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface,
         lineHeight = 22.sp
     )
     Spacer(Modifier.height(10.dp))
     Text(
-        state.detail.ifEmpty { "Complete a few days of tracking and I'll begin identifying trends." },
-        fontSize = 13.sp, color = SecondaryText, lineHeight = 19.sp
+        state.detail.ifEmpty { "Log your first workout or meal and I'll begin identifying trends." },
+        fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 19.sp
     )
-    Spacer(Modifier.height(14.dp))
-    Text(
-        "Try logging a workout or your meals to get started.",
-        fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp
-    )
+    Spacer(Modifier.height(20.dp))
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        OutlinedButton(
+            onClick = onLogWorkout,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Text("Log Workout", fontSize = 13.sp)
+        }
+        Button(
+            onClick = onLogMeal,
+            modifier = Modifier.weight(1f),
+            shape = RoundedCornerShape(12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = Amber)
+        ) {
+            Text("Log Meal", fontSize = 13.sp, color = Color.White)
+        }
+    }
 }
 
 @Composable
@@ -135,7 +154,7 @@ private fun MainSolContent(state: SolUiState) {
     val namePart = if (state.userName.isNotBlank()) " ${state.userName}" else ""
     Text(
         "${state.greeting.trimEnd('.')}$namePart.",
-        fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText,
+        fontSize = 19.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface,
         lineHeight = 26.sp
     )
 
@@ -143,7 +162,7 @@ private fun MainSolContent(state: SolUiState) {
 
     Text(
         state.briefingHeader,
-        fontSize = 12.sp, color = SecondaryText, fontWeight = FontWeight.SemiBold,
+        fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold,
         letterSpacing = 0.3.sp
     )
 
@@ -152,18 +171,18 @@ private fun MainSolContent(state: SolUiState) {
     val headlineColor = when {
         state.type == InsightType.OVERTRAINING -> DarkError
         state.dayLabel == DayLabel.PERFORMANCE -> DarkSuccess
-        else -> PrimaryText
+        else -> MaterialTheme.colorScheme.onSurface
     }
     if (state.headline.isNotBlank()) {
         Text(state.headline, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = headlineColor, lineHeight = 22.sp)
         Spacer(Modifier.height(6.dp))
     }
-    Text(state.detail, fontSize = 13.sp, color = SecondaryText, lineHeight = 19.sp)
+    Text(state.detail, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 19.sp)
 
     if (state.supplementaryHeadlines.isNotEmpty()) {
         Spacer(Modifier.height(12.dp))
         state.supplementaryHeadlines.forEach { sh ->
-            Text("• $sh", fontSize = 12.sp, color = SecondaryText, lineHeight = 17.sp)
+            Text("• $sh", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 17.sp)
         }
     }
 
@@ -187,9 +206,9 @@ private fun MainSolContent(state: SolUiState) {
                     .padding(vertical = 8.dp, horizontal = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(signal.label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                Text(signal.label, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
                 Spacer(Modifier.height(2.dp))
-                Text(signal.detail, fontSize = 10.sp, color = SecondaryText)
+                Text(signal.detail, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -202,7 +221,7 @@ private fun MainSolContent(state: SolUiState) {
         DayLabel.NUTRITION_FOCUS -> ProteinColor
         DayLabel.MINDFULNESS -> RecoveryAccent
         DayLabel.CONSISTENCY -> DarkWarning
-        DayLabel.BALANCED -> SecondaryText
+        DayLabel.BALANCED -> MaterialTheme.colorScheme.onSurfaceVariant
     }
     Text(
         state.dayLabel.displayName,
@@ -224,7 +243,7 @@ private fun MainSolContent(state: SolUiState) {
                 val arrowColor = when (trend.direction) {
                     TrendDirection.UP -> DarkSuccess
                     TrendDirection.DOWN -> DarkError
-                    TrendDirection.STABLE -> SecondaryText
+                    TrendDirection.STABLE -> MaterialTheme.colorScheme.onSurfaceVariant
                 }
                 Column(
                     modifier = Modifier
@@ -240,7 +259,7 @@ private fun MainSolContent(state: SolUiState) {
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(trend.label, fontSize = 10.sp, color = trendColor)
-                    Text("Past 7 Days", fontSize = 8.sp, color = SecondaryText)
+                    Text("Past 7 Days", fontSize = 8.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -248,20 +267,20 @@ private fun MainSolContent(state: SolUiState) {
 
     if (state.reasoning.isNotEmpty()) {
         Spacer(Modifier.height(16.dp))
-        Text("Why?", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText, letterSpacing = 0.2.sp)
+        Text("Why?", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, letterSpacing = 0.2.sp)
         Spacer(Modifier.height(6.dp))
         state.reasoning.forEach { reason ->
-            Text("• $reason", fontSize = 12.sp, color = SecondaryText, lineHeight = 18.sp)
+            Text("• $reason", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
             Spacer(Modifier.height(3.dp))
         }
     }
 
     if (state.recommendations.isNotEmpty()) {
         Spacer(Modifier.height(14.dp))
-        Text("Recommended", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText, letterSpacing = 0.2.sp)
+        Text("Recommended", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, letterSpacing = 0.2.sp)
         Spacer(Modifier.height(6.dp))
         state.recommendations.forEach { rec ->
-            Text("✓ $rec", fontSize = 12.sp, color = SecondaryText, lineHeight = 18.sp)
+            Text("✓ $rec", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, lineHeight = 18.sp)
             Spacer(Modifier.height(3.dp))
         }
     }
@@ -287,7 +306,7 @@ fun PersonalityDialog(
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(p.displayName, fontSize = 15.sp, color = PrimaryText)
+                        Text(p.displayName, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.weight(1f))
                         if (p == current) Text("Active", fontSize = 12.sp, color = Amber)
                     }

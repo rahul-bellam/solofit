@@ -52,6 +52,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -74,8 +75,9 @@ import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.NutritionBg
 import com.solofit.app.ui.theme.NutritionCard
 import com.solofit.app.ui.theme.NutritionAccent
-import com.solofit.app.ui.theme.PrimaryText
-import com.solofit.app.ui.theme.SecondaryText
+import com.solofit.app.ui.theme.ProteinColor
+import com.solofit.app.ui.theme.CarbsColor
+import com.solofit.app.ui.theme.FatsColor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
@@ -190,8 +192,8 @@ fun NutritionScreen(
             item {
                 Column(Modifier.padding(horizontal = 20.dp)) {
                     Spacer(Modifier.height(8.dp))
-                    Text("Nutrition", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
-                    Text("Track what you eat", fontSize = 14.sp, color = SecondaryText)
+                    Text("Nutrition", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+                    Text("Track what you eat", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(20.dp))
                 }
             }
@@ -203,7 +205,7 @@ fun NutritionScreen(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
                 ) {
                     Column(Modifier.padding(28.dp)) {
-                        Text("Calories Remaining", fontSize = 15.sp, color = SecondaryText, fontWeight = FontWeight.Medium)
+                        Text("Calories Remaining", fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.Medium)
                         Spacer(Modifier.height(4.dp))
                         Text(
                             "$remaining",
@@ -215,24 +217,47 @@ fun NutritionScreen(
                         Text(
                             "of $calGoal target",
                             fontSize = 16.sp,
-                            color = SecondaryText
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
             }
 
-            // ── MEDIUM: Macros + AI Scan ──
+            // ── MEDIUM: Macros (Protein emphasized) + AI Scan ──
             item {
                 WellnessStaticCard(
                     containerColor = NutritionCard,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
                 ) {
                     Column(Modifier.padding(28.dp)) {
-                        MacroBar("Protein", dailyProtein, proteinGoal, NutritionAccent, animate = true)
+                        Text("Protein", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = ProteinColor)
+                        Spacer(Modifier.height(6.dp))
+                        Row(verticalAlignment = Alignment.Bottom) {
+                            Text("$dailyProtein", fontSize = 34.sp, fontWeight = FontWeight.Bold, color = ProteinColor)
+                            Spacer(Modifier.width(6.dp))
+                            Text("g", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = ProteinColor.copy(alpha = 0.7f))
+                            Spacer(Modifier.weight(1f))
+                            Text("$proteinGoal g goal", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        val proteinFrac = (dailyProtein.toFloat() / proteinGoal.coerceAtLeast(1)).coerceAtMost(1f)
+                        Box(
+                            Modifier.fillMaxWidth().height(8.dp)
+                                .clip(RoundedCornerShape(4.dp))
+                                .background(NutritionAccent.copy(alpha = 0.15f))
+                        ) {
+                            Box(
+                                Modifier.fillMaxWidth(proteinFrac).height(8.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(ProteinColor)
+                            )
+                        }
+
+                        Spacer(Modifier.height(20.dp))
+
+                        MacroBar("Carbs", dailyCarbs, carbsGoal, CarbsColor, animate = true)
                         Spacer(Modifier.height(10.dp))
-                        MacroBar("Carbs", dailyCarbs, carbsGoal, NutritionAccent, animate = true)
-                        Spacer(Modifier.height(10.dp))
-                        MacroBar("Fats", dailyFats, fatGoal, NutritionAccent, animate = true)
+                        MacroBar("Fats", dailyFats, fatGoal, FatsColor, animate = true)
 
                         Spacer(Modifier.height(20.dp))
 
@@ -258,7 +283,7 @@ fun NutritionScreen(
             // ── SMALL: Today's Log ──
             item {
                 Spacer(Modifier.height(4.dp))
-                Text("Today's Log", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText,
+                Text("Today's Log", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier.padding(horizontal = 20.dp))
                 Spacer(Modifier.height(12.dp))
             }
@@ -274,7 +299,7 @@ fun NutritionScreen(
                     )
                 }
                 if (results.isEmpty()) {
-                    item { Text("No foods match \"$query\".", color = SecondaryText, modifier = Modifier.padding(horizontal = 20.dp)) }
+                    item { Text("No foods match \"$query\".", color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 20.dp)) }
                 }
             } else {
                 val allEntries = sections.flatMap { section ->
@@ -380,7 +405,7 @@ private fun ActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, la
                 Icon(icon, null, tint = Amber, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(4.dp))
-            Text(label, fontSize = 11.sp, color = PrimaryText, fontWeight = FontWeight.Medium)
+            Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Medium)
         }
     }
     }
@@ -399,8 +424,8 @@ private fun FoodLogItem(emoji: String, name: String, quantity: String, time: Str
             Text(emoji, fontSize = 24.sp)
             Spacer(Modifier.size(12.dp))
             Column(Modifier.weight(1f)) {
-                Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = PrimaryText)
-                Text("$quantity  \u00B7  $time", fontSize = 12.sp, color = SecondaryText)
+                Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
+                Text("$quantity  \u00B7  $time", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
@@ -421,13 +446,20 @@ private data class FoodLogEntry(
 private fun SearchFoodDialog(query: String, onQueryChange: (String) -> Unit, results: List<FoodItemEntity>, onSelectFood: (FoodItemEntity) -> Unit, onDismiss: () -> Unit, onBarcode: () -> Unit, onCamera: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Log a food") },
+        title = { Text("Log Food", fontWeight = FontWeight.Bold) },
         text = {
             Column {
-                OutlinedTextField(value = query, onValueChange = onQueryChange, placeholder = { Text("What did you eat?") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = onQueryChange,
+                    placeholder = { Text("Search food...", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp)
+                )
                 Spacer(Modifier.height(12.dp))
                 if (query.isBlank()) {
-                    Text("SUGGESTED", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("QUICK ADD", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
                     Spacer(Modifier.height(8.dp))
                     listOf(Triple("Banana", "\uD83C\uDF4C", 105), Triple("Oatmeal with berries", "\uD83C\uDF53", 310), Triple("Almond butter", "\uD83E\uDD5C", 190), Triple("Chia seed pudding", "\uD83C\uDF31", 175)).forEach { (name, emoji, cal) ->
                         Row(Modifier.fillMaxWidth().clickable { onQueryChange(name) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -438,16 +470,18 @@ private fun SearchFoodDialog(query: String, onQueryChange: (String) -> Unit, res
                     }
                 } else {
                     results.forEach { food ->
-                        Row(Modifier.fillMaxWidth().clickable { onSelectFood(food) }.padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(food.name, modifier = Modifier.weight(1f))
+                        Row(Modifier.fillMaxWidth().clickable { onSelectFood(food) }.padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(food.name, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
                             Text("${food.caloriesPer100g.roundToInt()} kcal", color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                 }
             }
         },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text("Cancel") }
+        },
+        dismissButton = {}
     )
 }
 
