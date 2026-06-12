@@ -1,7 +1,6 @@
 package com.solofit.app.sol
 
 import com.solofit.app.ui.theme.MossGreen
-import com.solofit.app.ui.theme.Ochre
 import com.solofit.app.ui.theme.RustIron
 import com.solofit.app.ui.theme.SlateBlue
 import com.solofit.app.ui.theme.TwilightBlue

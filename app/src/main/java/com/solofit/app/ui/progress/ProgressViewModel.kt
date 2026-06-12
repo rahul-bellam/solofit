@@ -34,8 +34,7 @@ data class Achievement(
 )
 
 data class ProgressUiState(
-    val streakDays: Int = 0,
-    val bestStreak: Int = 0,
+    val activeDaysThisWeek: Int = 0,
     val workoutsThisMonth: Int = 0,
     val totalVolumeKg: Int = 0,
     val milestonesUnlocked: Int = 0,
@@ -77,8 +76,10 @@ class ProgressViewModel @Inject constructor(
         enabled: List<SoloFitModule>
     ) {
         val dates = history.map { it.session.date }.sorted()
-        val streak = computeCurrentStreak(dates)
-        val bestStreak = computeBestStreak(dates)
+        val activeThisWeek = dates.count {
+            val d = runCatching { LocalDate.parse(it) }.getOrNull() ?: return@count false
+            ChronoUnit.DAYS.between(d, LocalDate.now()) < 7
+        }
 
         val thisMonth = LocalDate.now().withDayOfMonth(1).toString()
         val workoutsThisMonth = history.count {
@@ -88,9 +89,7 @@ class ProgressViewModel @Inject constructor(
         val totalVolumeKg = volume.sumOf { it.totalVolume }.toInt()
 
         val milestonesUnlocked = listOfNotNull(
-            if (streak >= 7) "Week Warrior" else null,
             if (history.size >= 10) "10 Workouts" else null,
-            if (streak >= 30) "30 Days" else null,
             if (history.size >= 100) "100 Workouts" else null
         ).size
 
@@ -105,15 +104,12 @@ class ProgressViewModel @Inject constructor(
             (workoutDays * 100 / daysThisMonth).coerceIn(0, 100) else 0
 
         val achievements = buildList {
-            add(Achievement("Week Warrior", "7-day streak", streak >= 7))
-            add(Achievement("Iron Will", "Complete 10 workouts", history.size >= 10))
-            add(Achievement("Consistent", "Log workouts for 30 days", streak >= 30))
+            add(Achievement("Getting Started", "Complete 10 workouts", history.size >= 10))
             add(Achievement("Century", "100 workouts total", history.size >= 100))
         }
 
         _state.value = ProgressUiState(
-            streakDays = streak,
-            bestStreak = bestStreak.coerceAtLeast(streak),
+            activeDaysThisWeek = activeThisWeek,
             workoutsThisMonth = workoutsThisMonth,
             totalVolumeKg = totalVolumeKg,
             milestonesUnlocked = milestonesUnlocked,
@@ -123,40 +119,4 @@ class ProgressViewModel @Inject constructor(
     }
 }
 
-private fun computeCurrentStreak(dates: List<String>): Int {
-    if (dates.isEmpty()) return 0
-    val today = LocalDate.now()
-    var count = 0
-    var expected = today
-    for (date in dates.reversed()) {
-        val d = LocalDate.parse(date)
-        if (d == expected || d == expected.minusDays(1)) {
-            if (d == expected) {
-                count++
-                expected = expected.minusDays(1)
-            } else {
-                // Gap day
-                break
-            }
-        } else if (d < expected.minusDays(1)) {
-            break
-        }
-    }
-    return count
-}
 
-private fun computeBestStreak(dates: List<String>): Int {
-    if (dates.isEmpty()) return 0
-    val unique = dates.map { LocalDate.parse(it) }.distinct().sorted()
-    var best = 1
-    var current = 1
-    for (i in 1 until unique.size) {
-        if (ChronoUnit.DAYS.between(unique[i - 1], unique[i]) == 1L) {
-            current++
-            best = maxOf(best, current)
-        } else {
-            current = 1
-        }
-    }
-    return best
-}

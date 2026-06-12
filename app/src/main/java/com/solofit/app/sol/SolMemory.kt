@@ -20,27 +20,27 @@ class SolMemoryEngine {
         val proteinByCondition = mutableMapOf<String, MutableList<Double>>()
 
         historySessions.forEach { dateStr ->
-            try {
+            runCatching {
                 val date = java.time.LocalDate.parse(dateStr)
                 val dayName = date.dayOfWeek.name
                 dayCounts[dayName] = (dayCounts[dayName] ?: 0) + 1
-            } catch (_: Exception) {}
+            }
         }
 
         weeklyRecovery.forEach { (day, rec) ->
-            try {
+            runCatching {
                 val date = java.time.LocalDate.parse(day)
                 val dayName = date.dayOfWeek.name
                 dayRecovery.getOrPut(dayName) { mutableListOf() }.add(rec)
-            } catch (_: Exception) {}
+            }
         }
 
         weeklyProtein.forEach { (day, pct) ->
-            try {
+            runCatching {
                 val date = java.time.LocalDate.parse(day)
                 val dayName = date.dayOfWeek.name
                 proteinByCondition.getOrPut(dayName) { mutableListOf() }.add(pct)
-            } catch (_: Exception) {}
+            }
         }
 
         val strongestDay = dayCounts.maxByOrNull { it.value }?.let {

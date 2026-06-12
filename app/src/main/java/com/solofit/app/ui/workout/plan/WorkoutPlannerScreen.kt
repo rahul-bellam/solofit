@@ -165,7 +165,7 @@ private fun PlanNameEditor(dayName: String, onSave: (String) -> Unit) {
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("$dayName plan name (e.g. Push Day)") },
+            label = { Text("$dayName plan name (e.g. Strength Day)") },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )

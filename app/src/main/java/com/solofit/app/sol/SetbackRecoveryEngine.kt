@@ -32,15 +32,15 @@ object SetbackRecoveryEngine {
             ))
         } else if (!workoutToday && !workoutYesterday && daysActiveThisWeek == 0) {
             messages.add(SetbackRecoveryMessage(
-                "Momentum slowed. Let's rebuild — one session at a time.",
+                "Movement has been quieter recently. A short session today is enough.",
                 "workout",
-                "Start with a short workout today."
+                "Start with a short workout or walk today."
             ))
         } else if (!workoutToday && !workoutYesterday && daysActiveThisWeek > 0) {
             messages.add(SetbackRecoveryMessage(
-                "Two days off can happen. This week's earlier work still counts.",
+                "Two days off can happen. This week's earlier movement still matters.",
                 "workout",
-                "Get back in today."
+                "Get back to it today."
             ))
         } else if (workoutToday && !workoutYesterday) {
             messages.add(SetbackRecoveryMessage(

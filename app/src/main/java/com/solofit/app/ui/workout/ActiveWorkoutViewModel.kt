@@ -191,7 +191,7 @@ class ActiveWorkoutViewModel @Inject constructor(
             )
             repository.savePersonalRecord(pr)
             _uiState.update {
-                it.copy(prCelebrationMessage = "New PR! $exerciseName: ${estimated1RM.roundToInt()} kg 1RM")
+                it.copy(prCelebrationMessage = "Personal best! $exerciseName: ${estimated1RM.roundToInt()} kg estimated max")
             }
         }
     }

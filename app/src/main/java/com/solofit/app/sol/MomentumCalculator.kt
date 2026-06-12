@@ -58,7 +58,6 @@ object MomentumCalculator {
             else -> MomentumLevel.BUILDING
         }
 
-        val improving = level >= MomentumLevel.STABLE
         val direction = if (level == MomentumLevel.BUILDING && posCount > 0) TrendDirection.UP
         else if (level == MomentumLevel.BUILDING) TrendDirection.DOWN
         else TrendDirection.STABLE

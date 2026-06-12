@@ -44,7 +44,7 @@ private val DISCIPLINE_MESSAGES = listOf(
 
 private val INTENSITY_MESSAGES = mapOf(
     "HIGH" to listOf(
-        "Push through. Stay controlled.",
+        "Steady now. Stay controlled.",
         "This is where strength is built. Hold form.",
         "Stay tight. Do not lose position."
     ),

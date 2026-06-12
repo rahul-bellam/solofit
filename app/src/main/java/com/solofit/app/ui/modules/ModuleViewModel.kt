@@ -57,12 +57,21 @@ class ModuleViewModel @Inject constructor(
     ) { enabled, history ->
         val count = history.size
         buildList {
+            if (SoloFitModule.WALKING !in enabled && count < 3) {
+                add(
+                    ModuleSuggestion(
+                        module = SoloFitModule.WALKING,
+                        reason = "Start with Walking",
+                        detail = "A short walk each day builds momentum without pressure."
+                    )
+                )
+            }
             if (SoloFitModule.RECOVERY !in enabled && count >= 5) {
                 add(
                     ModuleSuggestion(
                         module = SoloFitModule.RECOVERY,
                         reason = "Add Recovery Tracking",
-                        detail = "Recovery insights can improve training performance."
+                        detail = "Recovery insights can help you understand how your body responds."
                     )
                 )
             }

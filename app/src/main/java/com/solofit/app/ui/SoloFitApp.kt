@@ -216,7 +216,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                                     restoreState = true
                                 }
                             },
-                            onOpenMeditation = { navController.navigate(Routes.MEDITATION) }
+                            onOpenMeditation = { navController.navigate(Routes.MEDITATION) },
+                            onOpenWalking = { navController.navigate(Routes.WALKING) }
                         )
                     }
                     composable(Routes.NUTRITION) {

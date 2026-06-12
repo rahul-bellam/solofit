@@ -54,6 +54,7 @@ data class DashboardState(
     val waterGoalMl: Int = WellnessThresholds.WATER_DEFAULT_GOAL_ML,
     val streakDays: Int = 0,
     val daysActiveThisWeek: Int = 0,
+    val daysTracked: Int = 0,
     val workoutToday: Boolean = false,
     val remindersActive: Boolean = false,
     val steps: Int = 0,
@@ -68,6 +69,7 @@ data class DashboardState(
     val trainingGoal: TrainingGoal = TrainingGoal.BODYBUILDING
 ) {
     val recoveryLabel: String get() = FitnessMath.readinessLabel(recoveryScore)
+    val isFirstWeek: Boolean get() = daysTracked < 7
 }
 
 @HiltViewModel
@@ -110,6 +112,8 @@ class DashboardViewModel @Inject constructor(
     ) { profile, totals, water, goal, history ->
         val dates = history.map { it.session.date }
         val now = LocalDate.now()
+        val firstDate = (dates.minOrNull()?.let { runCatching { LocalDate.parse(it) }.getOrNull() }) ?: now
+        val daysTracked = ChronoUnit.DAYS.between(firstDate, now).toInt().coerceAtLeast(0) + 1
         CoreData(
             profile = profile,
             totals = totals,
@@ -117,7 +121,8 @@ class DashboardViewModel @Inject constructor(
             waterGoal = goal,
             streak = StreakCalculator.currentStreak(dates, now),
             activeThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
-            workoutToday = dates.contains(today)
+            workoutToday = dates.contains(today),
+            daysTracked = daysTracked
         )
     }
 
@@ -193,6 +198,7 @@ class DashboardViewModel @Inject constructor(
             waterGoalMl = c.waterGoal,
             streakDays = c.streak,
             daysActiveThisWeek = c.activeThisWeek,
+            daysTracked = c.daysTracked,
             workoutToday = c.workoutToday,
             remindersActive = reminders.hydrationEnabled || reminders.workoutEnabled ||
                 reminders.morningGoalsEnabled || reminders.eveningGratitudeEnabled,
@@ -292,7 +298,8 @@ class DashboardViewModel @Inject constructor(
         val waterGoal: Int,
         val streak: Int,
         val activeThisWeek: Int,
-        val workoutToday: Boolean
+        val workoutToday: Boolean,
+        val daysTracked: Int
     )
 
     private data class TransformData(

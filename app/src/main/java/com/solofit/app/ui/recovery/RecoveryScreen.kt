@@ -311,7 +311,7 @@ private fun RecommendationsSection(score: Int, sleep: Float, stress: Int, energy
         if (stress > 3) add("Try a 5-minute breathing exercise to lower stress levels.")
         if (energy < 3) add("Your energy is low — consider a lighter workout or rest day.")
         if (score < 60) add("Focus on recovery today: prioritize sleep, nutrition, and stretching.")
-        if (score >= 80 && sleep >= 7f) add("You're in great shape — maintain your routine and keep pushing!")
+        if (score >= 80 && sleep >= 7f) add("You're in great shape — maintain your routine and keep moving!")
         if (isEmpty()) add("Everything looks balanced. Keep up your consistent habits.")
     }
 

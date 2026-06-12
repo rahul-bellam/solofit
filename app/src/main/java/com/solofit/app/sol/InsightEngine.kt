@@ -520,10 +520,10 @@ class InsightEngine @Inject constructor() {
         listOf("Step count has been declining for several days"), listOf("Take a 15 minute walk", "Stand up and stretch regularly"),
         "Walking volume has been declining this week. A short walk today may help restore momentum.", InsightType.WALKING)
 
-    private val CONSISTENCY_PRAISE = Script("Consistent Week", "You have been active and recovering well this week.", "That discipline is paying off.",
+    private val CONSISTENCY_PRAISE = Script("Consistent Week", "You have been active and recovering well this week.", "That consistency is building momentum.",
         listOf("You have trained at least 4 days this week", "Recovery is within a healthy range"),
         listOf("Keep showing up", "Maintain your current habits"),
-        "You have been consistent this week. That discipline is paying off.", InsightType.CONSISTENCY)
+        "You have been consistent this week. That consistency is building momentum.", InsightType.CONSISTENCY)
 
     private val EVENING_BALANCED = Script("Balanced Day", "Small consistent actions tend to compound over time.", "Tomorrow's performance often starts with tonight's habits.",
         listOf("You made meaningful progress today"), listOf("Prioritise sleep", "Set intentions for tomorrow"),

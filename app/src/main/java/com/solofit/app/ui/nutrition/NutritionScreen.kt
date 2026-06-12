@@ -85,7 +85,6 @@ import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
-import com.solofit.app.ui.theme.WarmSand
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.time.LocalTime
@@ -162,7 +161,7 @@ fun NutritionScreen(
                     captureUri.value = uri
                     cameraLauncher.launch(uri)
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) { /* Camera unavailable */ }
         }
     }
 

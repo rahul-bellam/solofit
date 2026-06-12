@@ -90,22 +90,13 @@ fun ProgressScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                         Text(
-                            "${state.streakDays}",
+                            "${state.activeDaysThisWeek}",
                             fontSize = 80.sp,
                             fontWeight = FontWeight.Light,
                             color = SlateBlue,
                             letterSpacing = (-2).sp
                         )
-                        Text("day streak", fontSize = 18.sp, color = SecondaryText, fontWeight = FontWeight.Medium)
-                        Spacer(Modifier.height(4.dp))
-                        if (state.bestStreak > state.streakDays) {
-                            Text(
-                                "Best: ${state.bestStreak} days",
-                                fontSize = 14.sp,
-                                color = SlateBlue,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text("active days this week", fontSize = 18.sp, color = SecondaryText, fontWeight = FontWeight.Medium)
                     }
                 }
 

@@ -128,7 +128,7 @@ fun ProgressPhotosScreen(
                     captureUri.value = uri
                     cameraLauncher.launch(uri)
                 }
-            } catch (_: Exception) { }
+            } catch (_: Exception) { /* Camera unavailable */ }
         }
     }
 

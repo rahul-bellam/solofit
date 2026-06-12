@@ -157,7 +157,7 @@ fun WorkoutScreen(
                     EmptyState(
                         icon = Icons.Filled.FitnessCenter,
                         title = "No routines yet",
-                        message = "Create a routine like \"Push Day\" to start tracking your sets and progressive overload.",
+                        message = "Create a routine like \"Strength Day\" to start tracking your sets and progress.",
                         actionLabel = "Create your first routine",
                         onAction = onCreateRoutine,
                         modifier = Modifier.padding(top = 16.dp)

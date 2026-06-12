@@ -11,11 +11,11 @@ enum class Gender(val displayName: String) {
  * (Total Daily Energy Expenditure).
  */
 enum class ActivityLevel(val displayName: String, val factor: Double, val description: String) {
-    SEDENTARY("Sedentary", 1.2, "Little or no exercise, desk job"),
-    LIGHT("Light", 1.375, "Light exercise 1-3 days/week"),
-    MODERATE("Moderate", 1.55, "Moderate exercise 3-5 days/week"),
-    ACTIVE("Active", 1.725, "Hard exercise 6-7 days/week"),
-    VERY_ACTIVE("Very Active", 1.9, "Physical job or 2x/day training")
+    SEDENTARY("Starting Out", 1.2, "Building movement into your day"),
+    LIGHT("Building Routine", 1.375, "Light movement most days"),
+    MODERATE("Finding Consistency", 1.55, "Regular movement or exercise 3-5 days/week"),
+    ACTIVE("Active Lifestyle", 1.725, "Consistent activity most days"),
+    VERY_ACTIVE("Training Regularly", 1.9, "Daily training or active job")
 }
 
 /**

@@ -183,6 +183,57 @@ object WorkoutTemplates {
                 TemplateExercise("Triceps Kickback", "Arms", 2, "12", "Finisher"),
                 TemplateExercise("Mountain Climbers", "Core", 2, "30s", "Burnout finish")
             )
+        ),
+
+        // ── 6. Move Your Body (15 min, beginner) ──
+        WorkoutTemplate(
+            name = "Move Your Body",
+            description = "A gentle 15-minute full-body session. Perfect for getting started.",
+            daysPerWeek = 3,
+            goal = "GENERAL_FITNESS",
+            exercises = listOf(
+                TemplateExercise("Bodyweight Squat", "Legs", 2, "10", "Feet shoulder-width, slow and controlled"),
+                TemplateExercise("Wall Push-Up", "Chest", 2, "8", "Standing push-up against a wall"),
+                TemplateExercise("Cat-Cow Stretch", "Core", 2, "30s", "Slow breath with each movement"),
+                TemplateExercise("Standing Calf Raise", "Legs", 2, "10", "Hold onto a chair for balance"),
+                TemplateExercise("Seated March", "Core", 2, "30s", "Lift knees alternately while seated"),
+                TemplateExercise("Deep Breathing", "Core", 1, "60s", "Inhale 4s, exhale 6s")
+            )
+        ),
+
+        // ── 7. Feel Stronger (20 min, building) ──
+        WorkoutTemplate(
+            name = "Feel Stronger",
+            description = "A 20-minute session building on the basics. Increase reps as you go.",
+            daysPerWeek = 3,
+            goal = "GENERAL_FITNESS",
+            exercises = listOf(
+                TemplateExercise("Bodyweight Squat", "Legs", 2, "12", "Lower slowly, drive up through heels"),
+                TemplateExercise("Push-Up (Knee or Full)", "Chest", 2, "8", "Knee version if needed — form first"),
+                TemplateExercise("Bird-Dog", "Core", 2, "8 each", "Slow and balanced"),
+                TemplateExercise("Standing Calf Raise", "Legs", 2, "12", "Full range of motion"),
+                TemplateExercise("Glute Bridge", "Legs", 2, "10", "Squeeze glutes at the top"),
+                TemplateExercise("Side-Lying Leg Raise", "Legs", 2, "8 each", "Keep hips stacked"),
+                TemplateExercise("Child's Pose Stretch", "Core", 1, "30s", "Breathe deeply")
+            )
+        ),
+
+        // ── 8. Build Confidence (25 min, progressing) ──
+        WorkoutTemplate(
+            name = "Build Confidence",
+            description = "A 25-minute session with more volume. You are building a consistent practice.",
+            daysPerWeek = 3,
+            goal = "GENERAL_FITNESS",
+            exercises = listOf(
+                TemplateExercise("Bodyweight Squat", "Legs", 3, "12", "Focus on depth and control"),
+                TemplateExercise("Push-Up (Knee or Full)", "Chest", 3, "8", "Slow negative, controlled press"),
+                TemplateExercise("Bird-Dog", "Core", 2, "10 each", "Extend fully, pause at peak"),
+                TemplateExercise("Reverse Lunge", "Legs", 2, "8 each", "Hold a chair for balance if needed"),
+                TemplateExercise("Dumbbell Row (light)", "Back", 2, "10 each", "Use a water bottle or light weight"),
+                TemplateExercise("Plank", "Core", 2, "20s", "Keep hips level"),
+                TemplateExercise("Standing Side Bend", "Core", 2, "8 each", "Stretch and strengthen obliques"),
+                TemplateExercise("Seated Twist Stretch", "Core", 1, "30s each", "Gentle spinal mobility")
+            )
         )
     )
 }

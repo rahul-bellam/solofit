@@ -118,6 +118,8 @@ class SolViewModel @Inject constructor(
             val setRows = workoutRepository.observeCompletedSetRows().first()
             val recentEntries = journalRepository.observeRecentGratitude(7).first()
             val wellness = prefs.dailyWellness(todayStr).first()
+            val yesterdayWellness = prefs.dailyWellness(yesterdayStr).first()
+            val waterMlToday = prefs.waterMl(todayStr).first()
             val personality = prefs.voicePersonality.first()
 
             val dates = history.map { it.session.date }
@@ -157,7 +159,18 @@ class SolViewModel @Inject constructor(
             val prevSleep = yesterdayMetric?.sleepHours
             val prevSteps = yesterdayMetric?.steps
 
-            val journalSentiment: JournalSentiment? = null
+            val journalSentiment: JournalSentiment? = if (recentEntries.isEmpty()) null else {
+                val positiveWords = setOf("grateful", "happy", "good", "great", "thankful", "love", "enjoy", "blessed", "wonderful", "amazing", "excited", "peaceful")
+                val challengingWords = setOf("struggle", "hard", "tired", "sad", "anxious", "stress", "difficult", "challenging", "overwhelmed", "exhausted", "frustrated", "worried")
+                val text = recentEntries.joinToString(" ") { it.text.lowercase() }
+                val posCount = positiveWords.count { it in text }
+                val negCount = challengingWords.count { it in text }
+                when {
+                    posCount > negCount -> JournalSentiment.POSITIVE
+                    negCount > posCount -> JournalSentiment.CHALLENGING
+                    else -> null
+                }
+            }
 
             // ── Weekly data aggregation ──
             val weekStart = now.minusDays(6)
@@ -223,11 +236,11 @@ class SolViewModel @Inject constructor(
                 previousSleepHours = prevSleep,
                 steps = metric?.steps,
                 previousSteps = prevSteps,
-                waterMl = 0,
+                waterMl = waterMlToday,
                 waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML,
                 energyScore = metric?.energyScore,
                 stressLevel = wellness.stressLevel,
-                previousStressLevel = null,
+                previousStressLevel = yesterdayWellness.stressLevel,
                 moodScore = metric?.moodScore,
                 meditationMinutes = wellness.meditationMinutes,
                 previousMeditationMinutes = prevMetric?.let { prefs.dailyWellness(yesterdayStr).first().meditationMinutes },
@@ -302,7 +315,6 @@ class SolViewModel @Inject constructor(
                 steps = metric?.steps,
                 weeklySteps = weeklySteps,
                 daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
-                weeksActiveTrend = false
             )
             val stepGoal = prefs.stepGoal.first()
             val movementRisk = SedentaryIntelligence.assess(

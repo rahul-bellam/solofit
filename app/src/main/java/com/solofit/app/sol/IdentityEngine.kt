@@ -26,12 +26,16 @@ object IdentityEngine {
         IdentityMessage("You are proving to yourself that you show up.", "consistency", 80),
         IdentityMessage("You are rewiring what 'normal' looks like for your body.", "identity", 70),
         IdentityMessage("Small choices repeated become your new default.", "identity", 65),
-        IdentityMessage("You are no longer someone who skips — you are someone who adapts.", "resilience", 75),
+        IdentityMessage("You adapt when life gets in the way. That is resilience.", "resilience", 75),
         IdentityMessage("You are becoming the kind of person who takes care of themselves.", "identity", 90),
         IdentityMessage("Your habits are quietly reshaping who you are.", "identity", 70),
         IdentityMessage("You are not chasing perfection — you are building direction.", "mindset", 80),
-        IdentityMessage("The person you are becoming shows up on the hard days.", "resilience", 75),
-        IdentityMessage("You are learning that rest is productive.", "recovery", 60)
+        IdentityMessage("The person you are becoming shows up, especially when it matters.", "resilience", 75),
+        IdentityMessage("You are learning that rest is productive.", "recovery", 60),
+        IdentityMessage("A short walk is still forward motion.", "movement", 50),
+        IdentityMessage("Rest days are not setbacks — they are part of the rhythm.", "recovery", 55),
+        IdentityMessage("You are building habits that fit your life, not the other way around.", "identity", 70),
+        IdentityMessage("Progress is not linear, and that is completely normal.", "mindset", 65)
     )
 
     private val shownHistory = mutableMapOf<String, LocalDate>()

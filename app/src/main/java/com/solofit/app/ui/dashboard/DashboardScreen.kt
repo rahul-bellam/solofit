@@ -41,6 +41,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -67,6 +69,7 @@ import com.solofit.app.ui.theme.Terracotta
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.TwilightBlue
+import com.solofit.app.ui.theme.WalkingAccent
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -83,6 +86,7 @@ fun DashboardScreen(
     onOpenWeight: () -> Unit = {},
     onOpenRecovery: () -> Unit = {},
     onOpenMeditation: () -> Unit = {},
+    onOpenWalking: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     solViewModel: SolViewModel = hiltViewModel()
 ) {
@@ -150,15 +154,20 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(32.dp))
 
+                    // ── FIRST WEEK GOALS ──
+                    if (state.isFirstWeek) {
+                        FirstWeekGoalsCard()
+                        Spacer(Modifier.height(24.dp))
+                    }
+
                     // ── THREE PILLARS CAROUSEL ──
                     val pillars = listOf(
-                        PillarData("Fuel", "Nutrition", state.consumed.calories.roundToInt(),
-                            state.profile?.targetCalories ?: 2000, MossGreen, onLogMeal),
-                        PillarData("Effort", "Workout",
-                            if (state.steps > 0) state.steps else 0,
-                            state.stepGoal.coerceAtLeast(1), RustIron, onLogWorkout),
-                        PillarData("Rest", "Recovery",
-                            state.recoveryScore?.toInt() ?: 0, 100, TwilightBlue, onOpenRecovery)
+                        PillarData("Move", "Steps", state.steps,
+                            state.stepGoal.coerceAtLeast(1), WalkingAccent, onOpenWalking),
+                        PillarData("Recover", "Recovery",
+                            state.recoveryScore?.toInt() ?: 0, 100, TwilightBlue, onOpenRecovery),
+                        PillarData("Nourish", "Nutrition", state.consumed.calories.roundToInt(),
+                            state.profile?.targetCalories ?: 2000, MossGreen, onLogMeal)
                     )
                     LazyRow(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -171,64 +180,6 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // ── TODAY'S PLAN ──
-                    val planName by viewModel.todayPlanName.collectAsStateWithLifecycle()
-                    val exercises by viewModel.todayExercises.collectAsStateWithLifecycle()
-                    val allDone by viewModel.todayAllDone.collectAsStateWithLifecycle()
-                    val planDismissed by viewModel.planDismissed.collectAsStateWithLifecycle()
-
-                    AnimatedVisibility(
-                        visible = planName.isNotEmpty() && !planDismissed,
-                        exit = fadeOut()
-                    ) {
-                        Column {
-                            Card(
-                                shape = RoundedCornerShape(8.dp),
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                            ) {
-                                Column(Modifier.padding(16.dp)) {
-                                    Text(
-                                        "Today's Plan",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        color = TextSecondary,
-                                        letterSpacing = 0.5.sp
-                                    )
-                                    Spacer(Modifier.height(10.dp))
-                                    exercises.take(4).forEach { ex ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(vertical = 4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Box(
-                                                Modifier.size(16.dp)
-                                                    .clip(CircleShape)
-                                                    .background(
-                                                        if (ex.isCompleted) OliveClay
-                                                        else Hairline
-                                                    )
-                                            )
-                                            Spacer(Modifier.width(10.dp))
-                                            Text(
-                                                "${ex.exerciseName}  ${ex.sets}x${ex.reps} @ ${ex.weight}${ex.weightUnit}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = if (ex.isCompleted) TextSecondary.copy(alpha = 0.5f)
-                                                else TextPrimary
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            Spacer(Modifier.height(16.dp))
-                        }
-                    }
-
-                    Spacer(Modifier.height(20.dp))
 
                     // ── TODAY'S FOCUS ──
                     Card(
@@ -346,6 +297,99 @@ fun DashboardScreen(
                                 )
                             }
                         }
+                    }
+
+                    
+                    // ── TODAY'S PLAN ──
+                    val planName by viewModel.todayPlanName.collectAsStateWithLifecycle()
+                    val exercises by viewModel.todayExercises.collectAsStateWithLifecycle()
+                    val allDone by viewModel.todayAllDone.collectAsStateWithLifecycle()
+                    val planDismissed by viewModel.planDismissed.collectAsStateWithLifecycle()
+
+                    AnimatedVisibility(
+                        visible = planName.isNotEmpty() && !planDismissed,
+                        exit = fadeOut()
+                    ) {
+                        Column {
+                            Card(
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            ) {
+                                Column(Modifier.padding(16.dp)) {
+                                    Text(
+                                        "Today's Plan",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = TextSecondary,
+                                        letterSpacing = 0.5.sp
+                                    )
+                                    Spacer(Modifier.height(10.dp))
+                                    exercises.take(4).forEach { ex ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Box(
+                                                Modifier.size(16.dp)
+                                                    .clip(CircleShape)
+                                                    .background(
+                                                        if (ex.isCompleted) OliveClay
+                                                        else Hairline
+                                                    )
+                                            )
+                                            Spacer(Modifier.width(10.dp))
+                                            Text(
+                                                "${ex.exerciseName}  ${ex.sets}x${ex.reps} @ ${ex.weight}${ex.weightUnit}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = if (ex.isCompleted) TextSecondary.copy(alpha = 0.5f)
+                                                else TextPrimary
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            Spacer(Modifier.height(16.dp))
+                        }
+                    }
+
+                    Spacer(Modifier.height(20.dp))
+
+                    // ── MOVEMENT SNACK (for low-activity days) ──
+                    if (planName.isEmpty() && state.steps < 4000) {
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(Modifier.padding(16.dp)) {
+                                Text(
+                                    "Movement Snack",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextSecondary,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Spacer(Modifier.height(8.dp))
+                                Text(
+                                    "A short walk or stretch can help reset focus and energy.",
+                                    fontSize = 13.sp, color = TextPrimary, lineHeight = 18.sp
+                                )
+                                Spacer(Modifier.height(10.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text("\u2192 Walk for 10 minutes", fontSize = 12.sp, color = WalkingAccent)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("\u2192 Stand and stretch", fontSize = 12.sp, color = WalkingAccent)
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(16.dp))
                     }
 
                     // ── SETBACK RECOVERY ──
@@ -654,4 +698,78 @@ private fun setbackPredColor(pred: SetbackPrediction): Color = when (pred.riskLe
     "Elevated" -> RustIron
     "Moderate" -> Color(0xFFE09F3E)
     else -> MossGreen
+}
+
+// ── FIRST WEEK GOALS ──
+@Composable
+private fun FirstWeekGoalsCard() {
+    var walked by remember { mutableStateOf(false) }
+    var hydrated by remember { mutableStateOf(false) }
+    var sleptEarly by remember { mutableStateOf(false) }
+    var stretched by remember { mutableStateOf(false) }
+    val done = listOf(walked, hydrated, sleptEarly, stretched).count { it }
+
+    Card(
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = WalkingAccent.copy(alpha = 0.06f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(
+                    Modifier.size(28.dp).clip(CircleShape)
+                        .background(WalkingAccent.copy(alpha = 0.12f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Box(Modifier.size(7.dp).clip(CircleShape).background(WalkingAccent))
+                }
+                Spacer(Modifier.width(10.dp))
+                Text("Your First Week", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                Spacer(Modifier.weight(1f))
+                Text("$done/4", fontSize = 12.sp, color = TextSecondary)
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Start small. These four actions build momentum.",
+                fontSize = 13.sp, color = TextSecondary, lineHeight = 18.sp
+            )
+            Spacer(Modifier.height(12.dp))
+            GoalCheckbox("Walk for 10 minutes", checked = walked) { walked = it }
+            Spacer(Modifier.height(8.dp))
+            GoalCheckbox("Drink enough water", checked = hydrated) { hydrated = it }
+            Spacer(Modifier.height(8.dp))
+            GoalCheckbox("Sleep 15 minutes earlier", checked = sleptEarly) { sleptEarly = it }
+            Spacer(Modifier.height(8.dp))
+            GoalCheckbox("Stretch for 5 minutes", checked = stretched) { stretched = it }
+            if (done == 4) {
+                Spacer(Modifier.height(12.dp))
+                Text(
+                    "Good start. Tomorrow, try again.",
+                    fontSize = 13.sp, color = WalkingAccent, fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun GoalCheckbox(label: String, checked: Boolean, onChecked: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).clickable { onChecked(!checked) }.padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(18.dp)
+                .clip(RoundedCornerShape(4.dp))
+                .background(if (checked) WalkingAccent else Hairline),
+            contentAlignment = Alignment.Center
+        ) {
+            if (checked) Text("\u2713", fontSize = 12.sp, color = Color(0xFF1E1D1B), fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.width(10.dp))
+        Text(label, fontSize = 13.sp, color = if (checked) TextSecondary else TextPrimary)
+    }
 }

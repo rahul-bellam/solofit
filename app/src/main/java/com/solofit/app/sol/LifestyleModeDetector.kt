@@ -21,8 +21,7 @@ object LifestyleModeDetector {
         weeklySleep: List<Double>,
         steps: Int?,
         weeklySteps: List<Int>,
-        daysActiveThisWeek: Int,
-        weeksActiveTrend: Boolean
+        daysActiveThisWeek: Int
     ): LifestyleMode {
         val rec = recoveryScore ?: return LifestyleMode.REBUILDING
 

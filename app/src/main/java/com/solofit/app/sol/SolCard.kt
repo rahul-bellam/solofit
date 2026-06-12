@@ -43,7 +43,6 @@ import com.solofit.app.ui.theme.DarkSuccess
 import com.solofit.app.ui.theme.DarkWarning
 import com.solofit.app.ui.theme.DarkError
 import com.solofit.app.ui.theme.ProteinColor
-import com.solofit.app.ui.theme.WalkingAccent
 import com.solofit.app.ui.theme.RecoveryAccent
 
 @Composable

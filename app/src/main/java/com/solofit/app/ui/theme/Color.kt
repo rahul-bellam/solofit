@@ -65,12 +65,10 @@ val WorkoutAccent = RustIron
 val MeditationAccent = LavenderGrey
 val BodyRecompAccent = SlateBlue
 val WorkoutActiveTimer = Ochre
-val WorkoutRestTimer = Color(0xFFC06A3E)
 
 val SolAccent = SolAmber
 
 // ─── TEXT ALIASES ───
 val PrimaryText = TextPrimary
 val SecondaryText = TextSecondary
-val PageBg = SurfaceBg
 val CardCream = CardPrimary

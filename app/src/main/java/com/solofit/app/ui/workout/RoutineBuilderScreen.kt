@@ -117,7 +117,7 @@ fun RoutineBuilderScreen(
                 OutlinedTextField(
                     value = state.name,
                     onValueChange = viewModel::onName,
-                    label = { Text("Routine name (e.g. Push Day)") },
+                    label = { Text("Routine name (e.g. Strength Day)") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
