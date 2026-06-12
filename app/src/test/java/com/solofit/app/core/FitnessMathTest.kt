@@ -44,9 +44,9 @@ class FitnessMathTest {
 
     @Test
     fun `recovery score partial inputs normalize by available weights`() {
-        // only sleep 4h -> value 0.5, weight .40 -> weighted .20 / totalWeight .40 = 0.5 -> 50
+        // only sleep 4h -> value 4/7 ≈ 0.571, weight .40 -> score = 57
         val s = FitnessMath.recoveryScore(4.0, null, null, null, 3000, null)
-        assertEquals(50, s)
+        assertEquals(57, s)
     }
 
     @Test

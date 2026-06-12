@@ -45,12 +45,9 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.LineChart
-import com.solofit.app.ui.theme.Amber
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.WalkingAccent
-import com.solofit.app.ui.theme.WalkingBg
-import com.solofit.app.ui.theme.WalkingCard as WalkingCardColor
 import com.solofit.app.ui.theme.HighGreen
 import java.text.NumberFormat
 import java.util.Locale
@@ -78,12 +75,12 @@ fun WalkingScreen(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = WalkingBg,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = PrimaryText
                 )
             )
         },
-        containerColor = WalkingBg
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -142,7 +139,7 @@ fun WalkingScreen(
                         modifier = Modifier
                             .size(200.dp)
                             .clip(CircleShape)
-                            .background(WalkingCardColor),
+                            .background(MaterialTheme.colorScheme.surface),
                         contentAlignment = Alignment.Center
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -198,7 +195,7 @@ fun WalkingScreen(
                     Icon(
                         Icons.Filled.Sync,
                         contentDescription = "Sync Health Connect",
-                        tint = WalkingCardColor,
+                        tint = MaterialTheme.colorScheme.surface,
                         modifier = Modifier.size(20.dp)
                     )
                 }
@@ -222,7 +219,7 @@ fun WalkingScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(16.dp))
-                        .background(WalkingCardColor)
+                        .background(MaterialTheme.colorScheme.surface)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Row(
@@ -254,7 +251,7 @@ fun WalkingScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(WalkingCardColor)
+                    .background(MaterialTheme.colorScheme.surface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text("Tips", fontWeight = FontWeight.SemiBold, color = PrimaryText)

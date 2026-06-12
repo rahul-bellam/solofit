@@ -11,11 +11,13 @@ import com.solofit.app.domain.model.MacroTotals
 import com.solofit.app.domain.model.TrainingGoal
 import com.solofit.app.data.local.entity.PlannedExerciseEntity
 import com.solofit.app.data.local.entity.WeeklyPlanEntity
+import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.repository.WeeklyPlanRepository
 import com.solofit.app.domain.repository.WorkoutRepository
+import com.solofit.app.sol.WellnessThresholds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -49,11 +51,14 @@ data class DashboardState(
     val consumed: MacroTotals = MacroTotals(),
     val date: String = DateUtils.today(),
     val waterMl: Int = 0,
-    val waterGoalMl: Int = 3000,
+    val waterGoalMl: Int = WellnessThresholds.WATER_DEFAULT_GOAL_ML,
     val streakDays: Int = 0,
     val daysActiveThisWeek: Int = 0,
     val workoutToday: Boolean = false,
     val remindersActive: Boolean = false,
+    val steps: Int = 0,
+    val stepGoal: Int = WellnessThresholds.DEFAULT_STEP_GOAL,
+    val meditationMinutes: Int = 0,
     // Transformation dashboard
     val phaseName: String = "Foundation Recomp",
     val phaseDay: Int = 1,
@@ -72,6 +77,7 @@ class DashboardViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val bodyRepository: BodyRepository,
     private val weeklyPlanRepository: WeeklyPlanRepository,
+    private val prefs: UserPreferences,
     private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -143,7 +149,7 @@ class DashboardViewModel @Inject constructor(
             val firsts = byDate.values.firstOrNull()?.maxOfOrNull {
                 FitnessMath.epley1RM(it.weightKg, it.reps)
             } ?: return@mapNotNull null
-            val bests = byDate.values.maxOf { day -> day.maxOf { set -> FitnessMath.epley1RM(set.weightKg, set.reps) } }
+            val bests = byDate.values.maxOfOrNull { day -> day.maxOf { set -> FitnessMath.epley1RM(set.weightKg, set.reps) } } ?: 0.0
             if (firsts <= 0) null else ((bests - firsts) / firsts)
         }
         val avgGain = if (gains.isEmpty()) 0.0 else gains.average()
@@ -151,7 +157,11 @@ class DashboardViewModel @Inject constructor(
         ScoreInputs(goal, waistProgress, strengthProgress)
     }
 
-    val state = combine(_isRefreshing, core, transform, scoreInputs, profileRepository.reminderSettings) { refreshing, c, t, si, reminders ->
+    private val prefsFlow = combine(prefs.stepGoal, prefs.meditationMinutes(today)) { g, m -> StepGoalAndMed(g, m) }
+
+    private val isRefreshingAndPrefs = combine(_isRefreshing, prefsFlow) { refreshing, p -> refreshing to p }
+
+    val state = combine(isRefreshingAndPrefs, core, transform, scoreInputs, profileRepository.reminderSettings) { (refreshing, prefsData), c, t, si, reminders ->
         val phaseDay = t.startDate?.let {
             runCatching {
                 ChronoUnit.DAYS.between(LocalDate.parse(it), LocalDate.now()).toInt() + 1
@@ -186,6 +196,9 @@ class DashboardViewModel @Inject constructor(
             workoutToday = c.workoutToday,
             remindersActive = reminders.hydrationEnabled || reminders.workoutEnabled ||
                 reminders.morningGoalsEnabled || reminders.eveningGratitudeEnabled,
+            steps = t.steps ?: 0,
+            stepGoal = prefsData.stepGoal,
+            meditationMinutes = prefsData.meditationMinutes,
             phaseName = t.name,
             phaseDay = phaseDay.coerceAtLeast(1),
             phaseTargetDays = t.target,
@@ -296,4 +309,6 @@ class DashboardViewModel @Inject constructor(
         val waistProgress: Double,
         val strengthProgress: Double
     )
+
+    private data class StepGoalAndMed(val stepGoal: Int, val meditationMinutes: Int)
 }

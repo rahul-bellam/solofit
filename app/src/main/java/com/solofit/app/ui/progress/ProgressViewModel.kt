@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.time.LocalDate
-import java.time.Period
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
@@ -96,9 +95,9 @@ class ProgressViewModel @Inject constructor(
         ).size
 
         val firstOfMonth = LocalDate.now().withDayOfMonth(1)
-        val daysThisMonth = firstOfMonth.datesUntil(
-            LocalDate.now().plusDays(1), Period.ofDays(1)
-        ).toList().size
+        val daysThisMonth = runCatching {
+            ChronoUnit.DAYS.between(firstOfMonth, LocalDate.now().plusDays(1)).toInt().coerceAtLeast(0)
+        }.getOrDefault(0)
         val workoutDays = history.filter { it.session.isCompleted }
             .map { it.session.date }.distinct()
             .count { it >= thisMonth }

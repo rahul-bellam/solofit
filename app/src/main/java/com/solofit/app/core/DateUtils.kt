@@ -11,6 +11,8 @@ object DateUtils {
 
     fun today(): String = LocalDate.now().format(iso)
 
+    fun daysAgo(days: Int): String = LocalDate.now().minusDays(days.toLong()).format(iso)
+
     fun parse(date: String): LocalDate = LocalDate.parse(date, iso)
 
     fun prettyMedium(date: String): String {

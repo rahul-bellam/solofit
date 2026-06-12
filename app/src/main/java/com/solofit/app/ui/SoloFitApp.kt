@@ -9,8 +9,11 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -60,28 +63,15 @@ import com.solofit.app.ui.workout.RoutineBuilderScreen
 import com.solofit.app.ui.workout.plan.WorkoutPlannerScreen
 import com.solofit.app.ui.workout.WorkoutScreen
 import com.solofit.app.ui.progress.ProgressScreen
+import com.solofit.app.ui.bodyrecomp.BodyRecompScreen
 import com.solofit.app.ui.walking.WalkingScreen
 import com.solofit.app.ui.habits.HabitsScreen
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ThemeMode
-import com.solofit.app.ui.theme.CardCream
-import com.solofit.app.ui.theme.DarkSurface
-import com.solofit.app.ui.theme.NutritionCard
-import com.solofit.app.ui.theme.RecoveryCard
-import com.solofit.app.ui.theme.ProgressBg
+import com.solofit.app.ui.theme.CardPrimary
+import com.solofit.app.ui.theme.SurfaceBg
 
-private fun navBarColorForRoute(route: String?): Color = when (route) {
-    Routes.DASHBOARD -> CardCream
-    Routes.NUTRITION -> NutritionCard
-    Routes.WORKOUT -> DarkSurface
-    Routes.RECOVERY -> RecoveryCard
-    Routes.MEDITATION -> CardCream
-    Routes.JOURNAL -> CardCream
-    Routes.PROGRESS -> ProgressBg
-    Routes.WALKING -> CardCream
-    Routes.HABITS -> CardCream
-    else -> Color.White
-}
+private fun navBarColorForRoute(route: String?): Color = SurfaceBg
 
 private val SNAV_ROUTES = setOf(
     Routes.DASHBOARD, Routes.WORKOUT, Routes.NUTRITION, Routes.RECOVERY,
@@ -121,9 +111,7 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     BottomDestination(
                         route = module.route,
                         label = module.displayName,
-                        icon = com.solofit.app.ui.modules.moduleIcon(module),
-                        gradientFrom = com.solofit.app.ui.theme.Amber,
-                        gradientTo = com.solofit.app.ui.theme.Amber
+                        icon = com.solofit.app.ui.modules.moduleIcon(module)
                     )
                 }
             }
@@ -157,10 +145,10 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     navController = navController,
                     startDestination = start,
                     modifier = Modifier.padding(padding),
-                    enterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { it / 4 } },
-                    exitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { -it / 4 } },
-                    popEnterTransition = { fadeIn(tween(300)) + slideInHorizontally(tween(300)) { -it / 4 } },
-                    popExitTransition = { fadeOut(tween(300)) + slideOutHorizontally(tween(300)) { it / 4 } }
+                    enterTransition = { fadeIn(tween(250, delayMillis = 50)) + slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 3 } },
+                    exitTransition = { fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { -it / 6 } },
+                    popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(250)) { -it / 6 } },
+                    popExitTransition = { fadeOut(tween(150, delayMillis = 50)) + slideOutHorizontally(tween(250)) { it / 3 } }
                 ) {
                     composable(Routes.ONBOARDING) {
                         val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
@@ -220,9 +208,6 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                             onOpenSettings = { navController.navigate(Routes.SETTINGS) },
                             onOpenJournal = { navController.navigate(Routes.JOURNAL) },
                             onOpenBody = { navController.navigate(Routes.BODY) },
-                            onEditPhase = { navController.navigate(Routes.EDIT_PHASE) },
-                            onOpenProfile = { navController.navigate(Routes.EDIT_PROFILE) },
-                            onOpenReminders = { navController.navigate(Routes.REMINDERS) },
                             onOpenWeight = { navController.navigate(Routes.WEIGHT) },
                             onOpenRecovery = {
                                 navController.navigate(Routes.RECOVERY) {
@@ -293,14 +278,25 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     composable(Routes.MEDITATION) {
                         MeditationScreen(onBack = { navController.popBackStack() })
                     }
+                    composable(Routes.WELLNESS) {
+                        RecoveryScreen(onBack = { navController.popBackStack() })
+                    }
                     composable(Routes.WALKING) {
                         WalkingScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.HABITS) {
                         HabitsScreen(onBack = { navController.popBackStack() })
                     }
+                    composable(Routes.YOGA) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text("Yoga & Flexibility", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
                     composable(Routes.PROGRESS) {
                         ProgressScreen()
+                    }
+                    composable(Routes.BODY_RECOMP) {
+                        BodyRecompScreen(onBack = { navController.popBackStack() })
                     }
                     if (BuildConfig.DEBUG) {
                         composable(Routes.PERF) {

@@ -18,6 +18,8 @@ import com.solofit.app.data.local.dao.ProgressPhotoDao
 import com.solofit.app.data.local.dao.WeeklyPlanDao
 import com.solofit.app.data.local.dao.WeightDao
 import com.solofit.app.data.local.dao.WorkoutDao
+import com.solofit.app.data.local.dao.FrequentMealDao
+import com.solofit.app.data.local.entity.FrequentMealEntity
 import com.solofit.app.data.local.entity.DailyLogEntity
 import com.solofit.app.data.local.entity.ExerciseEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
@@ -56,9 +58,10 @@ import kotlinx.coroutines.launch
         ProgressPhotoEntity::class,
         WeeklyPlanEntity::class,
         PlannedExerciseEntity::class,
-        PersonalRecordEntity::class
+        PersonalRecordEntity::class,
+        FrequentMealEntity::class
     ],
-    version = 11,
+    version = 12,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -74,6 +77,7 @@ abstract class SoloFitDatabase : RoomDatabase() {
     abstract fun dailyMetricDao(): DailyMetricDao
     abstract fun progressPhotoDao(): ProgressPhotoDao
     abstract fun weeklyPlanDao(): WeeklyPlanDao
+    abstract fun frequentMealDao(): FrequentMealDao
 
     companion object {
         const val DB_NAME = "solofit.db"
@@ -309,6 +313,31 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v11 -> v12: add frequent_meals table for meal memory. */
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS frequent_meals (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        normalizedName TEXT NOT NULL,
+                        caloriesPer100g REAL NOT NULL,
+                        proteinPer100g REAL NOT NULL,
+                        carbsPer100g REAL NOT NULL,
+                        fatsPer100g REAL NOT NULL,
+                        fiberPer100g REAL NOT NULL DEFAULT 0.0,
+                        logCount INTEGER NOT NULL DEFAULT 1,
+                        lastLoggedAt INTEGER NOT NULL,
+                        confidence TEXT NOT NULL DEFAULT 'MEDIUM'
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE UNIQUE INDEX IF NOT EXISTS index_frequent_meals_normalizedName
+                    ON frequent_meals(normalizedName)
+                """.trimIndent())
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
             val db = Room.databaseBuilder(
                 context.applicationContext,
@@ -318,7 +347,7 @@ abstract class SoloFitDatabase : RoomDatabase() {
                 .addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                     MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
-                    MIGRATION_9_10, MIGRATION_10_11
+                    MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12
                 )
 
                 .addCallback(object : Callback() {

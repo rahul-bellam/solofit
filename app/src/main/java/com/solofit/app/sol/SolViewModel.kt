@@ -11,6 +11,7 @@ import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.JournalRepository
 import com.solofit.app.domain.repository.ProfileRepository
+import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.domain.repository.WorkoutRepository
 import com.solofit.app.core.FitnessMath
 import com.solofit.app.core.StreakCalculator
@@ -55,7 +56,21 @@ data class SolUiState(
     val weeklyWalkingTrend: String = "",
     val hasSufficientData: Boolean = true,
     val daysTracked: Int = 0,
-    val emptyMessage: String = ""
+    val emptyMessage: String = "",
+    // ── Adaptive Lifestyle Engine ──
+    val dailyPriority: DailyPriority = DailyPriority.CONSISTENCY,
+    val priorityReason: String = "",
+    val priorityAction: String = "",
+    val momentum: MomentumState = MomentumState(MomentumLevel.BUILDING, "", TrendDirection.STABLE, emptyList()),
+    val lifestyleMode: LifestyleMode = LifestyleMode.REBUILDING,
+    val movementRisk: MovementRisk? = null,
+    val microWins: List<MicroWin> = emptyList(),
+    val journalDays: Int = 0,
+    val identityMessage: IdentityMessage? = null,
+    val setbackMessages: List<SetbackRecoveryMessage> = emptyList(),
+    val confidence: String = "Low",
+    val patternDiscoveries: List<PatternDiscovery> = emptyList(),
+    val setbackPrediction: SetbackPrediction? = null
 )
 
 private val BRIEFING_HEADERS = listOf(
@@ -75,6 +90,7 @@ class SolViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository,
     private val bodyRepository: BodyRepository,
     private val journalRepository: JournalRepository,
+    private val weightRepository: WeightRepository,
     private val prefs: UserPreferences,
     private val insightEngine: InsightEngine
 ) : ViewModel() {
@@ -83,41 +99,41 @@ class SolViewModel @Inject constructor(
     val state: StateFlow<SolUiState> = _state.asStateFlow()
 
     private var tts: TextToSpeech? = null
-    private val today = DateUtils.today()
 
     init {
         refresh()
     }
 
-    fun refresh() {
+    fun refresh(screenRole: ScreenRole = ScreenRole.GUIDE) {
         viewModelScope.launch {
+            val now = LocalDate.now()
+            val todayStr = DateUtils.today()
             val profile = profileRepository.observeProfile().first()
-            val totals = dailyLogRepository.observeTotalsForDate(today).first()
+            val totals = dailyLogRepository.observeTotalsForDate(todayStr).first()
             val history = workoutRepository.observeHistory().first()
-            val metric = bodyRepository.observeMetric(today).first()
-            val yesterdayStr = LocalDate.now().minusDays(1).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val metric = bodyRepository.observeMetric(todayStr).first()
+            val yesterdayStr = now.minusDays(1).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
             val prevMetric = runCatching { bodyRepository.observeMetric(yesterdayStr).first() }.getOrNull()
             val measurements = bodyRepository.observeMeasurements().first()
             val setRows = workoutRepository.observeCompletedSetRows().first()
             val recentEntries = journalRepository.observeRecentGratitude(7).first()
-            val wellness = prefs.dailyWellness(today).first()
+            val wellness = prefs.dailyWellness(todayStr).first()
             val personality = prefs.voicePersonality.first()
 
             val dates = history.map { it.session.date }
-            val now = LocalDate.now()
 
             val previousRecovery = prevMetric?.let {
                 FitnessMath.recoveryScore(
                     sleepHours = it.sleepHours, steps = it.steps,
                     workoutDone = null, waterMl = null,
-                    waterGoalMl = 3000, energyScore = it.energyScore
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = it.energyScore
                 )
             }
             val recoveryScore = metric?.let {
                 FitnessMath.recoveryScore(
                     sleepHours = it.sleepHours, steps = it.steps,
-                    workoutDone = dates.contains(today), waterMl = null,
-                    waterGoalMl = 3000, energyScore = it.energyScore
+                    workoutDone = dates.contains(todayStr), waterMl = null,
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = it.energyScore
                 )
             }
 
@@ -160,7 +176,7 @@ class SolViewModel @Inject constructor(
                 FitnessMath.recoveryScore(
                     sleepHours = m.sleepHours, steps = m.steps,
                     workoutDone = dates.contains(m.date), waterMl = null,
-                    waterGoalMl = 3000, energyScore = m.energyScore
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
                 )
             }
             val targetProtein = profile?.targetProtein ?: 150
@@ -198,7 +214,7 @@ class SolViewModel @Inject constructor(
                 previousRecoveryScore = previousRecovery,
                 streakDays = StreakCalculator.currentStreak(dates, now),
                 daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
-                workoutToday = dates.contains(today),
+                workoutToday = dates.contains(todayStr),
                 consumedCalories = totals.calories.roundToInt(),
                 consumedProtein = totals.proteinG.roundToInt(),
                 targetCalories = profile?.targetCalories ?: 2000,
@@ -208,12 +224,13 @@ class SolViewModel @Inject constructor(
                 steps = metric?.steps,
                 previousSteps = prevSteps,
                 waterMl = 0,
-                waterGoalMl = 3000,
+                waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML,
                 energyScore = metric?.energyScore,
                 stressLevel = wellness.stressLevel,
                 previousStressLevel = null,
                 moodScore = metric?.moodScore,
                 meditationMinutes = wellness.meditationMinutes,
+                previousMeditationMinutes = prevMetric?.let { prefs.dailyWellness(yesterdayStr).first().meditationMinutes },
                 journalDays = recentEntries.size,
                 journalSentiment = journalSentiment,
                 measurementImproving = measurementImproving,
@@ -225,14 +242,15 @@ class SolViewModel @Inject constructor(
                 daysTracked = daysTracked,
                 weeklySteps = weeklySteps,
                 weeklyRecovery = weeklyRecovery,
-                weeklyProteinPct = weeklyProteinPct
+                weeklyProteinPct = weeklyProteinPct,
+                weeklySleep = weeklyMetrics.mapNotNull { it.sleepHours }
             )
 
             val weeklyRecoveryMap = weeklyMetrics.associate { m ->
                 m.date to (FitnessMath.recoveryScore(
                     sleepHours = m.sleepHours, steps = m.steps,
                     workoutDone = dates.contains(m.date), waterMl = null,
-                    waterGoalMl = 3000, energyScore = m.energyScore
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
                 ) ?: 0)
             }
             val weeklyProteinMap = dateStrings.zip(weeklyTotals).associate { (date, totals) ->
@@ -247,6 +265,185 @@ class SolViewModel @Inject constructor(
             val briefing = insightEngine.computeBriefing(input, memory)
             val transformedVoice = VoicePersonalityTransformer.transform(briefing.primary.voiceLine, personality)
 
+            // ── Adaptive Lifestyle Engine ──
+            val baseline = BaselineCalculator.compute(
+                weeklySteps = weeklySteps,
+                weeklyRecovery = weeklyRecovery,
+                weeklyProteinPct = weeklyProteinPct,
+                weeklySleep = weeklyMetrics.mapNotNull { it.sleepHours },
+                historyCount = history.size,
+                daysTracked = daysTracked,
+                meditationMinutes = wellness.meditationMinutes,
+                profile = profile
+            )
+            val dailyPriority = DailyPriorityEngine.determine(
+                recoveryScore = recoveryScore,
+                sleepHours = metric?.sleepHours,
+                baseline = baseline,
+                todaySteps = metric?.steps,
+                todayProtein = if (targetProtein > 0) totals.proteinG / targetProtein else 0.0,
+                daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
+                meditationToday = wellness.meditationMinutes > 0,
+                stressLevel = wellness.stressLevel
+            )
+            val momentum = MomentumCalculator.compute(
+                daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
+                recoveryScore = recoveryScore,
+                weeklySteps = weeklySteps,
+                weeklyProteinPct = weeklyProteinPct,
+                sleepHours = metric?.sleepHours,
+                streakDays = StreakCalculator.currentStreak(dates, now),
+                baseline = baseline
+            )
+            val lifestyleMode = LifestyleModeDetector.detect(
+                recoveryScore = recoveryScore,
+                sleepHours = metric?.sleepHours,
+                weeklySleep = weeklyMetrics.mapNotNull { it.sleepHours },
+                steps = metric?.steps,
+                weeklySteps = weeklySteps,
+                daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
+                weeksActiveTrend = false
+            )
+            val stepGoal = prefs.stepGoal.first()
+            val movementRisk = SedentaryIntelligence.assess(
+                todaySteps = metric?.steps,
+                weeklySteps = weeklySteps,
+                stepGoal = stepGoal
+            )
+            val microWins = MicroWinEngine.detect(
+                todaySteps = metric?.steps,
+                yesterdaySteps = prevMetric?.steps,
+                todaySleep = metric?.sleepHours,
+                yesterdaySleep = prevMetric?.sleepHours,
+                todayProtein = if (targetProtein > 0) totals.proteinG / targetProtein else null,
+                yesterdayProtein = null,
+                todayRecovery = recoveryScore,
+                yesterdayRecovery = previousRecovery,
+                todayMeditation = wellness.meditationMinutes,
+                yesterdayMeditation = prevMetric?.let { prefs.dailyWellness(yesterdayStr).first().meditationMinutes }
+            )
+
+            // ── Identity Engine (max 2-3x per week) ──
+            val activeMetrics = buildList {
+                if (dates.contains(todayStr)) add("workout")
+                if (weeklyProteinDays > 0) add("nutrition")
+                if (recoveryScore != null && recoveryScore >= 50) add("recovery")
+                if ((metric?.steps ?: 0) >= WellnessThresholds.MODERATE_MOVEMENT_STEPS) add("movement")
+                if (wellness.meditationMinutes > 0) add("meditation")
+                if (recentEntries.size >= 3) add("journal")
+            }
+            val recentStatements = emptyList<String>()
+            val identityMessage = IdentityEngine.select(activeMetrics, recentStatements)
+
+            // ── Setback Recovery Engine ──
+            val workoutYesterday = dates.contains(yesterdayStr)
+            val ateWellToday = targetProtein > 0 && totals.proteinG >= targetProtein * 0.8
+            val yesterdayTotals = runCatching { dailyLogRepository.observeTotalsForDate(yesterdayStr).first() }.getOrNull()
+            val ateWellYesterday = yesterdayTotals != null && targetProtein > 0 && yesterdayTotals.proteinG >= targetProtein * 0.8
+            val movedEnough = (metric?.steps ?: 0) >= WellnessThresholds.MODERATE_MOVEMENT_STEPS
+            val prevStepsVal = prevMetric?.steps ?: 0
+            val movedYesterday = prevStepsVal >= WellnessThresholds.MODERATE_MOVEMENT_STEPS
+            val setbackMessages = SetbackRecoveryEngine.detect(
+                workoutToday = dates.contains(todayStr),
+                ateWellToday = ateWellToday,
+                movedEnough = movedEnough,
+                meditatedToday = wellness.meditationMinutes > 0,
+                journaledToday = recentEntries.isNotEmpty(),
+                workoutYesterday = workoutYesterday,
+                ateWellYesterday = ateWellYesterday,
+                movedYesterday = movedYesterday,
+                meditatedYesterday = (prevMetric?.let { prefs.dailyWellness(yesterdayStr).first().meditationMinutes } ?: 0) > 0,
+                journaledYesterday = runCatching { journalRepository.observeRecentGratitude(7).first().any { it.date == yesterdayStr } }.getOrDefault(false),
+                daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
+                momentum = momentum.level
+            )
+
+            // ── 30d / 90d Data Windows ──
+            val thirtyDaysAgo = now.minusDays(29).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val ninetyDaysAgo = now.minusDays(89).format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
+            val metrics30d = runCatching { bodyRepository.observeMetricsSince(thirtyDaysAgo).first() }.getOrDefault(emptyList())
+            val metrics90d = runCatching { bodyRepository.observeMetricsSince(ninetyDaysAgo).first() }.getOrDefault(emptyList())
+            val totals30d = runCatching { dailyLogRepository.getDailyTotalsSince(thirtyDaysAgo) }.getOrDefault(emptyList())
+            val totals90d = runCatching { dailyLogRepository.getDailyTotalsSince(ninetyDaysAgo) }.getOrDefault(emptyList())
+            val weight30d = runCatching { weightRepository.getEntriesSince(thirtyDaysAgo) }.getOrDefault(emptyList())
+            val weight90d = runCatching { weightRepository.getEntriesSince(ninetyDaysAgo) }.getOrDefault(emptyList())
+            val allHistory = runCatching { workoutRepository.observeHistory().first() }.getOrDefault(emptyList())
+            val workouts30d = allHistory.count { h ->
+                runCatching { LocalDate.parse(h.session.date) >= now.minusDays(29) }.getOrDefault(false)
+            }
+            val workouts90d = allHistory.count { h ->
+                runCatching { LocalDate.parse(h.session.date) >= now.minusDays(89) }.getOrDefault(false)
+            }
+
+            val steps30d = metrics30d.mapNotNull { it.steps?.toInt() }
+            val steps90d = metrics90d.mapNotNull { it.steps?.toInt() }
+            val sleep30d = metrics30d.mapNotNull { it.sleepHours }
+            val sleep90d = metrics90d.mapNotNull { it.sleepHours }
+            val recovery30d = metrics30d.mapNotNull { m ->
+                FitnessMath.recoveryScore(
+                    sleepHours = m.sleepHours, steps = m.steps?.toInt(),
+                    workoutDone = null, waterMl = null,
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
+                )
+            }
+            val recovery90d = metrics90d.mapNotNull { m ->
+                FitnessMath.recoveryScore(
+                    sleepHours = m.sleepHours, steps = m.steps?.toInt(),
+                    workoutDone = null, waterMl = null,
+                    waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
+                )
+            }
+            val protein30d = if (targetProtein > 0) totals30d.map { it.proteinG / targetProtein } else emptyList()
+            val protein90d = if (targetProtein > 0) totals90d.map { it.proteinG / targetProtein } else emptyList()
+            val meditation30dTotal = metrics30d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
+            val meditation90dTotal = metrics90d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
+            val bodyWeight30d = weight30d.map { it.weightKg }
+            val bodyWeight90d = weight90d.map { it.weightKg }
+
+            // ── Extended Baseline ──
+            val fullBaseline = BaselineCalculator.compute(
+                weeklySteps = weeklySteps,
+                weeklyRecovery = weeklyRecovery,
+                weeklyProteinPct = weeklyProteinPct,
+                weeklySleep = weeklyMetrics.mapNotNull { it.sleepHours },
+                historyCount = history.size,
+                daysTracked = daysTracked,
+                meditationMinutes = wellness.meditationMinutes,
+                profile = profile,
+                steps30d = steps30d, steps90d = steps90d,
+                recovery30d = recovery30d, recovery90d = recovery90d,
+                protein30d = protein30d, protein90d = protein90d,
+                sleep30d = sleep30d, sleep90d = sleep90d,
+                meditation30dTotal = meditation30dTotal, meditation90dTotal = meditation90dTotal,
+                daysTracked30d = metrics30d.size, daysTracked90d = metrics90d.size,
+                workouts30d = workouts30d, workouts90d = workouts90d,
+                bodyWeight30d = bodyWeight30d, bodyWeight90d = bodyWeight90d
+            )
+
+            // ── Pattern Discovery Engine ──
+            val workoutDaysOfWeek = history.mapNotNull { h ->
+                runCatching { LocalDate.parse(h.session.date).dayOfWeek }.getOrNull()
+            }
+            val stepsByDay = weeklyMetrics.mapNotNull { m ->
+                runCatching { LocalDate.parse(m.date).dayOfWeek to (m.steps?.toInt() ?: 0) }.getOrNull()
+            }.toMap()
+            val patternDiscoveries = PatternDiscoveryEngine.discover(
+                trends = briefing.trends,
+                signals = briefing.signals,
+                baseline = fullBaseline,
+                weeklyWorkoutDays = workoutDaysOfWeek,
+                stepsByDay = stepsByDay,
+                daysTracked = daysTracked
+            )
+
+            // ── Confidence System ──
+            val confidence = when {
+                daysTracked >= 90 -> "High"
+                daysTracked >= 30 -> "Medium"
+                daysTracked >= 7 -> "Low"
+                else -> "Minimal"
+            }
+
             val streakMilestone = when (input.streakDays) {
                 7 -> 7; 30 -> 30; 100 -> 100; else -> 0
             }
@@ -256,6 +453,124 @@ class SolViewModel @Inject constructor(
             val isSunday = now.dayOfWeek == DayOfWeek.SUNDAY
 
             val weeklyWorkoutCount = StreakCalculator.daysActiveInWindow(dates, now, 7)
+
+            // ── Setback Predictor (logistic regression) ──
+            val savedWeightsStr = prefs.setbackPredictorWeights.first()
+            val loadedWeights = if (savedWeightsStr.isNotEmpty()) {
+                SetbackPredictor.deserializeWeights(savedWeightsStr) ?: SetbackPredictor.defaultWeights()
+            } else SetbackPredictor.defaultWeights()
+            val loadedBias = prefs.setbackPredictorBias.first().toDouble()
+            val daysSinceLastWorkout = dates.lastOrNull()?.let {
+                ChronoUnit.DAYS.between(runCatching { LocalDate.parse(it) }.getOrNull() ?: now, now)
+            }?.toInt()?.coerceAtLeast(0) ?: 14
+            val avgSleep3d = weeklyMetrics.takeLast(3).mapNotNull { it.sleepHours }.let {
+                if (it.isNotEmpty()) it.average() else null
+            }
+            val avgSteps3d = weeklyMetrics.takeLast(3).mapNotNull { it.steps?.toInt() }.let {
+                if (it.isNotEmpty()) it.average().toInt() else null
+            }
+            val momentumDirection = when {
+                last3 > prev3 && last3 >= 2 -> 2
+                last3 >= prev3 -> 1
+                else -> 0
+            }
+            val features = SetbackPredictor.extractFeatures(
+                daysSinceLastWorkout = daysSinceLastWorkout,
+                avgRecovery7d = weeklyRecovery.average().let { if (it.isNaN()) null else it.toInt() },
+                avgSleep3d = avgSleep3d,
+                avgProteinAdherence7d = weeklyProteinPct.average().let { if (it.isNaN()) null else it },
+                avgSteps3d = avgSteps3d,
+                meditatedAny7d = weeklyMetrics.any { m ->
+                    runCatching { prefs.dailyWellness(m.date).first().meditationMinutes > 0 }.getOrDefault(false)
+                },
+                journaledAny7d = recentEntries.isNotEmpty(),
+                isWeekend = now.dayOfWeek == DayOfWeek.SATURDAY || now.dayOfWeek == DayOfWeek.SUNDAY,
+                momentumDirection = momentumDirection
+            )
+            val prob = SetbackPredictor.predict(loadedWeights, loadedBias, features)
+            val riskLevel = SetbackPredictor.probabilityToRisk(prob)
+            val topDriver = SetbackPredictor.topDriver(loadedWeights, features)
+            val setbackPrediction = SetbackPrediction(
+                probability = prob,
+                riskLevel = riskLevel,
+                topDriver = topDriver
+            )
+
+            // ── Online training (one example per day, after outcome is known) ──
+            val lastTrainedDate = prefs.setbackLastTrainedDate.first()
+            if (lastTrainedDate != yesterdayStr) {
+                val trainedYesterday = dates.contains(yesterdayStr)
+                val yTotals = runCatching { dailyLogRepository.observeTotalsForDate(yesterdayStr).first() }.getOrNull()
+                val yMetric = prevMetric
+                val yWellness = if (yMetric != null) runCatching { prefs.dailyWellness(yesterdayStr).first() }.getOrNull() else null
+                val outcomeWorkout = trainedYesterday
+                val outcomNutrition = yTotals != null && targetProtein > 0 && yTotals.proteinG >= targetProtein * 0.8
+                val outcomeMovement = (yMetric?.steps ?: 0) >= WellnessThresholds.MODERATE_MOVEMENT_STEPS
+                val outcomeMeditation = (yWellness?.meditationMinutes ?: 0) > 0
+                val outcomeJournal = runCatching { journalRepository.observeRecentGratitude(7).first().any { it.date == yesterdayStr } }.getOrDefault(false)
+                val positiveOutcomes = listOf(outcomeWorkout, outcomNutrition, outcomeMovement, outcomeMeditation, outcomeJournal).count { it }
+                val label = if (positiveOutcomes >= 3) 0 else 1
+                val yDates = history.map { it.session.date }
+                val yesDate = LocalDate.parse(yesterdayStr)
+                val yDaysSinceWorkout = yDates.lastOrNull()?.let {
+                    ChronoUnit.DAYS.between(runCatching { LocalDate.parse(it) }.getOrNull() ?: yesDate, yesDate)
+                }?.toInt()?.coerceAtLeast(0) ?: 14
+                val yWeeklyMetrics = (0..6).map { now.minusDays(it.toLong() + 1) }.mapNotNull { d ->
+                    runCatching { bodyRepository.getMetric(d.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)) }.getOrNull()
+                }
+                val yRecoveryList = yWeeklyMetrics.mapNotNull { m ->
+                    FitnessMath.recoveryScore(
+                        sleepHours = m.sleepHours, steps = m.steps?.toInt(),
+                        workoutDone = yDates.contains(m.date), waterMl = null,
+                        waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
+                    )
+                }
+                val yProteinList = (0..6).map { now.minusDays(it.toLong() + 1) }.mapNotNull { d ->
+                    runCatching { dailyLogRepository.observeTotalsForDate(d.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)).first() }.getOrNull()
+                }
+                val yFeatures = SetbackPredictor.extractFeatures(
+                    daysSinceLastWorkout = yDaysSinceWorkout,
+                    avgRecovery7d = yRecoveryList.average().let { if (it.isNaN()) null else it.toInt() },
+                    avgSleep3d = yWeeklyMetrics.takeLast(3).mapNotNull { it.sleepHours }.let {
+                        if (it.isNotEmpty()) it.average() else null
+                    },
+                    avgProteinAdherence7d = yProteinList.map { if (targetProtein > 0) it.proteinG / targetProtein else 0.0 }.let {
+                        if (it.isNotEmpty()) it.average() else null
+                    },
+                    avgSteps3d = yWeeklyMetrics.takeLast(3).mapNotNull { it.steps?.toInt() }.let {
+                        if (it.isNotEmpty()) it.average().toInt() else null
+                    },
+                    meditatedAny7d = yWeeklyMetrics.any { m ->
+                        runCatching { prefs.dailyWellness(m.date).first().meditationMinutes > 0 }.getOrDefault(false)
+                    },
+                    journaledAny7d = runCatching { journalRepository.observeRecentGratitude(7).first().any { it.date == yesterdayStr } }.getOrDefault(false),
+                    isWeekend = LocalDate.parse(yesterdayStr).dayOfWeek == DayOfWeek.SATURDAY ||
+                        LocalDate.parse(yesterdayStr).dayOfWeek == DayOfWeek.SUNDAY,
+                    momentumDirection = yDates.count { h ->
+                        runCatching {
+                            val d = LocalDate.parse(h)
+                            ChronoUnit.DAYS.between(d, yesDate).toInt() in 0..3
+                        }.getOrDefault(false)
+                    }.let { recent ->
+                        val prev = yDates.count { h ->
+                            runCatching {
+                                val d = LocalDate.parse(h)
+                                ChronoUnit.DAYS.between(d, yesDate).toInt() in 4..7
+                            }.getOrDefault(false)
+                        }
+                        when {
+                            recent > prev && recent >= 2 -> 2
+                            recent >= prev -> 1
+                            else -> 0
+                        }
+                    }
+                )
+                val example = TrainingExample(yFeatures, label)
+                val (newWeights, newBias) = SetbackPredictor.train(loadedWeights, loadedBias, listOf(example))
+                prefs.setSetbackPredictorWeights(SetbackPredictor.serializeWeights(newWeights))
+                prefs.setSetbackPredictorBias(newBias.toFloat())
+                prefs.setSetbackLastTrainedDate(yesterdayStr)
+            }
 
             _state.value = SolUiState(
                 visible = true,
@@ -282,7 +597,19 @@ class SolViewModel @Inject constructor(
                 weeklyWalkingTrend = walkingTrend,
                 hasSufficientData = briefing.hasSufficientData,
                 daysTracked = daysTracked,
-                emptyMessage = briefing.emptyMessage
+                emptyMessage = briefing.emptyMessage,
+                dailyPriority = dailyPriority.priority,
+                priorityReason = dailyPriority.reason,
+                priorityAction = dailyPriority.action,
+                momentum = momentum,
+                lifestyleMode = lifestyleMode,
+                movementRisk = movementRisk,
+                microWins = microWins,
+                journalDays = recentEntries.size,
+                identityMessage = identityMessage,
+                setbackMessages = setbackMessages,
+                confidence = confidence,
+                setbackPrediction = setbackPrediction
             )
         }
     }
@@ -319,7 +646,7 @@ class SolViewModel @Inject constructor(
         if (tts == null) {
             tts = TextToSpeech(context) { status ->
                 if (status == TextToSpeech.SUCCESS) {
-                    tts?.language = Locale.US
+                    this@SolViewModel.tts?.language = Locale.US
                     doSpeak(text)
                 }
             }
@@ -330,16 +657,21 @@ class SolViewModel @Inject constructor(
 
     private fun doSpeak(text: String) {
         _state.value = _state.value.copy(isSpeaking = true)
-        tts?.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+        val engine = tts ?: return
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
             override fun onStart(utteranceId: String?) {}
             override fun onDone(utteranceId: String?) {
-                _state.value = _state.value.copy(isSpeaking = false)
+                viewModelScope.launch {
+                    _state.value = _state.value.copy(isSpeaking = false)
+                }
             }
             override fun onError(utteranceId: String?) {
-                _state.value = _state.value.copy(isSpeaking = false)
+                viewModelScope.launch {
+                    _state.value = _state.value.copy(isSpeaking = false)
+                }
             }
         })
-        tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "sol")
+        engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, "sol")
     }
 
     override fun onCleared() {

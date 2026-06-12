@@ -8,121 +8,104 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.solofit.app.R
 
-val SpaceGrotesk = FontFamily(
-    Font(R.font.space_grotesk_variable, FontWeight.Normal)
+val PlayfairDisplay = FontFamily(
+    Font(R.font.playfair_display_variable, FontWeight.Normal)
 )
 
-val Nunito = FontFamily(
-    Font(R.font.nunito_variable, FontWeight.Normal)
+val PlusJakartaSans = FontFamily(
+    Font(R.font.plus_jakarta_sans_variable, FontWeight.Normal)
 )
 
 val AppTypography = Typography(
-    headlineLarge = TextStyle(fontWeight = FontWeight.Bold, fontSize = 32.sp),
-    headlineMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = 26.sp),
-    titleLarge = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 20.sp),
-    titleMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 16.sp),
-    bodyLarge = TextStyle(fontWeight = FontWeight.Normal, fontSize = 16.sp),
-    bodyMedium = TextStyle(fontWeight = FontWeight.Normal, fontSize = 14.sp),
-    labelLarge = TextStyle(fontWeight = FontWeight.Medium, fontSize = 14.sp),
-    labelSmall = TextStyle(fontWeight = FontWeight.Medium, fontSize = 11.sp)
-)
-
-val WorkoutTypography = Typography(
-    headlineLarge = TextStyle(
-        fontFamily = SpaceGrotesk,
+    // Serif (Playfair Display) for dashboard metrics and headers
+    displayLarge = TextStyle(
+        fontFamily = PlayfairDisplay,
         fontWeight = FontWeight.Bold,
-        fontSize = 30.sp,
+        fontSize = 48.sp,
+        letterSpacing = (-1).sp
+    ),
+    displayMedium = TextStyle(
+        fontFamily = PlayfairDisplay,
+        fontWeight = FontWeight.Bold,
+        fontSize = 40.sp,
         letterSpacing = (-0.8).sp
     ),
-    headlineMedium = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
+    displaySmall = TextStyle(
+        fontFamily = PlayfairDisplay,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 34.sp,
         letterSpacing = (-0.5).sp
     ),
-    titleLarge = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        letterSpacing = (-0.3).sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Bold,
-        fontSize = 16.sp,
-        letterSpacing = 0.3.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Bold,
-        fontSize = 12.sp,
-        letterSpacing = 1.2.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = SpaceGrotesk,
-        fontWeight = FontWeight.Bold,
-        fontSize = 10.sp,
-        letterSpacing = 0.8.sp
-    )
-)
-
-val NutritionTypography = Typography(
     headlineLarge = TextStyle(
-        fontFamily = Nunito,
-        fontWeight = FontWeight.Normal,
+        fontFamily = PlayfairDisplay,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 30.sp,
-        letterSpacing = 1.sp
+        letterSpacing = 0.5.sp
     ),
     headlineMedium = TextStyle(
-        fontFamily = Nunito,
-        fontWeight = FontWeight.Normal,
+        fontFamily = PlayfairDisplay,
+        fontWeight = FontWeight.SemiBold,
         fontSize = 24.sp,
         letterSpacing = 0.8.sp
     ),
-    titleLarge = TextStyle(
-        fontFamily = Nunito,
+    headlineSmall = TextStyle(
+        fontFamily = PlayfairDisplay,
         fontWeight = FontWeight.Medium,
         fontSize = 20.sp,
         letterSpacing = 0.5.sp
     ),
-    titleMedium = TextStyle(
-        fontFamily = Nunito,
+    titleLarge = TextStyle(
+        fontFamily = PlayfairDisplay,
         fontWeight = FontWeight.Medium,
-        fontSize = 16.sp,
+        fontSize = 18.sp,
         letterSpacing = 0.3.sp
+    ),
+    titleMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 16.sp,
+        letterSpacing = 0.2.sp
+    ),
+    titleSmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.SemiBold,
+        fontSize = 14.sp,
+        letterSpacing = 0.2.sp
     ),
     bodyLarge = TextStyle(
-        fontFamily = Nunito,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Normal,
         fontSize = 16.sp,
-        letterSpacing = 0.3.sp
+        letterSpacing = 0.2.sp
     ),
     bodyMedium = TextStyle(
-        fontFamily = Nunito,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         letterSpacing = 0.2.sp
     ),
+    bodySmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Normal,
+        fontSize = 12.sp,
+        letterSpacing = 0.2.sp
+    ),
     labelLarge = TextStyle(
-        fontFamily = Nunito,
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Medium,
-        fontSize = 13.sp,
+        fontSize = 14.sp,
         letterSpacing = 0.5.sp
     ),
-    labelSmall = TextStyle(
-        fontFamily = Nunito,
+    labelMedium = TextStyle(
+        fontFamily = PlusJakartaSans,
         fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
+        fontSize = 12.sp,
         letterSpacing = 0.3.sp
+    ),
+    labelSmall = TextStyle(
+        fontFamily = PlusJakartaSans,
+        fontWeight = FontWeight.Medium,
+        fontSize = 10.sp,
+        letterSpacing = 0.2.sp
     )
 )

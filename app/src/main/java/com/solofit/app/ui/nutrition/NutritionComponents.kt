@@ -41,7 +41,16 @@ import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.ProteinColor
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
-import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.NutritionAccent
+import com.solofit.app.ui.theme.SurfaceBg
+import com.solofit.app.ui.theme.CardPrimary
+import com.solofit.app.ui.theme.CardSecondary
+import com.solofit.app.ui.theme.Hairline
+import com.solofit.app.ui.theme.DarkBg
+import com.solofit.app.ui.theme.DarkCard
+import com.solofit.app.ui.theme.DarkSurface
+import com.solofit.app.ui.theme.DarkText
+import com.solofit.app.ui.theme.DarkTextSecondary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 
@@ -62,28 +71,28 @@ data class NutritionColors(
 )
 
 fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
-    bg = Color(0xFF121212),
-    surface = Color(0xFF1E1E1E),
-    textPrimary = Color(0xFFE8E4D9),
-    textMuted = Color(0xFF9E9A8E),
-    headerBg = Brush.verticalGradient(listOf(Color(0xFF1F2A1F), Color(0xFF162016))),
-    cardBg = Color(0xFF2A2A2A),
-    iconBg = Color(0xFF333333),
-    border = Color(0xFF444444),
-    green = Color(0xFF9CC99C),
-    greenLight = Color(0xFF2A3A2A),
-    trackColor = SecondaryText.copy(alpha = 0.2f)
+    bg = DarkBg,
+    surface = DarkCard,
+    textPrimary = DarkText,
+    textMuted = DarkTextSecondary,
+    headerBg = Brush.verticalGradient(listOf(DarkSurface, DarkCard)),
+    cardBg = DarkCard,
+    iconBg = DarkSurface,
+    border = DarkSurface,
+    green = NutritionAccent,
+    greenLight = NutritionAccent.copy(alpha = 0.2f),
+    trackColor = DarkTextSecondary.copy(alpha = 0.2f)
 ) else NutritionColors(
-    bg = Color(0xFFF8F7F2),
-    surface = Color.White,
+    bg = SurfaceBg,
+    surface = CardPrimary,
     textPrimary = PrimaryText,
     textMuted = SecondaryText,
-    headerBg = Brush.verticalGradient(listOf(Color(0xFFF0F5EB), Color(0xFFE8F0E0))),
-    cardBg = Color.White,
-    iconBg = Color(0xFFF0EFEA),
-    border = Color(0xFFE5E3D9),
-    green = Amber,
-    greenLight = Amber.copy(alpha = 0.15f),
+    headerBg = Brush.verticalGradient(listOf(CardSecondary, CardPrimary)),
+    cardBg = CardPrimary,
+    iconBg = CardSecondary,
+    border = Hairline,
+    green = NutritionAccent,
+    greenLight = NutritionAccent.copy(alpha = 0.15f),
     trackColor = SecondaryText.copy(alpha = 0.2f)
 )
 

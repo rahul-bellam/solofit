@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -27,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -37,12 +38,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.ProgressTheme
 import com.solofit.app.ui.components.WellnessStaticCard
-import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.ProgressBg
-import com.solofit.app.ui.theme.ProgressAccent
+import androidx.compose.material3.MaterialTheme
+import com.solofit.app.ui.theme.SlateBlue
+import com.solofit.app.ui.theme.TextPrimary
+import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.CardCream
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -53,93 +54,100 @@ fun ProgressScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     ProgressTheme {
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(ProgressBg)
-                .verticalScroll(rememberScrollState())
-                .padding(20.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
-            Spacer(Modifier.height(8.dp))
-            Text("Progress", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
-            Spacer(Modifier.height(4.dp))
-            Text("Your journey at a glance", fontSize = 14.sp, color = SecondaryText)
-            Spacer(Modifier.height(24.dp))
-
-            WellnessStaticCard(
-                containerColor = CardCream,
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
             ) {
-                Column(
-                    Modifier.fillMaxWidth().padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Spacer(Modifier.height(8.dp))
+                Text("Progress", style = MaterialTheme.typography.headlineMedium, color = PrimaryText)
+                Spacer(Modifier.height(4.dp))
+                Text("Your journey at a glance", fontSize = 14.sp, color = SecondaryText)
+                Spacer(Modifier.height(24.dp))
+
+                // ── Streak Hero ──
+                WellnessStaticCard(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Box(
-                        Modifier.size(72.dp).clip(CircleShape)
-                            .background(Brush.linearGradient(listOf(Amber, Amber.copy(alpha = 0.6f)))),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        Modifier.fillMaxWidth().padding(32.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Filled.LocalFireDepartment, null, tint = Color.White, modifier = Modifier.size(36.dp))
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "${state.streakDays}",
-                        fontSize = 80.sp,
-                        fontWeight = FontWeight.Light,
-                        color = Amber,
-                        letterSpacing = (-2).sp
-                    )
-                    Text("day streak", fontSize = 18.sp, color = SecondaryText, fontWeight = FontWeight.Medium)
-                    Spacer(Modifier.height(4.dp))
-                    if (state.bestStreak > state.streakDays) {
+                        Box(
+                            Modifier.size(72.dp).clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Filled.LocalFireDepartment, null, tint = SlateBlue, modifier = Modifier.size(36.dp))
+                        }
+                        Spacer(Modifier.height(16.dp))
                         Text(
-                            "Best: ${state.bestStreak} days",
-                            fontSize = 14.sp,
-                            color = Amber,
-                            fontWeight = FontWeight.SemiBold
+                            "${state.streakDays}",
+                            fontSize = 80.sp,
+                            fontWeight = FontWeight.Light,
+                            color = SlateBlue,
+                            letterSpacing = (-2).sp
                         )
+                        Text("day streak", fontSize = 18.sp, color = SecondaryText, fontWeight = FontWeight.Medium)
+                        Spacer(Modifier.height(4.dp))
+                        if (state.bestStreak > state.streakDays) {
+                            Text(
+                                "Best: ${state.bestStreak} days",
+                                fontSize = 14.sp,
+                                color = SlateBlue,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(20.dp))
 
-            WellnessStaticCard(
-                containerColor = CardCream,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(28.dp)) {
-                    Text("Monthly Overview", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-                    Spacer(Modifier.height(20.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        StatItem(Icons.Filled.FitnessCenter, "Workouts", "${state.workoutsThisMonth}", "this month")
-                        StatItem(Icons.AutoMirrored.Filled.TrendingUp, "Volume", formatNumber(state.totalVolumeKg), "kg total")
-                    }
-                    Spacer(Modifier.height(20.dp))
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        StatItem(Icons.Filled.Star, "Milestones", "${state.milestonesUnlocked}", "achieved")
-                        StatItem(Icons.Filled.LocalFireDepartment, "Consistency", "${state.consistencyPct}%", "this month")
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            Text("Achievements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-            Spacer(Modifier.height(12.dp))
-            WellnessStaticCard(
-                containerColor = CardCream,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(Modifier.padding(24.dp)) {
-                    state.achievements.forEachIndexed { index, achievement ->
-                        if (index > 0) Spacer(Modifier.height(16.dp))
-                        AchievementRow(achievement.title, achievement.description, achievement.unlocked)
+                // ── Monthly Overview ──
+                WellnessStaticCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(28.dp)) {
+                        Text("Monthly Overview", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                        Spacer(Modifier.height(20.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            StatItem(Icons.Filled.FitnessCenter, "Workouts", "${state.workoutsThisMonth}", "this month")
+                            StatItem(Icons.AutoMirrored.Filled.TrendingUp, "Volume", formatNumber(state.totalVolumeKg), "kg total")
+                        }
+                        Spacer(Modifier.height(20.dp))
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                            StatItem(Icons.Filled.Star, "Milestones", "${state.milestonesUnlocked}", "achieved")
+                            StatItem(Icons.Filled.LocalFireDepartment, "Consistency", "${state.consistencyPct}%", "this month")
+                        }
                     }
                 }
-            }
 
-            Spacer(Modifier.height(32.dp))
+                Spacer(Modifier.height(24.dp))
+
+                // ── Achievements ──
+                Text("Achievements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
+                Spacer(Modifier.height(12.dp))
+                WellnessStaticCard(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(Modifier.padding(24.dp)) {
+                        state.achievements.forEachIndexed { index, achievement ->
+                            if (index > 0) Spacer(Modifier.height(16.dp))
+                            AchievementRow(achievement.title, achievement.description, achievement.unlocked)
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(32.dp))
+            }
         }
     }
 }
@@ -160,10 +168,10 @@ private fun AchievementRow(title: String, description: String, unlocked: Boolean
     Row(verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier.size(36.dp).clip(CircleShape)
-                .background(if (unlocked) ProgressAccent else ProgressAccent.copy(alpha = 0.15f)),
+                .background(if (unlocked) SlateBlue else SlateBlue.copy(alpha = 0.15f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Filled.Star, null, tint = if (unlocked) Color.White else ProgressAccent.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Star, null, tint = if (unlocked) Color.White else SlateBlue.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
@@ -174,7 +182,7 @@ private fun AchievementRow(title: String, description: String, unlocked: Boolean
             if (unlocked) "Unlocked" else "Locked",
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            color = if (unlocked) ProgressAccent else Color(0xFF9CA3AF)
+            color = if (unlocked) SlateBlue else Color(0xFF9CA3AF)
         )
     }
 }

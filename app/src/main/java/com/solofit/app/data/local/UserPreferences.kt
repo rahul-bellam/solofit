@@ -5,6 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -12,6 +13,7 @@ import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ReminderSettings
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.model.TrainingGoal
+import com.solofit.app.sol.WellnessThresholds
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -54,6 +56,11 @@ class UserPreferences @Inject constructor(
     private val quietStartKey = intPreferencesKey("rem_quiet_start")
     private val quietEndKey = intPreferencesKey("rem_quiet_end")
     private val stepGoalKey = intPreferencesKey("step_goal")
+
+    // ── Setback Predictor (ML model persistence) ──
+    private val setbackPredictorWeightsKey = stringPreferencesKey("sp_weights")
+    private val setbackPredictorBiasKey = floatPreferencesKey("sp_bias")
+    private val setbackLastTrainedDateKey = stringPreferencesKey("sp_last_trained_date")
 
     val onboardingComplete: Flow<Boolean> =
         context.dataStore.data.map { it[onboardingCompleteKey] ?: false }
@@ -147,14 +154,14 @@ class UserPreferences @Inject constructor(
     }
 
     val waterGoalMl: Flow<Int> =
-        context.dataStore.data.map { it[waterGoalMlKey] ?: 3000 }
+        context.dataStore.data.map { it[waterGoalMlKey] ?: WellnessThresholds.WATER_DEFAULT_GOAL_ML }
 
     suspend fun setWaterGoalMl(ml: Int) {
         context.dataStore.edit { it[waterGoalMlKey] = ml.coerceIn(250, 10000) }
     }
 
     val stepGoal: Flow<Int> =
-        context.dataStore.data.map { it[stepGoalKey] ?: 8000 }
+        context.dataStore.data.map { it[stepGoalKey] ?: WellnessThresholds.DEFAULT_STEP_GOAL }
 
     suspend fun setStepGoal(goal: Int) {
         context.dataStore.edit { it[stepGoalKey] = goal.coerceIn(1000, 50000) }
@@ -390,5 +397,28 @@ class UserPreferences @Inject constructor(
                 }
                 .forEach { prefs.remove(it) }
         }
+    }
+
+    // ── Setback Predictor ML model ──
+
+    val setbackPredictorWeights: Flow<String> =
+        context.dataStore.data.map { it[setbackPredictorWeightsKey] ?: "" }
+
+    suspend fun setSetbackPredictorWeights(value: String) {
+        context.dataStore.edit { it[setbackPredictorWeightsKey] = value }
+    }
+
+    val setbackPredictorBias: Flow<Float> =
+        context.dataStore.data.map { it[setbackPredictorBiasKey] ?: 0f }
+
+    suspend fun setSetbackPredictorBias(value: Float) {
+        context.dataStore.edit { it[setbackPredictorBiasKey] = value }
+    }
+
+    val setbackLastTrainedDate: Flow<String?> =
+        context.dataStore.data.map { it[setbackLastTrainedDateKey] }
+
+    suspend fun setSetbackLastTrainedDate(value: String) {
+        context.dataStore.edit { it[setbackLastTrainedDateKey] = value }
     }
 }

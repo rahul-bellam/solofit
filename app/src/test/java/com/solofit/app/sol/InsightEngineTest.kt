@@ -29,6 +29,7 @@ class InsightEngineTest {
         previousStressLevel = null,
         moodScore = 5,
         meditationMinutes = 0,
+        previousMeditationMinutes = null,
         journalDays = 0,
         journalSentiment = null,
         measurementImproving = false,

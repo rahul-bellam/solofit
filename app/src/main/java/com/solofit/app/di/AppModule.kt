@@ -10,6 +10,7 @@ import com.solofit.app.data.local.dao.JournalDao
 import com.solofit.app.data.local.dao.BodyMeasurementDao
 import com.solofit.app.data.local.dao.DailyMetricDao
 import com.solofit.app.data.local.dao.ProgressPhotoDao
+import com.solofit.app.data.local.dao.FrequentMealDao
 import com.solofit.app.data.local.dao.WeeklyPlanDao
 import com.solofit.app.data.local.dao.WeightDao
 import com.solofit.app.data.local.dao.WorkoutDao
@@ -59,6 +60,7 @@ object AppModule {
     @Provides fun provideDailyMetricDao(db: SoloFitDatabase): DailyMetricDao = db.dailyMetricDao()
     @Provides fun provideProgressPhotoDao(db: SoloFitDatabase): ProgressPhotoDao = db.progressPhotoDao()
     @Provides fun provideWeeklyPlanDao(db: SoloFitDatabase): WeeklyPlanDao = db.weeklyPlanDao()
+    @Provides fun provideFrequentMealDao(db: SoloFitDatabase): FrequentMealDao = db.frequentMealDao()
 
     @Provides
     @Singleton

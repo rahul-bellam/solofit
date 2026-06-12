@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.repository.ProfileRepository
+import com.solofit.app.sol.WellnessThresholds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
@@ -31,7 +32,7 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
 
     val waterGoalMl = repository.waterGoalMl
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 3000)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WellnessThresholds.WATER_DEFAULT_GOAL_ML)
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repository.setThemeMode(mode) }

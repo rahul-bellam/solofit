@@ -4,44 +4,41 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -51,15 +48,12 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.domain.model.FitnessGoal
 import com.solofit.app.domain.model.Gender
-import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ThemeMode
-import com.solofit.app.ui.components.AnimatedThemeToggle
-import com.solofit.app.ui.modules.moduleIcon
-import com.solofit.app.ui.theme.Amber
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FitnessCenter
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import com.solofit.app.ui.theme.Hairline
+import com.solofit.app.ui.theme.Terracotta
+import com.solofit.app.ui.theme.TextPrimary
+import com.solofit.app.ui.theme.TextSecondary
+import kotlin.math.roundToInt
 
 @Composable
 fun OnboardingScreen(
@@ -71,264 +65,338 @@ fun OnboardingScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        if (state.step > 0 && state.step < 4) {
-            Icon(
-                Icons.AutoMirrored.Filled.ArrowBack, null,
-                tint = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier
-                    .padding(16.dp)
-                    .size(28.dp)
-                    .clickable { viewModel.previousStep() }
-                    .align(Alignment.TopStart)
-            )
-        }
-
         AnimatedContent(
             targetState = state.step,
             transitionSpec = {
-                val direction = if (targetState > initialState) 1 else -1
-                (slideInHorizontally(tween(350)) { it * direction } + fadeIn(tween(250)))
-                    .togetherWith(
-                        slideOutHorizontally(tween(350)) { -it * direction / 2 } + fadeOut(tween(250))
-                    )
+                (slideInVertically(tween(400)) { it } + fadeIn(tween(300)))
+                    .togetherWith(slideOutVertically(tween(300)) { -it / 3 } + fadeOut(tween(200)))
             },
             label = "onboarding",
             modifier = Modifier.fillMaxSize()
         ) { step ->
             when (step) {
-                 0 -> HeroStep(
-                        onGetStarted = viewModel::nextStep,
-                        themeMode = themeMode,
-                        onSetThemeMode = onSetThemeMode
-                    )
-                1 -> PersonalInfoStep(
-                    name = state.name, age = state.age, gender = state.gender,
-                    weight = state.weight, height = state.height,
-                    onName = viewModel::onName, onAge = viewModel::onAge,
-                    onGender = viewModel::onGender, onWeight = viewModel::onWeight,
-                    onHeight = viewModel::onHeight,
-                    isValid = state.isPersonalInfoValid,
-                    onContinue = viewModel::nextStep
-                )
-                2 -> GoalStep(
-                    selected = state.goal,
-                    onSelect = viewModel::onGoal,
-                    onContinue = if (state.goal != null) viewModel::nextStep else null
-                )
-                3 -> ModuleSelectionStep(
-                    selected = state.selectedModules,
-                    onToggle = viewModel::toggleModule,
-                    onContinue = viewModel::nextStep
-                )
-                4 -> ReadyStep(onEnter = {
-                    viewModel.finish(onComplete)
-                })
+                0 -> WelcomeStep(onGetStarted = viewModel::nextStep)
+                1 -> NameStep(name = state.name, onName = viewModel::onName, onContinue = viewModel::nextStep)
+                2 -> AgeStep(age = state.age, onAge = viewModel::onAge, onContinue = viewModel::nextStep)
+                3 -> GenderStep(gender = state.gender, onGender = viewModel::onGender, onContinue = viewModel::nextStep)
+                4 -> HeightStep(heightCm = state.height.toDoubleOrNull() ?: 170.0, onHeight = { viewModel.onHeight(it.roundToInt().toString()) }, onContinue = viewModel::nextStep)
+                5 -> WeightStep(weightKg = state.weight.toDoubleOrNull() ?: 70.0, onWeight = { viewModel.onWeight(it.roundToInt().toString()) }, onContinue = viewModel::nextStep)
+                6 -> GoalStep(selected = state.goal, onSelect = viewModel::onGoal, onContinue = if (state.goal != null) viewModel::nextStep else null)
+                7 -> ReadyStep(onEnter = { viewModel.finish(onComplete) })
             }
         }
-    }
-}
 
-// ───────────────────────────── STEP 1: HERO ─────────────────────────────
-
-@Composable
-private fun HeroStep(
-    onGetStarted: () -> Unit,
-    themeMode: ThemeMode,
-    onSetThemeMode: (ThemeMode) -> Unit
-) {
-    Box(Modifier.fillMaxSize().padding(32.dp)) {
-        AnimatedThemeToggle(
-            isDark = themeMode == ThemeMode.DARK,
-            onToggle = {
-                onSetThemeMode(
-                    if (themeMode == ThemeMode.DARK) ThemeMode.LIGHT else ThemeMode.DARK
-                )
-            },
-            modifier = Modifier.align(Alignment.TopEnd).size(28.dp)
-        )
-
-        Column(
-            Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Spacer(Modifier.weight(0.6f))
-
-            Text(
-                "Your Wellness.",
-                fontSize = 36.sp, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground, lineHeight = 42.sp
-            )
-            Text(
-                "Your Data.",
-                fontSize = 36.sp, fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground, lineHeight = 42.sp
-            )
-            Text(
-                "Your Rules.",
-                fontSize = 36.sp, fontWeight = FontWeight.Bold,
-                color = Amber, lineHeight = 42.sp
-            )
-
-            Spacer(Modifier.height(20.dp))
-
-            Text(
-                "Build a private wellness system that helps you train, eat, recover, and improve.\n\nEverything stays on your device.",
-                fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                lineHeight = 22.sp,
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(Modifier.weight(1f))
-
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
+        // Back button (except on first and last steps)
+        if (state.step in 1..6) {
+            TextButton(
+                onClick = viewModel::previousStep,
+                modifier = Modifier.padding(start = 8.dp, top = 48.dp).align(Alignment.TopStart)
             ) {
-                listOf(
-                    Icons.Filled.FitnessCenter to "Workout",
-                    Icons.AutoMirrored.Filled.ArrowBack to "Recovery"
-                ).forEach { (icon, label) ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Box(
-                            Modifier.size(56.dp).clip(RoundedCornerShape(16.dp))
-                                .background(Amber.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(icon, null, tint = Amber, modifier = Modifier.size(28.dp))
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onBackground)
-                    }
+                Text("Back", color = TextSecondary, fontSize = 14.sp)
+            }
+        }
+
+        // Step indicator dots
+        if (state.step in 1..6) {
+            Row(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = 48.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                repeat(6) { i ->
+                    Box(
+                        Modifier
+                            .size(if (i == state.step - 1) 8.dp else 6.dp)
+                            .clip(CircleShape)
+                            .background(
+                                if (i <= state.step - 1) Terracotta
+                                else Hairline
+                            )
+                    )
                 }
             }
-
-            Spacer(Modifier.height(32.dp))
-
-            Button(
-                onClick = onGetStarted,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Amber)
-            ) {
-                Text("Get Started", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-            }
-
-            Spacer(Modifier.height(16.dp))
         }
     }
 }
 
-// ───────────────────────── STEP 2: PERSONAL INFO ────────────────────────
-
 @Composable
-private fun PersonalInfoStep(
-    name: String, age: String, gender: Gender,
-    weight: String, height: String,
-    onName: (String) -> Unit, onAge: (String) -> Unit,
-    onGender: (Gender) -> Unit, onWeight: (String) -> Unit,
-    onHeight: (String) -> Unit,
-    isValid: Boolean, onContinue: () -> Unit
-) {
+private fun WelcomeStep(onGetStarted: () -> Unit) {
     Column(
-        Modifier.fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 24.dp)
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(Modifier.height(72.dp))
+        Spacer(Modifier.weight(0.6f))
 
-        Text("Let's personalise SoloFit", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+        Text(
+            "Welcome.",
+            style = MaterialTheme.typography.displayLarge,
+            color = TextPrimary,
+            letterSpacing = 2.sp
+        )
         Spacer(Modifier.height(8.dp))
         Text(
-            "A few details help us create more accurate recommendations.",
-            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
+            "Take a breath. There's nothing to set up right now.\nJust a few gentle questions.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondary,
+            lineHeight = 24.sp,
+            textAlign = TextAlign.Center
         )
-        Spacer(Modifier.height(32.dp))
 
+        Spacer(Modifier.weight(1f))
+
+        TextButton(
+            onClick = onGetStarted,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
+        ) {
+            Text("Begin", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        }
+        Spacer(Modifier.height(16.dp))
+    }
+}
+
+@Composable
+private fun NameStep(name: String, onName: (String) -> Unit, onContinue: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(0.5f))
+        Text("What should I call you?", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(32.dp))
         OutlinedTextField(
             value = name,
             onValueChange = onName,
-            label = { Text("Name") },
+            placeholder = { Text("Your name", color = TextSecondary) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(8.dp),
+            textStyle = MaterialTheme.typography.bodyLarge
         )
-        Spacer(Modifier.height(16.dp))
-
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedTextField(
-                value = age,
-                onValueChange = onAge,
-                label = { Text("Age") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
-            )
-            OutlinedTextField(
-                value = weight,
-                onValueChange = onWeight,
-                label = { Text("Weight (kg)") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(12.dp)
-            )
+        Spacer(Modifier.weight(1f))
+        TextButton(
+            onClick = onContinue,
+            enabled = name.isNotBlank(),
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (name.isNotBlank()) Terracotta else Hairline)
+        ) {
+            Text("Continue", color = if (name.isNotBlank()) Color.White else TextSecondary, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
         }
-        Spacer(Modifier.height(16.dp))
+    }
+}
 
+@Composable
+private fun AgeStep(age: String, onAge: (String) -> Unit, onContinue: () -> Unit) {
+    val valid = age.toIntOrNull()?.let { it in 1..120 } == true
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(0.5f))
+        Text("How old are you?", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(32.dp))
         OutlinedTextField(
-            value = height,
-            onValueChange = onHeight,
-            label = { Text("Height (cm)") },
+            value = age,
+            onValueChange = onAge,
+            placeholder = { Text("Your age", color = TextSecondary) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
+            shape = RoundedCornerShape(8.dp),
+            textStyle = MaterialTheme.typography.bodyLarge
         )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.weight(1f))
+        TextButton(
+            onClick = onContinue,
+            enabled = valid,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(if (valid) Terracotta else Hairline)
+        ) {
+            Text("Continue", color = if (valid) Color.White else TextSecondary, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        }
+    }
+}
 
-        Text("Gender", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(10.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+@Composable
+private fun GenderStep(gender: Gender, onGender: (Gender) -> Unit, onContinue: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(0.5f))
+        Text("Which describes you?", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(32.dp))
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             Gender.entries.forEach { g ->
                 val selected = gender == g
                 Box(
-                    Modifier
+                    Modifier.weight(1f).height(120.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (selected) Amber else MaterialTheme.colorScheme.surface)
-                        .border(
-                            BorderStroke(if (selected) 0.dp else 1.dp, MaterialTheme.colorScheme.outlineVariant),
-                            RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onGender(g) }
-                        .padding(horizontal = 28.dp, vertical = 14.dp)
+                        .background(if (selected) Terracotta.copy(alpha = 0.1f) else Color.Transparent)
+                        .clickable { onGender(g) },
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
                         g.displayName,
+                        color = if (selected) Terracotta else TextSecondary,
+                        fontSize = 20.sp,
                         fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (selected) Color.White else MaterialTheme.colorScheme.onBackground
+                        letterSpacing = 1.sp
                     )
                 }
             }
         }
-
-        Spacer(Modifier.height(32.dp))
-
-        Button(
+        Spacer(Modifier.weight(1f))
+        TextButton(
             onClick = onContinue,
-            enabled = isValid,
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber)
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
         ) {
-            Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+            Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
         }
-        Spacer(Modifier.height(32.dp))
     }
 }
 
-// ──────────────────────────── STEP 3: GOAL ─────────────────────────────
+@Composable
+private fun HeightStep(heightCm: Double, onHeight: (Double) -> Unit, onContinue: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.weight(0.3f))
+        Text("Your height", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Slide to set your height in centimetres.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            "${heightCm.roundToInt()} cm",
+            style = MaterialTheme.typography.displaySmall,
+            color = Terracotta
+        )
+        Spacer(Modifier.height(32.dp))
+
+        Box(
+            Modifier.fillMaxWidth().height(300.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                Modifier.size(48.dp, 300.dp)
+                    .graphicsLayer {
+                        rotationZ = -90f
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+                    }
+            ) {
+                Slider(
+                    value = heightCm.toFloat(),
+                    onValueChange = { onHeight(it.toDouble()) },
+                    valueRange = 100f..250f,
+                    steps = 149,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Terracotta,
+                        activeTrackColor = Terracotta,
+                        inactiveTrackColor = Hairline
+                    )
+                )
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("100", color = TextSecondary, fontSize = 12.sp)
+            Text("250", color = TextSecondary, fontSize = 12.sp)
+        }
+
+        Spacer(Modifier.weight(1f))
+        TextButton(
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
+        ) {
+            Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        }
+    }
+}
+
+@Composable
+private fun WeightStep(weightKg: Double, onWeight: (Double) -> Unit, onContinue: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.weight(0.3f))
+        Text("Your weight", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Slide to set your weight in kilograms.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+        Spacer(Modifier.height(40.dp))
+
+        Text(
+            "${weightKg.roundToInt()} kg",
+            style = MaterialTheme.typography.displaySmall,
+            color = Terracotta
+        )
+        Spacer(Modifier.height(32.dp))
+
+        Box(
+            Modifier.fillMaxWidth().height(300.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Box(
+                Modifier.size(48.dp, 300.dp)
+                    .graphicsLayer {
+                        rotationZ = -90f
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 0.5f)
+                    }
+            ) {
+                Slider(
+                    value = weightKg.toFloat(),
+                    onValueChange = { onWeight(it.toDouble()) },
+                    valueRange = 20f..250f,
+                    steps = 229,
+                    modifier = Modifier.fillMaxSize(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Terracotta,
+                        activeTrackColor = Terracotta,
+                        inactiveTrackColor = Hairline
+                    )
+                )
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text("20", color = TextSecondary, fontSize = 12.sp)
+            Text("250", color = TextSecondary, fontSize = 12.sp)
+        }
+
+        Spacer(Modifier.weight(1f))
+        TextButton(
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
+        ) {
+            Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        }
+    }
+}
 
 @Composable
 private fun GoalStep(
@@ -337,238 +405,84 @@ private fun GoalStep(
     onContinue: (() -> Unit)?
 ) {
     Column(
-        Modifier.fillMaxSize().padding(horizontal = 24.dp)
-    ) {
-        Spacer(Modifier.height(72.dp))
-
-        Text("What's your current goal?", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "We'll tailor your nutrition and recommendations.",
-            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(Modifier.height(28.dp))
-
-        val goals = listOf(
-            GoalDisplay("Build Muscle", "Increase strength and size", Icons.Filled.FitnessCenter),
-            GoalDisplay("Lose Fat", "Drop body fat while keeping muscle", Icons.Filled.FitnessCenter),
-            GoalDisplay("Body Recomposition", "Build muscle while losing fat", Icons.Filled.FitnessCenter),
-            GoalDisplay("Improve Fitness", "Boost endurance and health", Icons.Filled.FitnessCenter),
-            GoalDisplay("Stay Healthy", "Maintain current physique", Icons.Filled.FitnessCenter),
-        )
-
-        goals.forEach { g ->
-            val goalEnum = FitnessGoal.entries.firstOrNull { it.displayName == g.label }
-            val isSelected = selected?.displayName == g.label
-            GoalCard(
-                label = g.label,
-                description = g.description,
-                icon = g.icon,
-                isSelected = isSelected,
-                onClick = { goalEnum?.let(onSelect) }
-            )
-            Spacer(Modifier.height(12.dp))
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        onContinue?.let { cb ->
-            Button(
-                onClick = cb,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Amber)
-            ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-            }
-            Spacer(Modifier.height(24.dp))
-        }
-    }
-}
-
-private data class GoalDisplay(val label: String, val description: String, val icon: ImageVector)
-
-@Composable
-private fun GoalCard(
-    label: String, description: String, icon: ImageVector,
-    isSelected: Boolean, onClick: () -> Unit
-) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(if (isSelected) Amber.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surface)
-            .border(
-                BorderStroke(
-                    if (isSelected) 1.5.dp else 1.dp,
-                    if (isSelected) Amber else MaterialTheme.colorScheme.outlineVariant
-                ),
-                RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onClick)
-            .padding(18.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(48.dp).clip(CircleShape)
-                    .background(if (isSelected) Amber.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, null, tint = if (isSelected) Amber else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                Text(description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (isSelected) {
-                Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(22.dp))
-            }
-        }
-    }
-}
-
-// ─────────────────────── STEP 4: MODULE SELECTION ───────────────────────
-
-@Composable
-private fun ModuleSelectionStep(
-    selected: Set<SoloFitModule>,
-    onToggle: (SoloFitModule) -> Unit,
-    onContinue: () -> Unit
-) {
-    Column(
-        Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
-    ) {
-        Spacer(Modifier.height(72.dp))
-        Text(
-            "Build Your Wellness System",
-            fontSize = 26.sp, fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.padding(horizontal = 24.dp)
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(
-            "Choose what matters most right now.",
-            fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 24.dp)
-        )
-        Spacer(Modifier.height(28.dp))
-
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(SoloFitModule.entries) { module ->
-                ModuleCard(
-                    module = module,
-                    isSelected = module in selected,
-                    onToggle = { onToggle(module) }
-                )
-            }
-        }
-
-        Spacer(Modifier.weight(1f))
-
-        Box(Modifier.padding(20.dp)) {
-            Button(
-                onClick = onContinue,
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Amber)
-            ) {
-                Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
-            }
-        }
-        Spacer(Modifier.height(8.dp))
-    }
-}
-
-@Composable
-private fun ModuleCard(
-    module: SoloFitModule,
-    isSelected: Boolean,
-    onToggle: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface)
-            .border(
-                border = if (isSelected) BorderStroke(1.5.dp, Amber) else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                shape = RoundedCornerShape(16.dp)
-            )
-            .clickable(onClick = onToggle)
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(48.dp).clip(CircleShape).background(if (isSelected) Amber.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    moduleIcon(module),
-                    null,
-                    tint = if (isSelected) Amber else MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text(module.displayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                Text(module.description, fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            if (isSelected) {
-                Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(22.dp))
-            }
-        }
-    }
-}
-
-// ──────────────────────────── STEP 5: READY ─────────────────────────────
-
-@Composable
-private fun ReadyStep(onEnter: () -> Unit) {
-    Column(
-        Modifier.fillMaxSize().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        Modifier.fillMaxSize().padding(40.dp),
         verticalArrangement = Arrangement.Center
     ) {
-        Spacer(Modifier.weight(0.7f))
+        Spacer(Modifier.weight(0.3f))
+        Text("What brings you here?", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Pick one — you can adjust anytime.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+        Spacer(Modifier.height(28.dp))
 
-        Text("You're Ready", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-        Spacer(Modifier.height(32.dp))
-
-        val benefits = listOf(
-            "Private" to "Your data never leaves your device",
-            "Offline First" to "Works without internet access",
-            "Personalised" to "Built around your goals",
-            "Privacy Focused" to "No accounts, no tracking"
-        )
-        benefits.forEach { (title, desc) ->
-            Row(
-                Modifier.fillMaxWidth().padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(Icons.Filled.CheckCircle, null, tint = Amber, modifier = Modifier.size(24.dp))
-                Spacer(Modifier.width(14.dp))
-                Column {
-                    Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onBackground)
-                    Text(desc, fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Column(
+            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            FitnessGoal.entries.forEach { goal ->
+                val isSelected = selected == goal
+                Box(
+                    Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) Terracotta.copy(alpha = 0.08f) else Color.Transparent)
+                        .clickable { onSelect(goal) }
+                        .padding(vertical = 16.dp, horizontal = 16.dp)
+                ) {
+                    Text(
+                        goal.displayName,
+                        color = if (isSelected) Terracotta else TextPrimary,
+                        fontSize = 17.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        letterSpacing = 0.5.sp
+                    )
                 }
             }
         }
 
-        Spacer(Modifier.weight(1f))
-
-        Button(
-            onClick = onEnter,
-            modifier = Modifier.fillMaxWidth().height(54.dp),
-            shape = RoundedCornerShape(16.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber)
-        ) {
-            Text("Enter SoloFit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White)
+        onContinue?.let { cb ->
+            TextButton(
+                onClick = cb,
+                modifier = Modifier.fillMaxWidth().height(56.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Terracotta)
+            ) {
+                Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+            }
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ReadyStep(onEnter: () -> Unit) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Spacer(Modifier.weight(0.6f))
+        Text(
+            "You're all set.",
+            style = MaterialTheme.typography.displayMedium,
+            color = TextPrimary,
+            letterSpacing = 1.sp
+        )
+        Spacer(Modifier.height(12.dp))
+        Text(
+            "Everything stays on your device. Take your time getting familiar — there's no rush.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            lineHeight = 24.sp
+        )
+        Spacer(Modifier.weight(1f))
+        TextButton(
+            onClick = onEnter,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
+        ) {
+            Text("Enter SoloFit", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
+        }
+        Spacer(Modifier.height(16.dp))
     }
 }

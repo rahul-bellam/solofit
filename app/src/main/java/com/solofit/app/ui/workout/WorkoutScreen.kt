@@ -53,7 +53,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.EmptyState
 import com.solofit.app.ui.components.WellnessDarkCard
 import com.solofit.app.ui.components.WellnessStaticCard
-import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.components.WorkoutTheme
+import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.DarkBg
 import com.solofit.app.ui.theme.DarkText
 import com.solofit.app.ui.theme.DarkTextSecondary
@@ -76,6 +77,7 @@ fun WorkoutScreen(
             CircularProgressIndicator()
         }
     } else {
+    WorkoutTheme {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -104,10 +106,10 @@ fun WorkoutScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Box(
-                            Modifier.size(72.dp).clip(CircleShape).background(Amber.copy(alpha = 0.12f)),
+                            Modifier.size(72.dp).clip(CircleShape).background(SolAccent.copy(alpha = 0.12f)),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Filled.FitnessCenter, null, tint = Amber, modifier = Modifier.size(36.dp))
+                            Icon(Icons.Filled.FitnessCenter, null, tint = SolAccent, modifier = Modifier.size(36.dp))
                         }
                         Spacer(Modifier.height(16.dp))
                         Text(
@@ -130,7 +132,7 @@ fun WorkoutScreen(
                                 onClick = onCreateRoutine,
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Amber, contentColor = Color.White)
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = SolAccent, contentColor = Color.White)
                             ) {
                                 Icon(Icons.Filled.Add, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
@@ -172,7 +174,7 @@ fun WorkoutScreen(
                     Text(
                         "${routines.size} routine${if (routines.size != 1) "s" else ""} saved",
                         fontSize = 13.sp,
-                        color = Amber
+                        color = SolAccent
                     )
                     Spacer(Modifier.height(12.dp))
                 }
@@ -219,8 +221,8 @@ fun WorkoutScreen(
                                     Modifier.fillMaxWidth().padding(vertical = 6.dp),
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Box(Modifier.size(32.dp).clip(CircleShape).background(Amber.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
-                                        Icon(Icons.Filled.FitnessCenter, null, tint = Amber, modifier = Modifier.size(16.dp))
+                                    Box(Modifier.size(32.dp).clip(CircleShape).background(SolAccent.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
+                                        Icon(Icons.Filled.FitnessCenter, null, tint = SolAccent, modifier = Modifier.size(16.dp))
                                     }
                                     Spacer(Modifier.width(12.dp))
                                     Column(Modifier.weight(1f)) {
@@ -231,7 +233,7 @@ fun WorkoutScreen(
                                             color = DarkTextSecondary
                                         )
                                     }
-                                    Box(Modifier.size(6.dp).clip(CircleShape).background(Amber.copy(alpha = 0.3f)))
+                                    Box(Modifier.size(6.dp).clip(CircleShape).background(SolAccent.copy(alpha = 0.3f)))
                                 }
                             }
                             Spacer(Modifier.height(16.dp))
@@ -239,7 +241,7 @@ fun WorkoutScreen(
                                 onClick = { viewModel.startSession(item, onStartSession) },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(16.dp),
-                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = Amber, contentColor = Color.White)
+                                colors = ButtonDefaults.filledTonalButtonColors(containerColor = SolAccent, contentColor = Color.White)
                             ) {
                                 Icon(Icons.Filled.PlayArrow, null, modifier = Modifier.size(18.dp))
                                 Spacer(Modifier.width(8.dp))
@@ -275,6 +277,7 @@ fun WorkoutScreen(
                 }
             )
         }
+    }
     }
     }
 }

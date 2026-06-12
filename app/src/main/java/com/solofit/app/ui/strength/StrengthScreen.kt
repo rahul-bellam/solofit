@@ -42,6 +42,7 @@ fun StrengthScreen(
 ) {
     val lifts by viewModel.lifts.collectAsStateWithLifecycle()
 
+    StrengthTheme {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -54,7 +55,6 @@ fun StrengthScreen(
             )
         }
     ) { padding ->
-        StrengthTheme {
         if (lifts.isEmpty()) {
             EmptyState(
                 icon = Icons.Filled.FitnessCenter,
@@ -113,6 +113,6 @@ fun StrengthScreen(
             item { Spacer(Modifier.height(24.dp)) }
         }
         }
-        }
+    }
     }
 }

@@ -4,7 +4,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.solofit.app.ui.theme.Amber
 
 object Routes {
     const val ONBOARDING = "onboarding"
@@ -39,14 +38,15 @@ object Routes {
     const val MEDITATION = "meditation"
     const val WELLNESS = "wellness"
     const val PROGRESS = "progress"
+    const val BODY_RECOMP = "body_recomp"
 }
 
 data class BottomDestination(
     val route: String,
     val label: String,
     val icon: ImageVector,
-    val gradientFrom: Color = Amber,
-    val gradientTo: Color = Amber
+    val gradientFrom: Color = Color.Transparent,
+    val gradientTo: Color = Color.Transparent
 ) {
     companion object {
         val HOME = BottomDestination(

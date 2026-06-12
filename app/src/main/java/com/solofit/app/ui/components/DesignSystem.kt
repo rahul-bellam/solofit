@@ -21,8 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.CardCream
+import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.DarkSurface
 import com.solofit.app.ui.theme.DarkText
 import com.solofit.app.ui.theme.PrimaryText
@@ -41,7 +41,7 @@ val AppCardShape = RoundedCornerShape(24.dp)
 fun WellnessCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    containerColor: Color = CardCream,
+    containerColor: Color = CardPrimary,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -58,7 +58,7 @@ fun WellnessCard(
 @Composable
 fun WellnessStaticCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = CardCream,
+    containerColor: Color = CardPrimary,
     content: @Composable () -> Unit
 ) {
     Card(
@@ -93,8 +93,8 @@ fun HeroMetric(
     unit: String = "",
     label: String = "",
     modifier: Modifier = Modifier,
-    valueColor: Color = Amber,
-    unitColor: Color = Amber,
+    valueColor: Color = SolAccent,
+    unitColor: Color = SolAccent,
     labelColor: Color = SecondaryText,
     contentAlignment: Alignment.Horizontal = Alignment.CenterHorizontally
 ) {

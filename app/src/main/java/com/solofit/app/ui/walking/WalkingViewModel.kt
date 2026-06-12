@@ -6,6 +6,7 @@ import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.data.local.entity.DailyMetricEntity
 import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.sol.HealthConnectRepository
+import com.solofit.app.sol.WellnessThresholds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,7 +23,7 @@ import javax.inject.Inject
 
 data class WalkingUiState(
     val todaySteps: Int = 0,
-    val stepGoal: Int = 8000,
+    val stepGoal: Int = WellnessThresholds.DEFAULT_STEP_GOAL,
     val weeklySteps: List<Int> = emptyList(),
     val weeklyLabels: List<String> = emptyList(),
     val healthConnectAvailable: Boolean = false

@@ -26,4 +26,15 @@ class DailyLogRepositoryImpl @Inject constructor(
         }
     override suspend fun logFood(entry: DailyLogEntity): Long = dao.insert(entry)
     override suspend fun removeEntry(entry: DailyLogEntity) = dao.delete(entry)
+
+    override suspend fun getDailyTotalsSince(startDate: String): List<MacroTotals> =
+        dao.getDailyTotalsSince(startDate).map { t ->
+            MacroTotals(
+                calories = t.calories ?: 0.0,
+                proteinG = t.proteinG ?: 0.0,
+                carbsG = t.carbsG ?: 0.0,
+                fatsG = t.fatsG ?: 0.0,
+                fiberG = t.fiberG ?: 0.0
+            )
+        }
 }

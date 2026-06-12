@@ -1,14 +1,19 @@
 package com.solofit.app.ui.body
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -17,17 +22,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.TrendingDown
 import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,17 +36,24 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.solofit.app.ui.components.BodyTheme
 import com.solofit.app.ui.components.LineChart
-import kotlin.math.abs
+import com.solofit.app.ui.components.WellnessStaticCard
+import com.solofit.app.ui.theme.SlateBlue
+import com.solofit.app.ui.theme.PrimaryText
+import com.solofit.app.ui.theme.SecondaryText
+import com.solofit.app.ui.theme.TextSecondary
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BodyScreen(
     onBack: () -> Unit,
@@ -55,125 +63,136 @@ fun BodyScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Body & Recovery") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
+    BodyTheme {
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(16.dp)
+                .background(MaterialTheme.colorScheme.background)
+                .statusBarsPadding()
+                .navigationBarsPadding()
         ) {
-            // ---- V-Taper hero ----
-            VTaperCard(state)
-
-            Spacer(Modifier.height(12.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedButton(onClick = onStrength, modifier = Modifier.weight(1f)) {
-                    Text("Strength trends")
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp)
+            ) {
+                Spacer(Modifier.height(8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = PrimaryText)
+                    }
+                    Spacer(Modifier.weight(1f))
                 }
-                OutlinedButton(onClick = onPhotos, modifier = Modifier.weight(1f)) {
-                    Text("Progress photos")
+
+                Spacer(Modifier.height(8.dp))
+
+                // ── V-Taper Hero ──
+                VTaperCard(state)
+
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton(
+                        onClick = onStrength,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Strength trends") }
+                    OutlinedButton(
+                        onClick = onPhotos,
+                        modifier = Modifier.weight(1f)
+                    ) { Text("Progress photos") }
                 }
-            }
 
-            Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
-            // ---- Waist trend (the metric that matters more than scale) ----
-            Text("Waist trend", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            Card(Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(12.dp)) {
-                    val waistSeries = viewModel.series { it.waistCm }
-                    if (waistSeries.size < 2) {
-                        Text(
-                            "Log your waist on 2+ days to see the trend.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    } else {
-                        LineChart(values = waistSeries)
+                // ── Waist Trend ──
+                Text("Waist trend", style = MaterialTheme.typography.titleMedium, color = PrimaryText)
+                Spacer(Modifier.height(8.dp))
+                WellnessStaticCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        val waistSeries = viewModel.series { it.waistCm }
+                        if (waistSeries.size < 2) {
+                            Text(
+                                "Log your waist on 2+ days to see the trend.",
+                                fontSize = 14.sp,
+                                color = SecondaryText
+                            )
+                        } else {
+                            LineChart(
+                                values = waistSeries,
+                                lineColor = SlateBlue,
+                                pointColor = SlateBlue
+                            )
+                        }
                     }
                 }
+
+                Spacer(Modifier.height(16.dp))
+
+                // ── Measurement Entry ──
+                Text("Log measurements (cm)", style = MaterialTheme.typography.titleMedium, color = PrimaryText)
+                Spacer(Modifier.height(8.dp))
+                MeasurementForm(
+                    latest = state.latest,
+                    onSave = viewModel::saveMeasurement
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                // ── Today's Check-in ──
+                Text("Today's check-in", style = MaterialTheme.typography.titleMedium, color = PrimaryText)
+                Spacer(Modifier.height(8.dp))
+                MetricForm(
+                    metric = state.todayMetric,
+                    onSave = viewModel::saveMetric
+                )
+
+                Spacer(Modifier.height(24.dp))
             }
-
-            Spacer(Modifier.height(16.dp))
-
-            // ---- Measurement entry (biweekly) ----
-            Text("Log measurements (cm)", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            MeasurementForm(
-                latest = state.latest,
-                onSave = viewModel::saveMeasurement
-            )
-
-            Spacer(Modifier.height(16.dp))
-
-            // ---- Today's recovery inputs ----
-            Text("Today's check-in", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(8.dp))
-            MetricForm(
-                metric = state.todayMetric,
-                onSave = viewModel::saveMetric
-            )
-
-            Spacer(Modifier.height(24.dp))
         }
     }
 }
 
 @Composable
 private fun VTaperCard(state: BodyState) {
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer
-        )
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Text("V-Taper Score", style = MaterialTheme.typography.labelMedium)
+    WellnessStaticCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(20.dp)) {
+            Text("V-Taper Score", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = SecondaryText)
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.Bottom) {
                 Text(
-                    state.vTaper?.let { String.format("%.2f", it) } ?: "—",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+                    state.vTaper?.let { String.format(Locale.US, "%.2f", it) } ?: "—",
+                    fontSize = 48.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = SlateBlue
                 )
                 Spacer(Modifier.width(8.dp))
                 Text(
                     state.vTaperLabel,
-                    style = MaterialTheme.typography.titleMedium,
+                    fontSize = 16.sp,
+                    color = SecondaryText,
                     modifier = Modifier.padding(bottom = 6.dp)
                 )
             }
             Text(
-                "Shoulders ÷ Waist  ·  golden target ≈ 1.62",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                "Shoulders ÷ Waist · golden target ≈ 1.62",
+                fontSize = 13.sp,
+                color = SecondaryText
             )
             state.waistDeltaCm?.let { d ->
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(12.dp))
                 val shrinking = d <= 0
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         if (shrinking) Icons.AutoMirrored.Filled.TrendingDown
                         else Icons.AutoMirrored.Filled.TrendingUp,
-                        contentDescription = if (shrinking) "Waist decreasing" else "Waist increasing"
+                        contentDescription = if (shrinking) "Waist decreasing" else "Waist increasing",
+                        tint = SlateBlue,
+                        modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        "  Waist ${if (shrinking) "down" else "up"} " +
-                            "${String.format("%.1f", abs(d))} cm since last entry",
-                        style = MaterialTheme.typography.bodyMedium
+                        "  Waist ${if (shrinking) "down" else "up"} ${String.format(Locale.US, "%.1f", abs(d))} cm since last entry",
+                        fontSize = 14.sp,
+                        color = SecondaryText
                     )
                 }
             }
@@ -193,8 +212,8 @@ private fun MeasurementForm(
     var thighs by remember(latest) { mutableStateOf(latest?.thighsCm?.numText() ?: "") }
     var neck by remember(latest) { mutableStateOf(latest?.neckCm?.numText() ?: "") }
 
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp)) {
+    WellnessStaticCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 NumField("Waist", waist, { waist = it }, Modifier.weight(1f))
                 NumField("Shoulders", shoulders, { shoulders = it }, Modifier.weight(1f))
@@ -217,7 +236,8 @@ private fun MeasurementForm(
                         arms.toDoubleOrNull(), thighs.toDoubleOrNull(), neck.toDoubleOrNull()
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = SlateBlue)
             ) { Text("Save today's measurements") }
         }
     }
@@ -233,8 +253,8 @@ private fun MetricForm(
     var mood by remember(metric) { mutableStateOf(metric?.moodScore?.toString() ?: "") }
     var energy by remember(metric) { mutableStateOf(metric?.energyScore?.toString() ?: "") }
 
-    Card(Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(14.dp)) {
+    WellnessStaticCard(modifier = Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(16.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 NumField("Sleep (h)", sleep, { sleep = it }, Modifier.weight(1f))
                 NumField("Steps", steps, { steps = it }, Modifier.weight(1f), integer = true)
@@ -254,7 +274,8 @@ private fun MetricForm(
                         energy.toIntOrNull()?.coerceIn(1, 10)
                     )
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(containerColor = SlateBlue)
             ) { Text("Save check-in") }
         }
     }
@@ -286,4 +307,3 @@ private fun NumField(
 
 private fun Double.numText(): String =
     if (abs(this % 1.0) < 0.0001) this.roundToInt().toString() else this.toString()
-

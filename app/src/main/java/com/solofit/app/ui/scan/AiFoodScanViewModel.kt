@@ -120,7 +120,7 @@ class AiFoodScanViewModel @Inject constructor(
         return@withLock false
     }
 
-    fun analyzeAndLog(bitmap: Bitmap) {
+    fun analyzeFood(bitmap: Bitmap) {
         if (_isScanning.value) return
         _isScanning.value = true
         viewModelScope.launch {
@@ -174,32 +174,6 @@ class AiFoodScanViewModel @Inject constructor(
 
                 val aiFood = withContext(Dispatchers.IO) {
                     json.decodeFromString<AiFoodJson>(cleaned)
-                }
-
-                val foodId = withContext(Dispatchers.IO) {
-                    foodRepository.addCustomFood(
-                        FoodItemEntity(
-                            name = aiFood.name.trim(),
-                            category = "AI Scan",
-                            caloriesPer100g = aiFood.caloriesPer100g,
-                            proteinPer100g = aiFood.proteinPer100g,
-                            carbsPer100g = aiFood.carbsPer100g,
-                            fatsPer100g = aiFood.fatsPer100g,
-                            fiberPer100g = aiFood.fiberPer100g,
-                            isCustom = true
-                        )
-                    )
-                }
-
-                withContext(Dispatchers.IO) {
-                    dailyLogRepository.logFood(
-                        DailyLogEntity(
-                            date = DateUtils.today(),
-                            foodId = foodId,
-                            gramsConsumed = aiFood.estimatedGrams.coerceAtLeast(10.0),
-                            mealCategory = inferMealCategory().name
-                        )
-                    )
                 }
 
                 _scanResult.tryEmit(

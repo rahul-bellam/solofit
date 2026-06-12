@@ -2,66 +2,75 @@ package com.solofit.app.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-// ─── Foundation (shared across all screens) ───
-val PageBg = Color(0xFFF2EBE0)
-val CardCream = Color(0xFFFFFCF9)
-val PrimaryText = Color(0xFF4A4741)
-val SecondaryText = Color(0xFFA8A5A0)
-val Hairline = Color(0xFFE5E7EB)
+// ─── GLOBAL FOUNDATIONS: DARK-FIRST (warm charcoal, no pure white/black) ───
+val SurfaceBg = Color(0xFF161514)        // Deep warm charcoal
+val CardPrimary = Color(0xFF1E1D1B)      // Carbon
+val CardSecondary = Color(0xFF282624)    // Darker carbon
+val Hairline = Color(0xFF353330)         // Subtle warm border
+val TextPrimary = Color(0xFFEAE6DF)      // Warm off-white
+val TextSecondary = Color(0xFF9C9690)    // Muted warm gray
+val TextTertiary = Color(0xFF6B6560)     // Even more muted
 
-// ─── Global Signature Color ───
-val Amber = Color(0xFFAF751B)
-val AmberSoft = Color(0xFFE8D5B0)
+// Light variants (for light mode)
+val LightBg = Color(0xFFF0EBE4)          // Warm cream
+val LightCardPrimary = Color(0xFFFAF6F1) // Warm white
+val LightCardSecondary = Color(0xFFF0EBE4)
+val LightHairline = Color(0xFFE0DBD4)
+val LightTextPrimary = Color(0xFF2A2824) // Warm near-black
+val LightTextSecondary = Color(0xFF8A8480)
 
-// ─── Screen-Specific Temperatures (Light) ───
-val NutritionBg = Color(0xFFEFEADB)
-val NutritionCard = Color(0xFFFFFCF9)
-val NutritionAccent = Color(0xFF7A7B52)
+// ─── BACKWARD-COMPAT DARK ALIASES ───
+val DarkBg = SurfaceBg
+val DarkCard = CardPrimary
+val DarkSurface = CardSecondary
+val DarkHairline = Hairline
+val DarkText = TextPrimary
+val DarkTextSecondary = TextSecondary
 
-val RecoveryBg = Color(0xFFF2EFE9)
-val RecoveryCard = Color(0xFFFAF8F4)
-val RecoveryAccent = Color(0xFF7D8478)
+// ─── SECTION ACCENTS (dark-optimised — brighter & more saturated) ───
+val Terracotta = Color(0xFFD4895F)       // Onboarding interactive accent
+val OliveClay = Color(0xFF7A9448)        // Dashboard healthy completion
+val MossGreen = Color(0xFF5C9A65)        // Nutrition progress
+val WarmSand = Color(0xFFC8B8A4)         // Nutrition search field
+val RustIron = Color(0xFFBF6242)         // Workout routines
+val Ochre = Color(0xFFE8A842)            // Workout active timer
+val TwilightBlue = Color(0xFF5A8FA8)     // Recovery metrics
+val LavenderGrey = Color(0xFF6B6380)     // Meditation background (dark muted purple)
+val SlateBlue = Color(0xFF7A9BB5)        // Body charts
+val JournalAccent = Color(0xFFC8A88A)    // Journal vintage tan
+val WalkingAccent = Color(0xFF7A8E6A)    // Walking muted olive
 
-val MeditationBg = Color(0xFFF4EEE6)
-val MeditationAccent = Color(0xFF8A7763)
+// ─── SOL INTELLIGENCE ENGINE ACCENT ───
+val SolAmber = Color(0xFFDBA060)         // Distinct honey-amber for SOL engine
 
-val JournalBg = Color(0xFFF2EBE3)
-val JournalAccent = Color(0xFF7A6756)
+// ─── SEMANTIC HEALTH SIGNALS (dark-optimised) ───
+val HighGreen = Color(0xFF6EA86E)
+val MidAmber = Color(0xFFD4A84A)
+val LowRed = Color(0xFFC47A5A)
 
-val ProgressBg = Color(0xFFF5EFE4)
-val ProgressAccent = Color(0xFFB38632)
+val DarkSuccess = Color(0xFF6B9A5E)
+val DarkWarning = Color(0xFFC49A4A)
+val DarkError = Color(0xFFA06A5A)
 
-val WalkingBg = Color(0xFFF0F4F7)
-val WalkingCard = Color(0xFFF7FAFC)
-val WalkingAccent = Color(0xFF4A8B9E)
+// ─── MACRO COLORS (dark-optimised) ───
+val ProteinColor = Color(0xFFD49575)
+val CarbsColor = Color(0xFF6BAEC0)
+val FatsColor = Color(0xFFD4B06B)
 
-// ─── Warm Dark Mode Palette ───
-val DarkBg = Color(0xFF1C1917)
-val DarkSurface = Color(0xFF27231F)
-val DarkCard = Color(0xFF302B26)
-val DarkText = Color(0xFFF3EEE6)
-val DarkTextSecondary = Color(0xFFB7B0A7)
-val DarkHairline = Color(0xFF3A3530)
-val DarkAccent = Color(0xFFAF751B)
+// ─── BACKWARD-COMPAT ALIASES ───
+val NutritionAccent = MossGreen
+val NutritionProtein = ProteinColor
+val RecoveryAccent = TwilightBlue
+val WorkoutAccent = RustIron
+val MeditationAccent = LavenderGrey
+val BodyRecompAccent = SlateBlue
+val WorkoutActiveTimer = Ochre
+val WorkoutRestTimer = Color(0xFFC06A3E)
 
-val DarkSuccess = Color(0xFF8C9A6A)
-val DarkWarning = Color(0xFFC19148)
-val DarkError = Color(0xFFA26B57)
+val SolAccent = SolAmber
 
-// ─── Dark Screen-Specific Accents ───
-val DarkWorkoutAccent = Color(0xFFAF751B)
-val DarkRecoveryAccent = Color(0xFF7D8478)
-val DarkMeditationAccent = Color(0xFF8A7763)
-val DarkJournalAccent = Color(0xFF7A6756)
-val DarkWalkingAccent = Color(0xFF5A8B9E)
-val DarkNutritionAccent = Color(0xFF7A7B52)
-
-// ─── Semantic Health Signals ───
-val HighGreen = Color(0xFF4A9E5E)
-val MidAmber = Color(0xFFD4A017)
-val LowRed = Color(0xFFC85A5A)
-
-// ─── Macro Colors ───
-val ProteinColor = Color(0xFFE88080)
-val CarbsColor = Color(0xFF6AAEC8)
-val FatsColor = Color(0xFFE8C860)
+// ─── TEXT ALIASES ───
+val PrimaryText = TextPrimary
+val SecondaryText = TextSecondary
+val PageBg = SurfaceBg
+val CardCream = CardPrimary

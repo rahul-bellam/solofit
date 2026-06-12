@@ -40,7 +40,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.ui.components.WorkoutTheme
-import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.components.WorkoutDisciplineCard
+import com.solofit.app.ui.theme.DarkBg
+import com.solofit.app.ui.theme.DarkCard
+import com.solofit.app.ui.theme.DarkText
+import com.solofit.app.ui.theme.DarkTextSecondary
+import com.solofit.app.ui.theme.DarkHairline
+import com.solofit.app.ui.theme.Ochre
 import com.solofit.app.ui.components.rememberAnimationsActive
 import com.solofit.app.ui.components.VaporizeCelebration
 
@@ -115,7 +121,7 @@ fun ActiveWorkoutScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF0F0F0F))
+                    .background(DarkBg)
                     .padding(padding)
             ) {
                 LazyColumn(
@@ -124,6 +130,18 @@ fun ActiveWorkoutScreen(
                         .padding(horizontal = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    item {
+                        // ── Thick progress bar at absolute top ──
+                        val prog = if (totalCount > 0) (completedCount.toFloat() / totalCount).coerceAtMost(1f) else 0f
+                        Box(
+                            Modifier.fillMaxWidth().height(8.dp).background(DarkHairline)
+                        ) {
+                            Box(
+                                Modifier.fillMaxWidth(prog).fillMaxSize().background(Ochre)
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                    }
                     item {
                         Spacer(Modifier.height(8.dp))
                         SessionHeader(
@@ -138,6 +156,11 @@ fun ActiveWorkoutScreen(
                             total = totalCount
                         )
                         Spacer(Modifier.height(4.dp))
+                        WorkoutDisciplineCard(
+                            intensity = "MED",
+                            isResting = uiState.restTimerRunning,
+                            modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
+                        )
                     }
 
                     items(currentExercises, key = { "${it.exerciseName}_${it.orderIndex}" }) { data ->
@@ -247,7 +270,7 @@ fun ActiveWorkoutScreen(
                         VaporizeCelebration(
                             text = "WORKOUT COMPLETE",
                             fontSize = 48.sp,
-                            color = Amber,
+                            color = Ochre,
                             spread = 8f,
                             density = 7f,
                             vaporizeDurationMs = 3000,
@@ -312,7 +335,7 @@ private fun RestTimerOverlay(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
                             .background(
-                                if (duration == secs) Amber.copy(alpha = 0.3f)
+                                if (duration == secs) Ochre.copy(alpha = 0.3f)
                                 else Color.White.copy(alpha = 0.1f)
                             )
                             .padding(horizontal = 16.dp, vertical = 8.dp)

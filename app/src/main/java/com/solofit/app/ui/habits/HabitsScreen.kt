@@ -43,12 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.AmberSoft
+import androidx.compose.material3.MaterialTheme
+import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.HighGreen
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.PageBg
+import com.solofit.app.ui.theme.CardSecondary
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,16 +71,16 @@ fun HabitsScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.setAddDialogOpen(true) }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add habit", tint = Amber)
+                        Icon(Icons.Filled.Add, contentDescription = "Add habit", tint = SolAccent)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = PageBg,
+                    containerColor = MaterialTheme.colorScheme.background,
                     titleContentColor = PrimaryText
                 )
             )
         },
-        containerColor = PageBg
+        containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -141,14 +141,14 @@ fun HabitsScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Amber,
-                        cursorColor = Amber
+                        focusedBorderColor = SolAccent,
+                        cursorColor = SolAccent
                     )
                 )
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.addCustomHabit() }) {
-                    Text("Add", color = Amber)
+                    Text("Add", color = SolAccent)
                 }
             },
             dismissButton = {
@@ -170,7 +170,7 @@ private fun HabitRow(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(if (habit.completed) AmberSoft.copy(alpha = 0.3f) else PageBg)
+            .background(if (habit.completed) CardSecondary else MaterialTheme.colorScheme.background)
             .clickable { onToggle() }
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -183,7 +183,7 @@ private fun HabitRow(
             contentAlignment = Alignment.Center
         ) {
             if (habit.completed) {
-                Icon(Icons.Filled.Check, null, tint = PageBg, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.Check, null, tint = MaterialTheme.colorScheme.background, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(Modifier.width(14.dp))

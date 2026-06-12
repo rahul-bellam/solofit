@@ -46,7 +46,7 @@ class OnboardingViewModel @Inject constructor(
     private val _state = MutableStateFlow(OnboardingState())
     val state = _state.asStateFlow()
 
-    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(4)) }
+    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(7)) }
     fun previousStep() = _state.update { it.copy(step = (it.step - 1).coerceAtLeast(0)) }
 
     fun onName(v: String) = _state.update { it.copy(name = v) }
@@ -99,16 +99,16 @@ class OnboardingViewModel @Inject constructor(
 
     fun finish(onDone: () -> Unit) {
         val s = _state.value
-        val targets = s.preview ?: return
-        val g = s.goal ?: return
+        val targets = s.preview ?: computeFallbackTargets(s)
+        val g = s.goal ?: FitnessGoal.STAY_HEALTHY
         viewModelScope.launch {
             repository.saveProfile(
                 UserProfileEntity(
                     name = s.name.trim(),
-                    age = s.age.toInt(),
+                    age = s.age.toIntOrNull() ?: 30,
                     gender = s.gender,
-                    weightKg = s.weight.toDouble(),
-                    heightCm = s.height.toDouble(),
+                    weightKg = s.weight.toDoubleOrNull() ?: 70.0,
+                    heightCm = s.height.toDoubleOrNull() ?: 170.0,
                     activityLevel = ActivityLevel.MODERATE,
                     goal = g,
                     targetCalories = targets.targetCalories,
@@ -125,6 +125,17 @@ class OnboardingViewModel @Inject constructor(
             prefs.setModuleOrder(SoloFitModule.entries.filter { it in modules })
             prefs.setModuleSelectionComplete(true)
             onDone()
+        }
+    }
+
+    private fun computeFallbackTargets(s: OnboardingState): NutritionTargets {
+        val w = s.weight.toDoubleOrNull() ?: 70.0
+        val h = s.height.toDoubleOrNull() ?: 170.0
+        val a = s.age.toIntOrNull() ?: 30
+        return try {
+            calculate(CalculateNutritionTargetsUseCase.Params(a, s.gender, w, h, ActivityLevel.MODERATE, s.goal ?: FitnessGoal.STAY_HEALTHY))
+        } catch (_: IllegalArgumentException) {
+            NutritionTargets(2000, 150, 250, 65, 1700, 2000)
         }
     }
 }

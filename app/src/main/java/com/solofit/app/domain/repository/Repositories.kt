@@ -81,6 +81,7 @@ interface DailyLogRepository {
     fun observeTotalsForDate(date: String): Flow<com.solofit.app.domain.model.MacroTotals>
     suspend fun logFood(entry: DailyLogEntity): Long
     suspend fun removeEntry(entry: DailyLogEntity)
+    suspend fun getDailyTotalsSince(startDate: String): List<com.solofit.app.domain.model.MacroTotals>
 }
 
 interface WorkoutRepository {
@@ -108,6 +109,7 @@ interface WeightRepository {
     fun observeAll(): kotlinx.coroutines.flow.Flow<List<com.solofit.app.data.local.entity.WeightEntryEntity>>
     suspend fun logWeight(date: String, weightKg: Double): Long
     suspend fun latest(): com.solofit.app.data.local.entity.WeightEntryEntity?
+    suspend fun getEntriesSince(startDate: String): List<com.solofit.app.data.local.entity.WeightEntryEntity>
     suspend fun delete(id: Long)
 }
 

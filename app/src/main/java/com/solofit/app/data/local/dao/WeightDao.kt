@@ -20,6 +20,9 @@ interface WeightDao {
     @Query("SELECT * FROM weight_entries ORDER BY date DESC LIMIT 1")
     suspend fun latest(): WeightEntryEntity?
 
+    @Query("SELECT * FROM weight_entries WHERE date >= :startDate ORDER BY date ASC")
+    suspend fun getEntriesSince(startDate: String): List<WeightEntryEntity>
+
     @Query("DELETE FROM weight_entries WHERE id = :id")
     suspend fun delete(id: Long)
 }

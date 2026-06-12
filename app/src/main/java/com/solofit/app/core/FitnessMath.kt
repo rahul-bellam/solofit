@@ -1,5 +1,6 @@
 package com.solofit.app.core
 
+import com.solofit.app.sol.WellnessThresholds
 import kotlin.math.roundToInt
 
 /**
@@ -53,19 +54,19 @@ object FitnessMath {
         steps: Int?,
         workoutDone: Boolean?,
         waterMl: Int?,
-        waterGoalMl: Int = 3000,
+        waterGoalMl: Int = WellnessThresholds.WATER_DEFAULT_GOAL_ML,
         energyScore: Int? = null
     ): Int? {
         data class C(val weight: Double, val value: Double)
         val parts = buildList {
-            sleepHours?.let { add(C(0.40, (it / 8.0).coerceIn(0.0, 1.0))) }
-            steps?.let { add(C(0.20, (it / 8000.0).coerceIn(0.0, 1.0))) }
-            workoutDone?.let { add(C(0.15, if (it) 1.0 else 0.0)) }
+            sleepHours?.let { add(C(WellnessThresholds.RECOVERY_WEIGHT_SLEEP, (it / WellnessThresholds.SLEEP_OPTIMAL).coerceIn(0.0, 1.0))) }
+            steps?.let { add(C(WellnessThresholds.RECOVERY_WEIGHT_STEPS, (it / WellnessThresholds.DEFAULT_STEP_GOAL.toDouble()).coerceIn(0.0, 1.0))) }
+            workoutDone?.let { add(C(WellnessThresholds.RECOVERY_WEIGHT_WORKOUT, if (it) 1.0 else 0.0)) }
             waterMl?.let {
-                val goal = if (waterGoalMl > 0) waterGoalMl else 3000
-                add(C(0.15, (it.toDouble() / goal).coerceIn(0.0, 1.0)))
+                val goal = if (waterGoalMl > 0) waterGoalMl else WellnessThresholds.WATER_DEFAULT_GOAL_ML
+                add(C(WellnessThresholds.RECOVERY_WEIGHT_WATER, (it.toDouble() / goal).coerceIn(0.0, 1.0)))
             }
-            energyScore?.let { add(C(0.10, (it / 10.0).coerceIn(0.0, 1.0))) }
+            energyScore?.let { add(C(WellnessThresholds.RECOVERY_WEIGHT_ENERGY, (it / 10.0).coerceIn(0.0, 1.0))) }
         }
         if (parts.isEmpty()) return null
         val totalWeight = parts.sumOf { it.weight }
@@ -76,9 +77,9 @@ object FitnessMath {
     /** Readiness label from a recovery score. */
     fun readinessLabel(score: Int?): String = when {
         score == null -> "—"
-        score >= 80 -> "High"
-        score >= 60 -> "Moderate"
-        score >= 40 -> "Low"
+        score >= WellnessThresholds.RECOVERY_EXCELLENT -> "High"
+        score >= WellnessThresholds.RECOVERY_GOOD -> "Moderate"
+        score >= WellnessThresholds.RECOVERY_LOW -> "Low"
         else -> "Rest day"
     }
 

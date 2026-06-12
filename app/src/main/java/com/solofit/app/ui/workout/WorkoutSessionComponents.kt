@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -40,7 +41,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.HighGreen
 import com.solofit.app.ui.theme.MidAmber
 import kotlinx.coroutines.delay
@@ -77,7 +78,7 @@ fun ProgressRing(
 
     val color = when (state) {
         RingState.COMPLETE -> HighGreen
-        RingState.ACTIVE -> Amber
+        RingState.ACTIVE -> SolAccent
         RingState.REST -> MidAmber
         RingState.UPCOMING -> Color.White.copy(alpha = 0.2f)
     }
@@ -133,7 +134,7 @@ fun ProgressRing(
                     Text(
                         "LIVE",
                         fontSize = 10.sp,
-                        color = Color(0xFFA8A29E),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         letterSpacing = 1.sp,
                         textAlign = TextAlign.Center
                     )
@@ -142,8 +143,8 @@ fun ProgressRing(
 
             RingState.REST -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("REST", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = Amber)
-                    Text("45s", fontSize = 11.sp, color = Color(0xFFA8A29E))
+                    Text("REST", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SolAccent)
+                    Text("45s", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
 
@@ -207,17 +208,18 @@ fun WorkoutExerciseCard(
 ) {
     val isActive = state == RingState.ACTIVE
     val isComplete = state == RingState.COMPLETE
+    val lowAccent = MaterialTheme.colorScheme.onSurfaceVariant
 
     val cardModifier = modifier
         .fillMaxWidth()
         .clip(RoundedCornerShape(24.dp))
-        .background(Color(0xFF1A1A1A))
+        .background(MaterialTheme.colorScheme.surface)
         .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(24.dp))
         .drawBehind {
             val accentColor = when (intensityForName(exerciseName)) {
                 IntensityLevel.HIGH -> Color(0xFFFF6B6B)
-                IntensityLevel.MED -> Amber
-                IntensityLevel.LOW -> Color(0xFFA8A5A0)
+                IntensityLevel.MED -> SolAccent
+                IntensityLevel.LOW -> lowAccent
             }
             drawRect(
                 color = if (isActive) accentColor else accentColor.copy(alpha = 0.3f),
@@ -236,7 +238,7 @@ fun WorkoutExerciseCard(
                     ) {
                         TagChip(
                             text = "$sets • $reps",
-                            textColor = Color(0xFFA8A29E),
+                            textColor = MaterialTheme.colorScheme.onSurfaceVariant,
                             bgColor = Color.White.copy(alpha = 0.05f),
                             borderColor = Color.White.copy(alpha = 0.1f)
                         )
@@ -249,10 +251,10 @@ fun WorkoutExerciseCard(
                                 )
                                 TagChip(
                                     text = "Active",
-                                    textColor = Color(0xFFA8A29E),
-                                    bgColor = Amber.copy(alpha = 0.15f),
-                                    borderColor = Amber.copy(alpha = 0.3f),
-                                    dotColor = Amber.copy(alpha = pulse)
+                                    textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    bgColor = SolAccent.copy(alpha = 0.15f),
+                                    borderColor = SolAccent.copy(alpha = 0.3f),
+                                    dotColor = SolAccent.copy(alpha = pulse)
                                 )
                             }
                             isComplete -> TagChip(
@@ -263,9 +265,9 @@ fun WorkoutExerciseCard(
                             )
                             state == RingState.REST -> TagChip(
                                 text = "Rest",
-                                textColor = Amber,
-                                bgColor = Amber.copy(alpha = 0.15f),
-                                borderColor = Amber.copy(alpha = 0.3f)
+                                textColor = SolAccent,
+                                bgColor = SolAccent.copy(alpha = 0.15f),
+                                borderColor = SolAccent.copy(alpha = 0.3f)
                             )
                         }
                     }
@@ -287,12 +289,12 @@ fun WorkoutExerciseCard(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("⏱", fontSize = 14.sp)
-                            Text("${restTime} rest", fontSize = 13.sp, color = Color(0xFFA8A29E))
+                            Text("${restTime} rest", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Box(Modifier.size(4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)))
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("⚡", fontSize = 14.sp)
-                            Text("$kcal kcal", fontSize = 13.sp, color = Color(0xFFA8A29E))
+                            Text("$kcal kcal", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
 
@@ -314,7 +316,7 @@ fun WorkoutExerciseCard(
                                         .height(8.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .background(
-                                            Brush.horizontalGradient(listOf(Amber, Amber))
+                                            Brush.horizontalGradient(listOf(SolAccent, SolAccent))
                                         )
                                 )
                             }
@@ -332,7 +334,7 @@ fun WorkoutExerciseCard(
                                 SessionActionButton(
                                     text = "Done",
                                     onClick = onCompleteSet,
-                                    gradient = Amber to Amber,
+                                    gradient = SolAccent to SolAccent,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -364,8 +366,8 @@ fun WorkoutExerciseCard(
                             Row(
                                 Modifier.fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(Amber.copy(alpha = 0.05f))
-                                    .border(1.dp, Amber.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                                    .background(SolAccent.copy(alpha = 0.05f))
+                                    .border(1.dp, SolAccent.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
                                     .clickable(onClick = onRest)
                                     .padding(horizontal = 12.dp, vertical = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -375,17 +377,17 @@ fun WorkoutExerciseCard(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Box(Modifier.size(8.dp).clip(CircleShape).background(Amber))
+                                    Box(Modifier.size(8.dp).clip(CircleShape).background(SolAccent))
                                     Text(
                                         "Recovering",
-                                        color = Amber,
+                                        color = SolAccent,
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 13.sp
                                     )
                                 }
                                 Text(
                                     restDisplay,
-                                    color = Amber,
+                                    color = SolAccent,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp
                                 )
@@ -396,7 +398,7 @@ fun WorkoutExerciseCard(
                             SessionActionButton(
                                 text = "Start Set",
                                 onClick = onStartSet,
-                                gradient = Amber to Amber,
+                                gradient = SolAccent to SolAccent,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -441,7 +443,7 @@ private fun SessionActionButton(
     ) {
         Text(
             text,
-            color = if (gradient != null) Color.White else Color(0xFFF5F1EB),
+            color = if (gradient != null) Color.White else MaterialTheme.colorScheme.onSurface,
             fontWeight = if (gradient != null) FontWeight.Bold else FontWeight.SemiBold,
             fontSize = 13.sp
         )
@@ -477,7 +479,7 @@ fun SessionHeader(
                     subtitle,
                     fontSize = 11.sp,
                     letterSpacing = 2.sp,
-                    color = Color(0xFFA8A29E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
@@ -488,7 +490,7 @@ fun SessionHeader(
                     letterSpacing = (-0.3).sp
                 )
                 Spacer(Modifier.height(2.dp))
-                Text(formatElapsed((elapsed / 1000).toInt()), color = Color(0xFFA8A29E), fontSize = 11.sp, letterSpacing = 0.5.sp)
+                Text(formatElapsed((elapsed / 1000).toInt()), color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 11.sp, letterSpacing = 0.5.sp)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -498,7 +500,7 @@ fun SessionHeader(
                     Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(brush = Brush.verticalGradient(listOf(Amber, Color(0xFFFF8A3D)))),
+                        .background(brush = Brush.verticalGradient(listOf(SolAccent, Color(0xFFFF8A3D)))),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("🔥", fontSize = 18.sp)
@@ -508,7 +510,7 @@ fun SessionHeader(
                         "Streak",
                         fontSize = 10.sp,
                         letterSpacing = 2.sp,
-                        color = Color(0xFFA8A29E)
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         "$streak",
@@ -559,7 +561,7 @@ fun SessionProgressBar(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(
-                        Brush.horizontalGradient(listOf(Amber, Amber, Amber))
+                        Brush.horizontalGradient(listOf(SolAccent, SolAccent, SolAccent))
                     )
             )
         }
@@ -579,7 +581,7 @@ fun BottomActionBar(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFF171717).copy(alpha = 0.9f))
+            .background(Color.Black.copy(alpha = 0.9f))
             .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(24.dp))
             .padding(12.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -609,7 +611,7 @@ private fun PauseFinishButton(
 ) {
     val bgMod = if (isPrimary) {
         Modifier.background(
-            Brush.horizontalGradient(listOf(Color(0xFFF5F1EB), Color(0xFFE8E4D9))),
+            Brush.horizontalGradient(listOf(MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)),
             RoundedCornerShape(16.dp)
         )
     } else {
@@ -626,7 +628,7 @@ private fun PauseFinishButton(
     ) {
         Text(
             text,
-            color = if (isPrimary) Color(0xFF1A1A1A) else Color(0xFFF5F1EB),
+            color = if (isPrimary) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface,
             fontWeight = FontWeight.Bold,
             fontSize = 15.sp
         )
@@ -659,7 +661,7 @@ fun UpNextCard(
                     "Up Next",
                     fontSize = 11.sp,
                     letterSpacing = 2.sp,
-                    color = Color(0xFFA8A29E)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -677,7 +679,7 @@ fun UpNextCard(
                     .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("→", color = Color(0xFFF5F1EB), fontSize = 22.sp)
+                Text("→", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp)
             }
         }
     }

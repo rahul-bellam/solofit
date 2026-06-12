@@ -38,7 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import com.solofit.app.ui.theme.Amber
+import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.DarkSuccess
 import com.solofit.app.ui.theme.DarkWarning
 import com.solofit.app.ui.theme.DarkError
@@ -73,13 +73,13 @@ fun SolCard(
                     Modifier.size(36.dp).clip(CircleShape)
                         .background(
                             Brush.radialGradient(
-                                colors = listOf(Amber.copy(alpha = 0.2f), Amber.copy(alpha = 0.04f)),
+                                colors = listOf(SolAccent.copy(alpha = 0.2f), SolAccent.copy(alpha = 0.04f)),
                                 radius = 20f
                             )
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Box(Modifier.size(12.dp).clip(CircleShape).background(Amber))
+                    Box(Modifier.size(12.dp).clip(CircleShape).background(SolAccent))
                 }
                 Spacer(Modifier.width(10.dp))
                 Column {
@@ -89,7 +89,7 @@ fun SolCard(
                 Spacer(Modifier.weight(1f))
                 Icon(
                     Icons.AutoMirrored.Filled.VolumeUp, null,
-                    tint = if (state.isSpeaking) Amber else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (state.isSpeaking) SolAccent else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp).clickable(onClick = onListen)
                 )
             }
@@ -97,17 +97,17 @@ fun SolCard(
             Spacer(Modifier.height(14.dp))
 
             AnimatedContent(
-                targetState = state.hashCode(),
+                targetState = state,
                 transitionSpec = { fadeIn(tween(300)) togetherWith fadeOut(tween(200)) },
                 label = "sol_content"
-            ) {
+            ) { targetState ->
                 Column {
-                    if (!state.hasSufficientData) {
-                        EmptySolContent(state, onLogMeal, onLogWorkout)
+                    if (!targetState.hasSufficientData) {
+                        EmptySolContent(targetState, onLogMeal, onLogWorkout)
                         return@Column
                     }
 
-                    MainSolContent(state)
+                    MainSolContent(targetState)
                 }
             }
         }
@@ -142,7 +142,7 @@ private fun EmptySolContent(state: SolUiState, onLogMeal: () -> Unit, onLogWorko
             onClick = onLogMeal,
             modifier = Modifier.weight(1f),
             shape = RoundedCornerShape(12.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = Amber)
+            colors = ButtonDefaults.buttonColors(containerColor = SolAccent)
         ) {
             Text("Log Meal", fontSize = 13.sp, color = Color.White)
         }
@@ -301,14 +301,14 @@ fun PersonalityDialog(
                     Row(
                         Modifier.fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(if (p == current) Amber.copy(alpha = 0.1f) else Color.Transparent)
+                            .background(if (p == current) SolAccent.copy(alpha = 0.1f) else Color.Transparent)
                             .clickable { onSelect(p) }
                             .padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(p.displayName, fontSize = 15.sp, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.weight(1f))
-                        if (p == current) Text("Active", fontSize = 12.sp, color = Amber)
+                        if (p == current) Text("Active", fontSize = 12.sp, color = SolAccent)
                     }
                 }
             }

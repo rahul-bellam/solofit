@@ -75,4 +75,21 @@ interface DailyLogDao {
         """
     )
     fun observeTotalsForDate(date: String): Flow<DailyTotals>
+
+    @Query(
+        """
+        SELECT 
+            SUM(dl.gramsConsumed / 100.0 * fi.caloriesPer100g) AS calories,
+            SUM(dl.gramsConsumed / 100.0 * fi.proteinPer100g)  AS proteinG,
+            SUM(dl.gramsConsumed / 100.0 * fi.carbsPer100g)    AS carbsG,
+            SUM(dl.gramsConsumed / 100.0 * fi.fatsPer100g)     AS fatsG,
+            SUM(dl.gramsConsumed / 100.0 * fi.fiberPer100g)    AS fiberG
+        FROM daily_log dl
+        INNER JOIN food_items fi ON fi.id = dl.foodId
+        WHERE dl.date >= :startDate
+        GROUP BY dl.date
+        ORDER BY dl.date ASC
+        """
+    )
+    suspend fun getDailyTotalsSince(startDate: String): List<DailyTotals>
 }

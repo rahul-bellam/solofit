@@ -40,7 +40,15 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.components.PortionDialog
+import com.solofit.app.ui.components.NutritionConfidence
+import com.solofit.app.sol.NutritionConfidenceEngine
 import kotlin.math.roundToInt
+
+private fun confidenceFromLevel(level: NutritionConfidenceEngine.Level): NutritionConfidence = when (level) {
+    NutritionConfidenceEngine.Level.HIGH -> NutritionConfidence.HIGH
+    NutritionConfidenceEngine.Level.MEDIUM -> NutritionConfidence.MEDIUM
+    NutritionConfidenceEngine.Level.LOW -> NutritionConfidence.LOW
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -136,15 +144,9 @@ fun ScanScreen(
                 }
 
                 is ScanUiState.Found -> {
-                    var showPortion by remember { mutableStateOf(false) }
-                    FoundCard(s)
-                    Spacer(Modifier.height(16.dp))
-                    Button(onClick = { showPortion = true }, modifier = Modifier.fillMaxWidth()) {
-                        Text("Add to today's log")
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
-                        Text("Scan another")
+                    var showPortion by remember { mutableStateOf(true) }
+                    val confidence = remember(s.food.name) {
+                        confidenceFromLevel(NutritionConfidenceEngine.fromSource(true, s.food.name))
                     }
                     if (showPortion) {
                         PortionDialog(
@@ -154,12 +156,23 @@ fun ScanScreen(
                             carbsPer100g = s.food.carbsPer100g,
                             fatsPer100g = s.food.fatsPer100g,
                             fiberPer100g = s.food.fiberPer100g,
+                            confidence = confidence,
                             onDismiss = { showPortion = false },
                             onConfirm = { grams, cat ->
                                 viewModel.logFood(s.food, grams, cat)
                                 showPortion = false
                             }
                         )
+                    } else {
+                        FoundCard(s)
+                        Spacer(Modifier.height(16.dp))
+                        Button(onClick = { showPortion = true }, modifier = Modifier.fillMaxWidth()) {
+                            Text("Add to today's log")
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = viewModel::reset, modifier = Modifier.fillMaxWidth()) {
+                            Text("Scan another")
+                        }
                     }
                 }
 

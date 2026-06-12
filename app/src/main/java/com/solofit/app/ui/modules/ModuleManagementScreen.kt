@@ -41,11 +41,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.solofit.app.domain.model.SoloFitModule
-import com.solofit.app.ui.theme.Amber
-import com.solofit.app.ui.theme.PageBg
+import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.CardCream
+import androidx.compose.material3.MaterialTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,7 +57,7 @@ fun ModuleManagementScreen(
     val allModules = SoloFitModule.entries.filter { it != SoloFitModule.PROGRESS }
 
     Scaffold(
-        containerColor = PageBg,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             TopAppBar(
                 title = { Text("Manage Modules", fontWeight = FontWeight.SemiBold, color = PrimaryText) },
@@ -67,7 +66,7 @@ fun ModuleManagementScreen(
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = PrimaryText)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = PageBg)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
             )
         }
     ) { padding ->
@@ -125,7 +124,7 @@ private fun ModuleManageCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(CardCream)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -133,12 +132,12 @@ private fun ModuleManageCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(36.dp).clip(CircleShape)
-                        .background(if (enabled) Amber.copy(alpha = 0.12f) else CardCream),
+                        .background(if (enabled) SolAccent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         moduleIcon(module), null,
-                        tint = if (enabled) Amber else SecondaryText,
+                        tint = if (enabled) SolAccent else SecondaryText,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -166,7 +165,7 @@ private fun ModuleManageCard(
         Switch(
             checked = enabled,
             onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(checkedTrackColor = Amber)
+            colors = SwitchDefaults.colors(checkedTrackColor = SolAccent)
         )
     }
 }

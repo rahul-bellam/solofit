@@ -21,6 +21,7 @@ data class SolInput(
     val previousStressLevel: Int?,
     val moodScore: Int?,
     val meditationMinutes: Int?,
+    val previousMeditationMinutes: Int?,
     val journalDays: Int,
     val journalSentiment: JournalSentiment?,
     val measurementImproving: Boolean?,
@@ -32,7 +33,9 @@ data class SolInput(
     val daysTracked: Int = 0,
     val weeklySteps: List<Int> = emptyList(),
     val weeklyRecovery: List<Int> = emptyList(),
-    val weeklyProteinPct: List<Double> = emptyList()
+    val weeklyProteinPct: List<Double> = emptyList(),
+    val weeklySleep: List<Double> = emptyList(),
+    val baseline: UserBaseline? = null
 )
 
 enum class JournalSentiment {
