@@ -1,7 +1,11 @@
 package com.solofit.app.ui.components
 
-import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,31 +15,34 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import android.view.HapticFeedbackConstants
-import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.solofit.app.ui.theme.TextPrimary
+import com.solofit.app.ui.theme.TextSecondary
 
-/** Daily water intake card with an animated filling glass + quick +/- a glass. */
+/** Compact inline water widget. Prominent full card when [prominent] is true. */
 @Composable
 fun WaterTracker(
     currentMl: Int,
@@ -44,99 +51,151 @@ fun WaterTracker(
     onRemove: (Int) -> Unit,
     modifier: Modifier = Modifier,
     glassMl: Int = 250,
-    animate: Boolean = true,
+    prominent: Boolean = false,
     accentColor: Color = MaterialTheme.colorScheme.secondary
 ) {
     val fraction = if (goalMl > 0) (currentMl.toFloat() / goalMl).coerceIn(0f, 1f) else 0f
     val goalHit = goalMl > 0 && currentMl >= goalMl
 
-    val view = LocalView.current
-    // One-shot celebratory ripple when the goal is first reached.
-    val ripple = remember { Animatable(0f) }
-    LaunchedEffect(goalHit) {
-        if (goalHit) {
-            view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-            if (animate) {
-                ripple.snapTo(0f)
-                ripple.animateTo(1f, androidx.compose.animation.core.tween(600))
+    if (prominent) {
+        ProminentWaterCard(currentMl, goalMl, fraction, goalHit, onAdd, onRemove, glassMl, accentColor, modifier)
+    } else {
+        CompactWaterWidget(currentMl, goalMl, fraction, goalHit, onAdd, onRemove, glassMl, accentColor, modifier)
+    }
+}
+
+@Composable
+private fun CompactWaterWidget(
+    currentMl: Int,
+    goalMl: Int,
+    fraction: Float,
+    goalHit: Boolean,
+    onAdd: (Int) -> Unit,
+    onRemove: (Int) -> Unit,
+    glassMl: Int,
+    accentColor: Color,
+    modifier: Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val waterPct = if (goalMl > 0) (currentMl * 100 / goalMl).coerceAtMost(100) else 0
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.6f))
+            .clickable { expanded = !expanded }
+            .padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(
+            Icons.Filled.WaterDrop,
+            contentDescription = null,
+            tint = if (goalHit) accentColor else accentColor.copy(alpha = 0.5f),
+            modifier = Modifier.size(18.dp)
+        )
+        Column(Modifier.weight(1f)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "Water",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = TextPrimary
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "$currentMl / $goalMl ml",
+                    fontSize = 11.sp,
+                    color = TextSecondary
+                )
             }
-        } else {
-            ripple.snapTo(0f)
+            Spacer(Modifier.height(3.dp))
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(4.dp)
+                    .clip(RoundedCornerShape(2.dp))
+                    .background(accentColor.copy(alpha = 0.15f))
+            ) {
+                Box(
+                    Modifier
+                        .fillMaxWidth(fraction.coerceIn(0f, 1f))
+                        .height(4.dp)
+                        .clip(RoundedCornerShape(2.dp))
+                        .background(accentColor)
+                )
+            }
+        }
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .background(accentColor.copy(alpha = 0.12f))
+                .clickable { onAdd(glassMl) },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Add water", tint = accentColor, modifier = Modifier.size(16.dp))
         }
     }
+}
 
-    Card(
+@Composable
+private fun ProminentWaterCard(
+    currentMl: Int,
+    goalMl: Int,
+    fraction: Float,
+    goalHit: Boolean,
+    onAdd: (Int) -> Unit,
+    onRemove: (Int) -> Unit,
+    glassMl: Int,
+    accentColor: Color,
+    modifier: Modifier
+) {
+    androidx.compose.material3.Card(
         modifier = modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = accentColor.copy(alpha = 0.06f))
     ) {
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Animated glass with a goal-hit ripple overlay.
-            Box(contentAlignment = Alignment.Center) {
-                WaterGlass(
-                    fraction = fraction,
-                    animate = animate,
-                    waterColor = accentColor,
-                    modifier = Modifier.size(width = 44.dp, height = 64.dp)
-                )
-                if (ripple.value > 0f && ripple.value < 1f) {
-                    val rippleColor = accentColor
-                    Canvas(Modifier.size(64.dp)) {
-                        val r = size.minDimension / 2f * ripple.value
-                        drawCircle(
-                            color = rippleColor.copy(alpha = (1f - ripple.value) * 0.6f),
-                            radius = r,
-                            center = Offset(size.width / 2f, size.height / 2f),
-                            style = Stroke(width = 3.dp.toPx())
-                        )
-                    }
-                }
+        Column(Modifier.fillMaxWidth().padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.WaterDrop, null, tint = accentColor, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(6.dp))
+                Text("Hydration", fontWeight = FontWeight.SemiBold, fontSize = 14.sp, color = TextPrimary)
+                Spacer(Modifier.weight(1f))
+                Text("$currentMl / $goalMl ml", fontSize = 12.sp, color = TextSecondary)
             }
-
-            Column(Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        Icons.Filled.WaterDrop,
-                        contentDescription = null,
-                        tint = accentColor
-                    )
-                    Text(
-                        if (goalHit) "  Water · goal hit! 🎉" else "  Water",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                }
-                Spacer(Modifier.height(2.dp))
-                val waterPct = if (goalMl > 0) (currentMl * 100 / goalMl).coerceAtMost(100) else 0
-                Text(
-                    "$currentMl / $goalMl ml · $waterPct%",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+            Spacer(Modifier.height(10.dp))
+            Box(
+                Modifier.fillMaxWidth().height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .background(accentColor.copy(alpha = 0.12f))
+            ) {
+                Box(
+                    Modifier.fillMaxWidth(fraction.coerceIn(0f, 1f)).height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(accentColor)
                 )
-                Spacer(Modifier.height(8.dp))
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Box(
+                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                        .background(accentColor.copy(alpha = 0.1f))
+                        .clickable { onRemove(glassMl) }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
                 ) {
-                    FilledTonalIconButton(onClick = {
-                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        onRemove(glassMl)
-                    }) {
-                        Icon(Icons.Filled.Remove, contentDescription = "Remove a glass")
-                    }
-                    Text("$glassMl ml", fontWeight = FontWeight.SemiBold)
-                    FilledTonalIconButton(onClick = {
-                        view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                        onAdd(glassMl)
-                    }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add a glass")
-                    }
+                    Text("-$glassMl ml", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = accentColor)
+                }
+                Box(
+                    Modifier.weight(1f).clip(RoundedCornerShape(10.dp))
+                        .background(accentColor)
+                        .clickable { onAdd(glassMl) }
+                        .padding(vertical = 10.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("+$glassMl ml", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White)
                 }
             }
         }

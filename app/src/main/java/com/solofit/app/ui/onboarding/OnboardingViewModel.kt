@@ -8,6 +8,7 @@ import com.solofit.app.domain.model.ActivityLevel
 import com.solofit.app.domain.model.FitnessGoal
 import com.solofit.app.domain.model.Gender
 import com.solofit.app.domain.model.NutritionTargets
+import com.solofit.app.domain.model.OnboardingFocus
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.usecase.CalculateNutritionTargetsUseCase
@@ -26,6 +27,7 @@ data class OnboardingState(
     val weight: String = "",
     val height: String = "",
     val goal: FitnessGoal? = null,
+    val focus: OnboardingFocus? = null,
     val selectedModules: Set<SoloFitModule> = SoloFitModule.DEFAULT_ENABLED.toSet(),
     val preview: NutritionTargets? = null
 ) {
@@ -46,7 +48,7 @@ class OnboardingViewModel @Inject constructor(
     private val _state = MutableStateFlow(OnboardingState())
     val state = _state.asStateFlow()
 
-    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(7)) }
+    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(8)) }
     fun previousStep() = _state.update { it.copy(step = (it.step - 1).coerceAtLeast(0)) }
 
     fun onName(v: String) = _state.update { it.copy(name = v) }
@@ -59,6 +61,10 @@ class OnboardingViewModel @Inject constructor(
         _state.update {
             it.copy(goal = v).recompute()
         }
+    }
+
+    fun onFocus(v: OnboardingFocus) {
+        _state.update { it.copy(focus = v) }
     }
 
     fun toggleModule(module: SoloFitModule) {
@@ -124,6 +130,7 @@ class OnboardingViewModel @Inject constructor(
             prefs.setEnabledModules(modules)
             prefs.setModuleOrder(SoloFitModule.entries.filter { it in modules })
             prefs.setModuleSelectionComplete(true)
+            prefs.setOnboardingFocus(s.focus)
             onDone()
         }
     }

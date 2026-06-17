@@ -59,8 +59,17 @@ import com.solofit.app.sol.DailyPriority
 import com.solofit.app.sol.LifestyleMode
 import com.solofit.app.sol.MomentumLevel
 import com.solofit.app.sol.SetbackPrediction
+import com.solofit.app.sol.SolCard
+import com.solofit.app.sol.PersonalityDialog
 import com.solofit.app.sol.SolViewModel
+import com.solofit.app.sol.VoicePersonality
+import com.solofit.app.ui.components.WaterTracker
 import com.solofit.app.ui.modules.ModuleSuggestion
+import com.solofit.app.domain.model.FeatureVisibility
+import com.solofit.app.domain.model.VisibilityContext
+import com.solofit.app.ui.dashboard.WeeklyReflection
+import com.solofit.app.ui.dashboard.MonthlyReflection
+import com.solofit.app.ui.dashboard.MonthlyReflectionData
 import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.MossGreen
 import com.solofit.app.ui.theme.OliveClay
@@ -93,6 +102,23 @@ fun DashboardScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val solState by solViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+    var showPersonalityDialog by remember { mutableStateOf(false) }
+
+    val visibilityCtx = remember(state.daysTracked, state.daysActiveThisWeek, state.streakDays,
+        state.recoveryScore, state.workoutToday, solState.weeklyWorkoutCount,
+        state.meditationMinutes, solState.journalDays, solState.lifestyleMode) {
+        VisibilityContext(
+            daysTracked = state.daysTracked,
+            daysActiveThisWeek = state.daysActiveThisWeek,
+            streakDays = state.streakDays,
+            recoveryScore = state.recoveryScore,
+            workoutToday = state.workoutToday,
+            weeklyWorkoutCount = solState.weeklyWorkoutCount,
+            meditationMinutes = state.meditationMinutes,
+            journalDays = solState.journalDays,
+            lifestyleModeName = solState.lifestyleMode.name
+        )
+    }
 
     if (state.isLoading) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -152,7 +178,20 @@ fun DashboardScreen(
                         )
                     }
 
-                    Spacer(Modifier.height(32.dp))
+                    Spacer(Modifier.height(24.dp))
+
+                    // ── SOL COMPANION ──
+                    SolCard(
+                        state = solState,
+                        onToggleWhy = solViewModel::toggleWhy,
+                        onToggleWhat = solViewModel::toggleWhat,
+                        onListen = solViewModel::speak,
+                        onPersonalityChange = { showPersonalityDialog = true },
+                        onLogMeal = onLogMeal,
+                        onLogWorkout = onLogWorkout
+                    )
+
+                    Spacer(Modifier.height(24.dp))
 
                     // ── FIRST WEEK GOALS ──
                     if (state.isFirstWeek) {
@@ -493,6 +532,45 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(20.dp))
 
+                    // ── WATER TRACKER ──
+                    WaterTracker(
+                        currentMl = state.waterMl,
+                        goalMl = state.waterGoalMl,
+                        onAdd = { viewModel.addWater(it) },
+                        onRemove = { viewModel.removeWater(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        prominent = FeatureVisibility.shouldShowWaterProminent(visibilityCtx)
+                    )
+
+                    Spacer(Modifier.height(12.dp))
+
+                    // ── WEEKLY REFLECTION ──
+                    if (solState.isSunday && FeatureVisibility.shouldShowWeeklyReflection(visibilityCtx)) {
+                        WeeklyReflection(
+                            workoutCount = solState.weeklyWorkoutCount,
+                            proteinDays = solState.weeklyProteinDays,
+                            walkingTrend = solState.weeklyWalkingTrend,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(16.dp))
+                    }
+
+                    // ── MONTHLY REFLECTION ──
+                    if (FeatureVisibility.shouldShowMonthlyReflection(visibilityCtx) && solState.hasSufficientData) {
+                        MonthlyReflection(
+                            data = MonthlyReflectionData(
+                                workoutsCompleted = solState.weeklyWorkoutCount * 4,
+                                proteinConsistency = if (solState.weeklyProteinDays >= 4) "Good" else "Building",
+                                walkingTrend = solState.weeklyWalkingTrend,
+                                recoveryTrend = "",
+                                mostImprovedHabit = "",
+                                suggestedFocus = solState.dailyPriority.displayName
+                            ),
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                        Spacer(Modifier.height(16.dp))
+                    }
+
                     // ── EXPLORE (condensed) ──
                     Text(
                         "Explore",
@@ -575,6 +653,14 @@ fun DashboardScreen(
                     Spacer(Modifier.height(80.dp))
                 }
             }
+        }
+
+        if (showPersonalityDialog) {
+            PersonalityDialog(
+                current = solState.personality,
+                onSelect = { solViewModel.setPersonality(it); showPersonalityDialog = false },
+                onDismiss = { showPersonalityDialog = false }
+            )
         }
     }
 }

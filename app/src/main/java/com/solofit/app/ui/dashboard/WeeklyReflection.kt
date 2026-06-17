@@ -34,45 +34,47 @@ fun WeeklyReflection(
         Column(Modifier.fillMaxWidth().padding(20.dp)) {
             Text("This Week", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
 
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(12.dp))
 
-            val summaryLines = buildList {
-                if (workoutCount > 0) add("$workoutCount workouts completed")
-                if (proteinDays > 0) add("Protein target reached on $proteinDays days")
-                if (walkingTrend.isNotBlank()) add(walkingTrend.replaceFirstChar { it.lowercase() })
-                if (isEmpty()) add("No data tracked this week yet")
-            }
-
-            summaryLines.forEach { line ->
-                Text("• $line", fontSize = 14.sp, color = PrimaryText, lineHeight = 20.sp)
-                Spacer(Modifier.height(4.dp))
-            }
+            val narrative = buildWeekNarrative(workoutCount, proteinDays, walkingTrend)
+            Text(
+                narrative,
+                fontSize = 14.sp,
+                color = PrimaryText,
+                lineHeight = 22.sp
+            )
 
             Spacer(Modifier.height(12.dp))
 
             Text(
-                when {
-                    workoutCount >= 4 -> "Most consistent week this month. The routine is becoming a habit."
-                    workoutCount >= 3 -> "Building momentum steadily. Each session reinforces the pattern."
-                    workoutCount >= 1 -> "Every session counts. Consistency grows one day at a time."
-                    else -> "Small steps lead to big changes. Start with one session next week."
-                },
-                fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            Text("Next Week Focus", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PrimaryText)
-            Spacer(Modifier.height(4.dp))
-            Text(
-                when {
-                    workoutCount < 3 -> "Aim for 3-4 workouts. Even short sessions count."
-                    proteinDays < 4 -> "Try to hit your protein target more consistently. Meal prep may help."
-                    walkingTrend.contains("decreased", ignoreCase = true) -> "Try adding a short walk to your daily routine."
-                    else -> "Maintain the momentum. You're on a strong path."
-                },
-                fontSize = 13.sp, color = SecondaryText, lineHeight = 18.sp
+                buildNextWeekFocus(workoutCount, proteinDays, walkingTrend),
+                fontSize = 13.sp,
+                color = SecondaryText,
+                lineHeight = 18.sp
             )
         }
+    }
+}
+
+private fun buildWeekNarrative(workouts: Int, proteinDays: Int, walkingTrend: String): String {
+    return when {
+        workouts >= 5 -> "This was your most active week in recent memory. Movement is no longer a task \u2014 it's becoming part of who you are."
+        workouts == 4 -> "Consistent and present. Four sessions this week shows discipline. The routine is taking root."
+        workouts == 3 -> "Three workouts this week \u2014 a solid rhythm. Your body is learning to expect movement."
+        workouts == 2 -> "Two sessions this week. Every workout reinforces the pattern. Next week, aim for three."
+        workouts == 1 -> "One workout this week is one more than doing nothing. Momentum starts with showing up."
+        workouts == 0 && proteinDays >= 3 -> "Movement took a back seat, but your nutrition stayed consistent. Use that foundation to restart next week."
+        workouts == 0 && walkingTrend.contains("increased", ignoreCase = true) -> "No structured workouts, but your walking increased. Active recovery still counts."
+        workouts == 0 -> "It was a quiet week. Rest is part of growth too. Reset and come back fresh."
+        else -> "Small actions compound. Every week is a step toward consistency."
+    }
+}
+
+private fun buildNextWeekFocus(workouts: Int, proteinDays: Int, walkingTrend: String): String {
+    return when {
+        workouts < 3 -> "Next week: aim for 3 workouts. Even 20-minute sessions build confidence."
+        proteinDays < 4 -> "Next week: focus on protein consistency. Small prep saves the day."
+        walkingTrend.contains("decreased", ignoreCase = true) -> "Next week: add a short walk after meals. It adds up."
+        else -> "Next week: maintain your rhythm. Reliability beats intensity over time."
     }
 }

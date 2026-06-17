@@ -108,21 +108,19 @@ fun NutritionHeader(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(colors.headerBg)
-            .padding(horizontal = 24.dp, vertical = 32.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        Text(
-            greeting,
-            color = colors.textMuted,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium
-        )
-        Spacer(Modifier.height(6.dp))
         Text(
             tagline,
             color = colors.textPrimary,
-            fontSize = 32.sp,
+            fontSize = 22.sp,
             fontWeight = FontWeight.Bold
+        )
+        Spacer(Modifier.height(2.dp))
+        Text(
+            greeting,
+            color = colors.textMuted,
+            fontSize = 14.sp
         )
     }
 }
@@ -534,38 +532,32 @@ fun NutritionEmptyState(
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(24.dp))
             .border(1.dp, colors.border.copy(alpha = 0.4f), RoundedCornerShape(24.dp))
-            .clickable(onClick = onClick)
-            .padding(vertical = 40.dp),
+            .padding(vertical = 40.dp, horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("🍽️", fontSize = 48.sp, modifier = Modifier.alpha(0.4f))
-        Spacer(Modifier.height(12.dp))
         Text(
-            "No meals logged yet",
+            "Nothing logged today",
             color = colors.textPrimary,
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold
         )
-        Spacer(Modifier.height(4.dp))
+        Spacer(Modifier.height(8.dp))
         Text(
-            "Tap to log your first meal — scan a barcode,",
+            "Recording meals helps improve nutritional insights over time.",
             color = colors.textMuted,
-            fontSize = 12.sp
+            fontSize = 13.sp,
+            lineHeight = 18.sp
         )
-        Text(
-            "snap a photo, or search our database.",
-            color = colors.textMuted,
-            fontSize = 12.sp
-        )
-        Spacer(Modifier.height(16.dp))
-        Box(
-            Modifier
-                .clip(RoundedCornerShape(14.dp))
-                .background(colors.green.copy(alpha = 0.1f))
-                .padding(horizontal = 20.dp, vertical = 10.dp),
-            contentAlignment = Alignment.Center
+        Spacer(Modifier.height(20.dp))
+        Button(
+            onClick = onClick,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colors.green,
+                contentColor = Color.White
+            ),
+            shape = RoundedCornerShape(14.dp)
         ) {
-            Text("+ Log a meal", color = colors.green, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+            Text("Log First Meal", fontWeight = FontWeight.SemiBold)
         }
     }
 }

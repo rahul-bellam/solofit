@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.solofit.app.domain.model.OnboardingFocus
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ReminderSettings
 import com.solofit.app.domain.model.ThemeMode
@@ -42,6 +43,7 @@ class UserPreferences @Inject constructor(
     private val phaseTargetDaysKey = intPreferencesKey("phase_target_days")
     private val trainingGoalKey = stringPreferencesKey("training_goal")
     private val voicePersonalityKey = stringPreferencesKey("voice_personality")
+    private val onboardingFocusKey = stringPreferencesKey("onboarding_focus")
 
     // Reminder keys
     private val hydrationEnabledKey = booleanPreferencesKey("rem_hydration_enabled")
@@ -132,6 +134,20 @@ class UserPreferences @Inject constructor(
 
     suspend fun setVoicePersonality(personality: com.solofit.app.sol.VoicePersonality) {
         context.dataStore.edit { it[voicePersonalityKey] = personality.name }
+    }
+
+    val onboardingFocus: Flow<OnboardingFocus?> =
+        context.dataStore.data.map { prefs ->
+            prefs[onboardingFocusKey]?.let { raw ->
+                runCatching { OnboardingFocus.valueOf(raw) }.getOrNull()
+            }
+        }
+
+    suspend fun setOnboardingFocus(focus: OnboardingFocus?) {
+        context.dataStore.edit {
+            if (focus != null) it[onboardingFocusKey] = focus.name
+            else it.remove(onboardingFocusKey)
+        }
     }
 
     /** Water intake in millilitres for a given ISO date. */

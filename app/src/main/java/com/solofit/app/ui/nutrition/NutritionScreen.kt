@@ -78,6 +78,10 @@ import com.solofit.app.sol.ProteinDayStatus
 import com.solofit.app.ui.scan.AiFoodScanViewModel
 import com.solofit.app.ui.scan.AiScanResult
 import com.solofit.app.ui.theme.MossGreen
+import com.solofit.app.ui.nutrition.NutritionHeader
+import com.solofit.app.ui.nutrition.NutritionEmptyState
+import com.solofit.app.ui.nutrition.nutritionColors
+import androidx.compose.foundation.isSystemInDarkTheme
 import com.solofit.app.ui.theme.ProteinColor
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
@@ -217,12 +221,11 @@ fun NutritionScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
-                Column(Modifier.padding(horizontal = 20.dp)) {
-                    Spacer(Modifier.height(8.dp))
-                    Text("Nutrition", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
-                    Text("Track what you eat", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(Modifier.height(20.dp))
-                }
+                NutritionHeader(
+                    colors = nutritionColors(isSystemInDarkTheme()),
+                    greeting = "Track what you eat",
+                    tagline = "Nutrition"
+                )
             }
 
             // ── HERO: Calories Remaining ──
@@ -548,9 +551,10 @@ fun NutritionScreen(
 
                 if (allEntries.isEmpty()) {
                     item {
-                        Box(Modifier.fillMaxWidth().padding(40.dp), contentAlignment = Alignment.Center) {
-                            Text("No meals logged today", fontSize = 14.sp, color = Color(0xFF9CA3AF))
-                        }
+                        NutritionEmptyState(
+                            colors = nutritionColors(isSystemInDarkTheme()),
+                            onClick = { showCreateFood = true }
+                        )
                     }
                 } else {
                     items(allEntries, key = { it.raw?.hashCode()?.toString() ?: "${it.name}_${it.time}" }) { entry ->
