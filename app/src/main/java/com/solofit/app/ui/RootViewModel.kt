@@ -8,8 +8,8 @@ import com.solofit.app.domain.model.ThemeMode
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -17,7 +17,6 @@ import javax.inject.Inject
 sealed interface StartState {
     data object Loading : StartState
     data object Onboarding : StartState
-    data object ModuleSelection : StartState
     data object Ready : StartState
 }
 
@@ -27,13 +26,7 @@ class RootViewModel @Inject constructor(
 ) : ViewModel() {
 
     val startState = prefs.onboardingComplete
-        .combine(prefs.moduleSelectionComplete) { onboardingDone, modulesDone ->
-            when {
-                !onboardingDone -> StartState.Onboarding
-                !modulesDone -> StartState.ModuleSelection
-                else -> StartState.Ready
-            }
-        }
+        .map { done -> if (done) StartState.Ready else StartState.Onboarding }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StartState.Loading)
 
     val themeMode: StateFlow<ThemeMode> = prefs.themeMode

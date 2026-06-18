@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.solofit.app.domain.model.ActivityLevel
 import com.solofit.app.domain.model.FitnessGoal
 import com.solofit.app.domain.model.Gender
 import com.solofit.app.domain.model.OnboardingFocus
@@ -83,12 +84,13 @@ fun OnboardingScreen(
                 5 -> WeightStep(weightKg = state.weight.toDoubleOrNull() ?: 70.0, onWeight = { viewModel.onWeight(it.roundToInt().toString()) }, onContinue = viewModel::nextStep)
                 6 -> GoalStep(selected = state.goal, onSelect = viewModel::onGoal, onContinue = if (state.goal != null) viewModel::nextStep else null)
                 7 -> DescribeStep(selected = state.focus, onSelect = viewModel::onFocus, onContinue = if (state.focus != null) viewModel::nextStep else null)
-                8 -> ReadyStep(onEnter = { viewModel.finish(onComplete) })
+                8 -> ActivityLevelStep(selected = state.activityLevel, onSelect = viewModel::onActivityLevel, onContinue = viewModel::nextStep)
+                9 -> ReadyStep(onEnter = { viewModel.finish(onComplete) })
             }
         }
 
         // Back button (except on first and last steps)
-        if (state.step in 1..7) {
+        if (state.step in 1..8) {
             TextButton(
                 onClick = viewModel::previousStep,
                 modifier = Modifier.padding(start = 8.dp, top = 48.dp).align(Alignment.TopStart)
@@ -98,14 +100,14 @@ fun OnboardingScreen(
         }
 
         // Step indicator dots
-        if (state.step in 1..7) {
+        if (state.step in 1..8) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(bottom = 48.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                repeat(7) { i ->
+                repeat(8) { i ->
                     Box(
                         Modifier
                             .size(if (i == state.step - 1) 8.dp else 6.dp)
@@ -513,6 +515,69 @@ private fun DescribeStep(
             ) {
                 Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
             }
+        }
+        Spacer(Modifier.height(8.dp))
+    }
+}
+
+@Composable
+private fun ActivityLevelStep(
+    selected: ActivityLevel,
+    onSelect: (ActivityLevel) -> Unit,
+    onContinue: () -> Unit
+) {
+    Column(
+        Modifier.fillMaxSize().padding(40.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
+        Spacer(Modifier.weight(0.3f))
+        Text("How active are you?", style = MaterialTheme.typography.headlineLarge, color = TextPrimary, letterSpacing = 1.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("This helps calculate your nutrition targets.", style = MaterialTheme.typography.bodyMedium, color = TextSecondary)
+        Spacer(Modifier.height(28.dp))
+
+        Column(
+            Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            ActivityLevel.entries.forEach { level ->
+                val isSelected = selected == level
+                Box(
+                    Modifier.fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(if (isSelected) Terracotta.copy(alpha = 0.08f) else Color.Transparent)
+                        .clickable { onSelect(level) }
+                        .padding(vertical = 14.dp, horizontal = 16.dp)
+                ) {
+                    Column {
+                        Text(
+                            level.displayName,
+                            color = if (isSelected) Terracotta else TextPrimary,
+                            fontSize = 17.sp,
+                            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                            letterSpacing = 0.5.sp
+                        )
+                        if (isSelected) {
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                level.description,
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        TextButton(
+            onClick = onContinue,
+            modifier = Modifier.fillMaxWidth().height(56.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Terracotta)
+        ) {
+            Text("Continue", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Medium, letterSpacing = 1.sp)
         }
         Spacer(Modifier.height(8.dp))
     }

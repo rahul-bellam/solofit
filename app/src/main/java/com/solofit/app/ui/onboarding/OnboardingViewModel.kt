@@ -28,6 +28,7 @@ data class OnboardingState(
     val height: String = "",
     val goal: FitnessGoal? = null,
     val focus: OnboardingFocus? = null,
+    val activityLevel: ActivityLevel = ActivityLevel.MODERATE,
     val selectedModules: Set<SoloFitModule> = SoloFitModule.DEFAULT_ENABLED.toSet(),
     val preview: NutritionTargets? = null
 ) {
@@ -48,8 +49,12 @@ class OnboardingViewModel @Inject constructor(
     private val _state = MutableStateFlow(OnboardingState())
     val state = _state.asStateFlow()
 
-    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(8)) }
+    fun nextStep() = _state.update { it.copy(step = (it.step + 1).coerceAtMost(9)) }
     fun previousStep() = _state.update { it.copy(step = (it.step - 1).coerceAtLeast(0)) }
+
+    fun onActivityLevel(v: ActivityLevel) {
+        _state.update { it.copy(activityLevel = v) }
+    }
 
     fun onName(v: String) = _state.update { it.copy(name = v) }
     fun onAge(v: String) = _state.update { it.copy(age = v.filter { c -> c.isDigit() }) }
@@ -94,7 +99,7 @@ class OnboardingViewModel @Inject constructor(
                 preview = calculate(
                     CalculateNutritionTargetsUseCase.Params(
                         age = a, gender = gender, weightKg = w, heightCm = h,
-                        activityLevel = ActivityLevel.MODERATE, goal = g
+                        activityLevel = activityLevel, goal = g
                     )
                 )
             )
@@ -115,7 +120,7 @@ class OnboardingViewModel @Inject constructor(
                     gender = s.gender,
                     weightKg = s.weight.toDoubleOrNull() ?: 70.0,
                     heightCm = s.height.toDoubleOrNull() ?: 170.0,
-                    activityLevel = ActivityLevel.MODERATE,
+                    activityLevel = s.activityLevel,
                     goal = g,
                     targetCalories = targets.targetCalories,
                     targetProtein = targets.targetProteinG,
@@ -126,9 +131,8 @@ class OnboardingViewModel @Inject constructor(
                 )
             )
             repository.setOnboardingComplete(true)
-            val modules = s.selectedModules.toList().ifEmpty { SoloFitModule.DEFAULT_ENABLED }
-            prefs.setEnabledModules(modules)
-            prefs.setModuleOrder(SoloFitModule.entries.filter { it in modules })
+            prefs.setEnabledModules(SoloFitModule.DEFAULT_ENABLED)
+            prefs.setModuleOrder(SoloFitModule.DEFAULT_ENABLED)
             prefs.setModuleSelectionComplete(true)
             prefs.setOnboardingFocus(s.focus)
             onDone()
@@ -140,7 +144,7 @@ class OnboardingViewModel @Inject constructor(
         val h = s.height.toDoubleOrNull() ?: 170.0
         val a = s.age.toIntOrNull() ?: 30
         return try {
-            calculate(CalculateNutritionTargetsUseCase.Params(a, s.gender, w, h, ActivityLevel.MODERATE, s.goal ?: FitnessGoal.STAY_HEALTHY))
+            calculate(CalculateNutritionTargetsUseCase.Params(a, s.gender, w, h, s.activityLevel, s.goal ?: FitnessGoal.STAY_HEALTHY))
         } catch (_: IllegalArgumentException) {
             NutritionTargets(2000, 150, 250, 65, 1700, 2000)
         }

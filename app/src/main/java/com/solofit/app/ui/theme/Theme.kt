@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 val DarkColorScheme = darkColorScheme(
-    primary = SolAmber,
+    primary = HoneyGold,
     onPrimary = Color(0xFF1E1C1A),
     primaryContainer = CardSecondary,
     onPrimaryContainer = TextPrimary,
@@ -15,7 +15,7 @@ val DarkColorScheme = darkColorScheme(
     onSecondary = SurfaceBg,
     secondaryContainer = CardSecondary,
     onSecondaryContainer = TextPrimary,
-    tertiary = SolAmber,
+    tertiary = HoneyGold,
     background = SurfaceBg,
     onBackground = TextPrimary,
     surface = CardPrimary,
@@ -28,12 +28,12 @@ val DarkColorScheme = darkColorScheme(
     outlineVariant = Hairline,
     inverseSurface = TextPrimary,
     inverseOnSurface = SurfaceBg,
-    inversePrimary = SolAmber,
-    surfaceTint = SolAmber
+    inversePrimary = HoneyGold,
+    surfaceTint = HoneyGold
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Terracotta,
+    primary = Clay,
     onPrimary = Color.White,
     primaryContainer = LightCardSecondary,
     onPrimaryContainer = LightTextPrimary,
@@ -51,8 +51,8 @@ private val LightColorScheme = lightColorScheme(
     onError = Color.White,
     outline = LightHairline,
     outlineVariant = LightHairline,
-    inversePrimary = Terracotta,
-    surfaceTint = Terracotta
+    inversePrimary = Clay,
+    surfaceTint = Clay
 )
 
 @Composable

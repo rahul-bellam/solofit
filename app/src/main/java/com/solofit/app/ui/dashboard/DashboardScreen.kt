@@ -171,16 +171,46 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // ── SOL COMPANION ──
-                    SolCard(
-                        state = solState,
-                        onToggleWhy = solViewModel::toggleWhy,
-                        onToggleWhat = solViewModel::toggleWhat,
-                        onListen = solViewModel::speak,
-                        onPersonalityChange = { showPersonalityDialog = true },
-                        onLogMeal = onLogMeal,
-                        onLogWorkout = onLogWorkout
-                    )
+                    // ── TODAY'S PRIORITY (Hero) ──
+                    Card(
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                    ) {
+                        Column(Modifier.fillMaxWidth().padding(20.dp)) {
+                            Text(
+                                "Today's Priority",
+                                style = MaterialTheme.typography.titleSmall,
+                                color = TextSecondary,
+                                letterSpacing = 0.5.sp
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                solState.dailyPriority.displayName,
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = priorityColor(solState.dailyPriority),
+                                fontWeight = FontWeight.SemiBold,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(Modifier.height(6.dp))
+                            Text(
+                                solState.priorityReason,
+                                fontSize = 14.sp,
+                                color = TextPrimary,
+                                lineHeight = 20.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                solState.priorityAction,
+                                fontSize = 13.sp,
+                                color = TextSecondary,
+                                lineHeight = 18.sp
+                            )
+                        }
+                    }
 
                     Spacer(Modifier.height(24.dp))
 
@@ -210,55 +240,6 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-
-                    // ── TODAY'S FOCUS ──
-                    Card(
-                        shape = RoundedCornerShape(8.dp),
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
-                    ) {
-                        Column(Modifier.fillMaxWidth().padding(20.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    "Today's Focus",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = TextSecondary,
-                                    letterSpacing = 0.5.sp
-                                )
-                                Spacer(Modifier.weight(1f))
-                                val confidenceDot = when (solState.confidence) {
-                                    "High" -> MossGreen
-                                    "Medium" -> Terracotta
-                                    else -> TextSecondary
-                                }
-                                Box(Modifier.size(6.dp).clip(CircleShape).background(confidenceDot))
-                                Spacer(Modifier.width(4.dp))
-                            Text(
-                                solState.dailyPriority.displayName,
-                                fontSize = 12.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                color = priorityColor(solState.dailyPriority)
-                            )
-                            }
-                            Spacer(Modifier.height(10.dp))
-                            Text(
-                                solState.priorityReason,
-                                fontSize = 14.sp,
-                                color = TextPrimary,
-                                lineHeight = 20.sp
-                            )
-                            Spacer(Modifier.height(6.dp))
-                            Text(
-                                solState.priorityAction,
-                                fontSize = 13.sp,
-                                color = TextSecondary,
-                                lineHeight = 18.sp
-                            )
-                        }
-                    }
 
                     // ── MICRO WIN ──
                     val topWin = solState.microWins.firstOrNull()
@@ -421,6 +402,19 @@ fun DashboardScreen(
                         }
                         Spacer(Modifier.height(16.dp))
                     }
+
+                    // ── SOL COMPANION ──
+                    SolCard(
+                        state = solState,
+                        onToggleWhy = solViewModel::toggleWhy,
+                        onToggleWhat = solViewModel::toggleWhat,
+                        onListen = solViewModel::speak,
+                        onPersonalityChange = { showPersonalityDialog = true },
+                        onLogMeal = onLogMeal,
+                        onLogWorkout = onLogWorkout
+                    )
+
+                    Spacer(Modifier.height(16.dp))
 
                     // ── SETBACK RECOVERY ──
                     solState.setbackMessages.forEach { msg ->

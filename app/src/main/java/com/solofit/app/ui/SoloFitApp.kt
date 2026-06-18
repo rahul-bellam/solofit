@@ -96,7 +96,6 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
         else -> {
             val start = when (startState) {
                 StartState.Onboarding -> Routes.ONBOARDING
-                StartState.ModuleSelection -> Routes.MODULE_SELECTION
                 else -> Routes.DASHBOARD
             }
 
