@@ -1,7 +1,6 @@
 package com.solofit.app.data.local
 
 import android.content.Context
-import androidx.datastore.preferences.core.Preferences
 import dagger.hilt.android.qualifiers.ApplicationContext
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit

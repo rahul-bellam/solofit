@@ -1,9 +1,7 @@
 package com.solofit.app.ui.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,9 +26,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -38,7 +33,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -56,13 +50,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.core.DateUtils
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.sol.DailyPriority
-import com.solofit.app.sol.LifestyleMode
-import com.solofit.app.sol.MomentumLevel
 import com.solofit.app.sol.SetbackPrediction
 import com.solofit.app.sol.SolCard
 import com.solofit.app.sol.PersonalityDialog
 import com.solofit.app.sol.SolViewModel
-import com.solofit.app.sol.VoicePersonality
 import com.solofit.app.ui.components.WaterTracker
 import com.solofit.app.ui.modules.ModuleSuggestion
 import com.solofit.app.domain.model.FeatureVisibility

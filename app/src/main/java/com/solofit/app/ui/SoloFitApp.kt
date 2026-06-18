@@ -66,6 +66,7 @@ import com.solofit.app.ui.progress.ProgressScreen
 import com.solofit.app.ui.bodyrecomp.BodyRecompScreen
 import com.solofit.app.ui.walking.WalkingScreen
 import com.solofit.app.ui.habits.HabitsScreen
+import com.solofit.app.ui.yoga.YogaScreen
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.ui.theme.CardPrimary
@@ -75,7 +76,7 @@ private fun navBarColorForRoute(route: String?): Color = SurfaceBg
 
 private val SNAV_ROUTES = setOf(
     Routes.DASHBOARD, Routes.WORKOUT, Routes.NUTRITION, Routes.RECOVERY,
-    Routes.MEDITATION, Routes.JOURNAL, Routes.BODY, Routes.PROGRESS, Routes.WALKING, Routes.HABITS
+    Routes.MEDITATION, Routes.JOURNAL, Routes.BODY, Routes.PROGRESS, Routes.WALKING, Routes.HABITS, Routes.YOGA
 )
 
 private fun hasScreen(module: SoloFitModule): Boolean = module.route in SNAV_ROUTES
@@ -289,9 +290,7 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                         HabitsScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.YOGA) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Yoga & Flexibility", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                        }
+                        YogaScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.PROGRESS) {
                         ProgressScreen()

@@ -13,7 +13,6 @@ import com.solofit.app.ui.theme.RustIron
 import com.solofit.app.ui.theme.SlateBlue
 import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.TwilightBlue
-import com.solofit.app.ui.theme.WalkingAccent
 
 data class PageAccent(
     val primary: Color = SolAccent,
@@ -33,13 +32,6 @@ fun NutritionTheme(content: @Composable () -> Unit) {
 @Composable
 fun JournalTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = JournalAccent, name = "journal")) {
-        MaterialTheme(typography = AppTypography) { content() }
-    }
-}
-
-@Composable
-fun BodyRecompTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = SlateBlue, name = "bodyrecomp")) {
         MaterialTheme(typography = AppTypography) { content() }
     }
 }
@@ -73,13 +65,6 @@ fun BodyTheme(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun WalkingPageTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = WalkingAccent, name = "walking")) {
-        MaterialTheme(typography = AppTypography) { content() }
-    }
-}
-
-@Composable
 fun WorkoutTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = RustIron, name = "workout")) {
         MaterialTheme(typography = AppTypography) { content() }
@@ -89,13 +74,6 @@ fun WorkoutTheme(content: @Composable () -> Unit) {
 @Composable
 fun StrengthTheme(content: @Composable () -> Unit) {
     CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = RustIron, name = "strength")) {
-        MaterialTheme(typography = AppTypography) { content() }
-    }
-}
-
-@Composable
-fun TrainingTheme(content: @Composable () -> Unit) {
-    CompositionLocalProvider(LocalPageAccent provides PageAccent(primary = RustIron, name = "training")) {
         MaterialTheme(typography = AppTypography) { content() }
     }
 }
