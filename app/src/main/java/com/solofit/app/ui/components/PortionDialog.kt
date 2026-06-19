@@ -46,7 +46,6 @@ import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.NutritionAccent
 import com.solofit.app.ui.theme.NutritionProtein
-import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.ProteinColor
@@ -420,14 +419,14 @@ fun PortionDialog(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(SolAccent.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
+                        .background(NutritionAccent.copy(alpha = 0.06f), RoundedCornerShape(12.dp))
                         .clickable { onImproveAccuracy() }
                         .padding(14.dp)
                 ) {
                     Column {
                         Text(
                             text = "Improve Accuracy",
-                            color = SolAccent,
+                            color = NutritionAccent,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )

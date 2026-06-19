@@ -1,6 +1,5 @@
 package com.solofit.app.ui.components
 
-import android.os.Build
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -12,11 +11,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
-private val glassShape = RoundedCornerShape(16.dp)
+// The design system forbids glassmorphism (a known "made-by-AI" tell). This is now a
+// flat, matte card with a hairline border and a hint of the section accent — no blur,
+// no translucency, no glow.
+private val cardShape = RoundedCornerShape(16.dp)
 
 @Composable
 fun GlassCard(
@@ -25,15 +26,13 @@ fun GlassCard(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Card(
-        modifier = modifier.then(
-            if (Build.VERSION.SDK_INT >= 31) Modifier.clip(glassShape) else Modifier
-        ),
-        shape = glassShape,
+        modifier = modifier,
+        shape = cardShape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.35f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
-        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.12f)),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        border = BorderStroke(1.dp, accentColor.copy(alpha = 0.18f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
@@ -41,5 +40,3 @@ fun GlassCard(
         )
     }
 }
-
-

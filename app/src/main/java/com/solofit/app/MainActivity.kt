@@ -41,6 +41,7 @@ class MainActivity : ComponentActivity() {
                 rootViewModel.applyReducedMotionOnce(scale)
             }
 
+            // Light is the default (premium-notebook feel); dark is a full alternative.
             val darkTheme = when (themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false

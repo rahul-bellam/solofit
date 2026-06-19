@@ -16,7 +16,7 @@ interface OpenFoodFactsService {
     suspend fun getProduct(
         @Path("barcode") barcode: String,
         @Query("fields") fields: String =
-            "code,product_name,brands,nutriments",
+            "code,product_name,product_name_en,generic_name,brands,nutriments",
         // OFF asks every client to identify itself via User-Agent.
         @Header("User-Agent") userAgent: String = USER_AGENT
     ): OffProductResponse

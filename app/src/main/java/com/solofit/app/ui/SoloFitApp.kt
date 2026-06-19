@@ -72,8 +72,6 @@ import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.SurfaceBg
 
-private fun navBarColorForRoute(route: String?): Color = SurfaceBg
-
 private val SNAV_ROUTES = setOf(
     Routes.DASHBOARD, Routes.WORKOUT, Routes.NUTRITION, Routes.RECOVERY,
     Routes.MEDITATION, Routes.JOURNAL, Routes.BODY, Routes.PROGRESS, Routes.WALKING, Routes.HABITS, Routes.YOGA
@@ -136,7 +134,7 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                                     restoreState = true
                                 }
                             },
-                            barColor = navBarColorForRoute(currentRoute)
+                            barColor = SurfaceBg
                         )
                     }
                 }
@@ -217,7 +215,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                                 }
                             },
                             onOpenMeditation = { navController.navigate(Routes.MEDITATION) },
-                            onOpenWalking = { navController.navigate(Routes.WALKING) }
+                            onOpenWalking = { navController.navigate(Routes.WALKING) },
+                            onOpenStress = { navController.navigate(Routes.STRESS) }
                         )
                     }
                     composable(Routes.NUTRITION) {
@@ -275,6 +274,9 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     }
                     composable(Routes.RECOVERY) {
                         RecoveryScreen(onBack = { navController.popBackStack() })
+                    }
+                    composable(Routes.STRESS) {
+                        com.solofit.app.ui.stress.StressScreen(onBack = { navController.popBackStack() })
                     }
                     composable(Routes.MEDITATION) {
                         MeditationScreen(onBack = { navController.popBackStack() })

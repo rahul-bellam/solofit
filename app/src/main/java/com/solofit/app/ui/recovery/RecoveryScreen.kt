@@ -54,6 +54,7 @@ import com.solofit.app.ui.theme.LowRed
 import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
+import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import kotlin.math.roundToInt
@@ -252,8 +253,8 @@ private fun FactorSlider(
         colors = SliderDefaults.colors(thumbColor = TwilightBlue, activeTrackColor = TwilightBlue)
     )
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(leftLabel, fontSize = 11.sp, color = Color(0xFF9CA3AF))
-        Text(rightLabel, fontSize = 11.sp, color = Color(0xFF9CA3AF))
+        Text(leftLabel, fontSize = 11.sp, color = TextTertiary)
+        Text(rightLabel, fontSize = 11.sp, color = TextTertiary)
     }
 }
 
@@ -297,7 +298,7 @@ private fun FactorSelector(
                     "$n",
                     fontSize = if (isSelected) 15.sp else 13.sp,
                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                    color = if (isSelected) PrimaryText else Color(0xFF9CA3AF)
+                    color = if (isSelected) PrimaryText else TextTertiary
                 )
             }
         }

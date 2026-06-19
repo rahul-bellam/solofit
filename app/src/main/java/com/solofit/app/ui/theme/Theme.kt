@@ -4,66 +4,77 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
-val DarkColorScheme = darkColorScheme(
-    primary = HoneyGold,
-    onPrimary = Color(0xFF1E1C1A),
-    primaryContainer = CardSecondary,
-    onPrimaryContainer = TextPrimary,
-    secondary = TextSecondary,
-    onSecondary = SurfaceBg,
-    secondaryContainer = CardSecondary,
-    onSecondaryContainer = TextPrimary,
-    tertiary = HoneyGold,
-    background = SurfaceBg,
-    onBackground = TextPrimary,
-    surface = CardPrimary,
-    onSurface = TextPrimary,
-    surfaceVariant = CardSecondary,
-    onSurfaceVariant = TextSecondary,
-    error = DarkError,
-    onError = TextPrimary,
-    outline = Hairline,
-    outlineVariant = Hairline,
-    inverseSurface = TextPrimary,
-    inverseOnSurface = SurfaceBg,
-    inversePrimary = HoneyGold,
-    surfaceTint = HoneyGold
+// Primary drives default buttons & emphasis. Per the design system, Honey Gold is
+// reserved for Sol, so primary is the warm ink — premium, restrained, never gold.
+private val DarkColorScheme = darkColorScheme(
+    primary = DarkSolo.ink,
+    onPrimary = DarkSolo.canvas,
+    primaryContainer = DarkSolo.surface2,
+    onPrimaryContainer = DarkSolo.ink,
+    secondary = DarkSolo.inkSoft,
+    onSecondary = DarkSolo.canvas,
+    secondaryContainer = DarkSolo.surface2,
+    onSecondaryContainer = DarkSolo.ink,
+    tertiary = SolGold,
+    onTertiary = DarkSolo.canvas,
+    background = DarkSolo.canvas,
+    onBackground = DarkSolo.ink,
+    surface = DarkSolo.surface,
+    onSurface = DarkSolo.ink,
+    surfaceVariant = DarkSolo.surface2,
+    onSurfaceVariant = DarkSolo.inkSoft,
+    error = ErrorClay,
+    onError = DarkSolo.ink,
+    outline = DarkSolo.line,
+    outlineVariant = DarkSolo.line,
+    inverseSurface = DarkSolo.ink,
+    inverseOnSurface = DarkSolo.canvas,
+    inversePrimary = LightSolo.ink,
+    surfaceTint = Color.Transparent
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Clay,
-    onPrimary = Color.White,
-    primaryContainer = LightCardSecondary,
-    onPrimaryContainer = LightTextPrimary,
-    secondary = LightTextSecondary,
-    onSecondary = Color.White,
-    secondaryContainer = LightCardSecondary,
-    onSecondaryContainer = LightTextPrimary,
-    background = LightBg,
-    onBackground = LightTextPrimary,
-    surface = LightCardPrimary,
-    onSurface = LightTextPrimary,
-    surfaceVariant = LightCardSecondary,
-    onSurfaceVariant = LightTextSecondary,
-    error = LowRed,
-    onError = Color.White,
-    outline = LightHairline,
-    outlineVariant = LightHairline,
-    inversePrimary = Clay,
-    surfaceTint = Clay
+    primary = LightSolo.ink,
+    onPrimary = LightSolo.surface,
+    primaryContainer = LightSolo.surface2,
+    onPrimaryContainer = LightSolo.ink,
+    secondary = LightSolo.inkSoft,
+    onSecondary = LightSolo.surface,
+    secondaryContainer = LightSolo.surface2,
+    onSecondaryContainer = LightSolo.ink,
+    tertiary = SolGold,
+    onTertiary = LightSolo.surface,
+    background = LightSolo.canvas,
+    onBackground = LightSolo.ink,
+    surface = LightSolo.surface,
+    onSurface = LightSolo.ink,
+    surfaceVariant = LightSolo.surface2,
+    onSurfaceVariant = LightSolo.inkSoft,
+    error = ErrorClay,
+    onError = LightSolo.surface,
+    outline = LightSolo.line,
+    outlineVariant = LightSolo.line,
+    inverseSurface = LightSolo.ink,
+    inverseOnSurface = LightSolo.surface,
+    inversePrimary = DarkSolo.ink,
+    surfaceTint = Color.Transparent
 )
 
 @Composable
 fun SoloFitTheme(
-    darkTheme: Boolean = true,
+    darkTheme: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = AppTypography,
-        content = content
-    )
+    val solo = if (darkTheme) DarkSolo else LightSolo
+    CompositionLocalProvider(LocalSoloColors provides solo) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = AppTypography,
+            content = content
+        )
+    }
 }

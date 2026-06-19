@@ -44,7 +44,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.material3.MaterialTheme
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.HabitsAccent
 import com.solofit.app.ui.theme.HighGreen
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
@@ -71,7 +71,7 @@ fun HabitsScreen(
                 },
                 actions = {
                     IconButton(onClick = { viewModel.setAddDialogOpen(true) }) {
-                        Icon(Icons.Filled.Add, contentDescription = "Add habit", tint = SolAccent)
+                        Icon(Icons.Filled.Add, contentDescription = "Add habit", tint = HabitsAccent)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -141,14 +141,14 @@ fun HabitsScreen(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = SolAccent,
-                        cursorColor = SolAccent
+                        focusedBorderColor = HabitsAccent,
+                        cursorColor = HabitsAccent
                     )
                 )
             },
             confirmButton = {
                 TextButton(onClick = { viewModel.addCustomHabit() }) {
-                    Text("Add", color = SolAccent)
+                    Text("Add", color = HabitsAccent)
                 }
             },
             dismissButton = {

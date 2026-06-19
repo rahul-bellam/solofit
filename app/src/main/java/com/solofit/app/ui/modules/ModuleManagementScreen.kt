@@ -41,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.solofit.app.domain.model.SoloFitModule
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.JournalAccent
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import androidx.compose.material3.MaterialTheme
@@ -132,12 +132,12 @@ private fun ModuleManageCard(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     Modifier.size(36.dp).clip(CircleShape)
-                        .background(if (enabled) SolAccent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface),
+                        .background(if (enabled) JournalAccent.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
                         moduleIcon(module), null,
-                        tint = if (enabled) SolAccent else SecondaryText,
+                        tint = if (enabled) JournalAccent else SecondaryText,
                         modifier = Modifier.size(18.dp)
                     )
                 }
@@ -165,7 +165,7 @@ private fun ModuleManageCard(
         Switch(
             checked = enabled,
             onCheckedChange = { onToggle() },
-            colors = SwitchDefaults.colors(checkedTrackColor = SolAccent)
+            colors = SwitchDefaults.colors(checkedTrackColor = JournalAccent)
         )
     }
 }

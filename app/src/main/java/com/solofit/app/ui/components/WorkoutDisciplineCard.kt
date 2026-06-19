@@ -26,7 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.WorkoutAccent
 import kotlin.random.Random
 
 private val DISCIPLINE_MESSAGES = listOf(
@@ -92,12 +92,12 @@ fun WorkoutDisciplineCard(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(SolAccent.copy(alpha = 0.06f))
+            .background(WorkoutAccent.copy(alpha = 0.06f))
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(6.dp).clip(CircleShape).background(SolAccent)
+                Modifier.size(6.dp).clip(CircleShape).background(WorkoutAccent)
             )
             Spacer(Modifier.width(10.dp))
             Text(

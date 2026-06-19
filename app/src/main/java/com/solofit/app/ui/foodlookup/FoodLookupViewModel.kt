@@ -6,8 +6,12 @@ import com.solofit.app.data.remote.UsdaFood
 import com.solofit.app.data.remote.UsdaNutrient
 import com.solofit.app.data.remote.UsdaFoodService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,23 +31,47 @@ class FoodLookupViewModel @Inject constructor(
     private val _state = MutableStateFlow(LookupState())
     val state = _state.asStateFlow()
 
-    fun onQueryChange(q: String) {
-        _state.value = _state.value.copy(query = q)
+    private val queryFlow = MutableStateFlow("")
+
+    @OptIn(FlowPreview::class)
+    private fun observeQuery() {
+        viewModelScope.launch {
+            queryFlow
+                .debounce(350)
+                .map { it.trim() }
+                .distinctUntilChanged()
+                .collect { q ->
+                    if (q.length >= 2) runSearch(q)
+                    else _state.value = _state.value.copy(results = emptyList(), error = null)
+                }
+        }
     }
 
-    fun search() {
-        val q = _state.value.query.trim()
+    init { observeQuery() }
+
+    fun onQueryChange(q: String) {
+        _state.value = _state.value.copy(query = q)
+        queryFlow.value = q
+    }
+
+    /** Manual trigger (search button / IME action) — searches immediately. */
+    fun search() = runSearch(_state.value.query.trim())
+
+    private fun runSearch(q: String) {
         if (q.length < 2) return
         _state.value = _state.value.copy(isSearching = true, error = null, selectedFood = null)
         viewModelScope.launch {
             try {
                 val response = usdaService.searchFoods(query = q, pageSize = 10)
+                // A late response for a stale query shouldn't clobber newer input.
+                if (_state.value.query.trim() != q) return@launch
                 _state.value = _state.value.copy(
                     isSearching = false,
                     results = response.foods,
                     error = if (response.foods.isEmpty()) "No foods found for \"$q\"." else null
                 )
             } catch (e: Exception) {
+                if (_state.value.query.trim() != q) return@launch
                 val msg = when {
                     e.message?.contains("DEMO_KEY") == true ||
                         e.message?.contains("unauthorized") == true ||

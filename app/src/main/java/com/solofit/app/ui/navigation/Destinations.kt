@@ -35,6 +35,7 @@ object Routes {
     const val FOOD_LOOKUP = "food_lookup"
     const val WEEKLY_PLANNER = "weekly_planner"
     const val RECOVERY = "recovery"
+    const val STRESS = "stress"
     const val MEDITATION = "meditation"
     const val WELLNESS = "wellness"
     const val PROGRESS = "progress"

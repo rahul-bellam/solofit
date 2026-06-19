@@ -66,6 +66,8 @@ class BarcodeRepositoryImpl @Inject constructor(
                     return@measureSuspend BarcodeLookupResult.NotFound(barcode)
                 }
                 val name = product.productName?.takeIf { it.isNotBlank() }
+                    ?: product.productNameEn?.takeIf { it.isNotBlank() }
+                    ?: product.genericName?.takeIf { it.isNotBlank() }
                     ?: product.brands?.takeIf { it.isNotBlank() }
                     ?: "Product $barcode"
 

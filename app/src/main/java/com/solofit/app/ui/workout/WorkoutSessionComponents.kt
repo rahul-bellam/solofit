@@ -41,8 +41,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.WorkoutAccent
 import com.solofit.app.ui.theme.HighGreen
+import com.solofit.app.ui.theme.LowRed
 import com.solofit.app.ui.theme.MidAmber
 import kotlinx.coroutines.delay
 
@@ -78,7 +79,7 @@ fun ProgressRing(
 
     val color = when (state) {
         RingState.COMPLETE -> HighGreen
-        RingState.ACTIVE -> SolAccent
+        RingState.ACTIVE -> WorkoutAccent
         RingState.REST -> MidAmber
         RingState.UPCOMING -> Color.White.copy(alpha = 0.2f)
     }
@@ -114,11 +115,11 @@ fun ProgressRing(
                     Modifier
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF22C55E).copy(alpha = 0.15f))
-                        .border(1.dp, Color(0xFF22C55E).copy(alpha = 0.3f), CircleShape),
+                        .background(HighGreen.copy(alpha = 0.15f))
+                        .border(1.dp, HighGreen.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("✓", color = Color(0xFF22C55E), fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Text("✓", color = HighGreen, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                 }
             }
 
@@ -143,7 +144,7 @@ fun ProgressRing(
 
             RingState.REST -> {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("REST", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = SolAccent)
+                    Text("REST", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = WorkoutAccent)
                     Text("45s", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
@@ -217,8 +218,8 @@ fun WorkoutExerciseCard(
         .border(1.dp, Color(0x1AFFFFFF), RoundedCornerShape(24.dp))
         .drawBehind {
             val accentColor = when (intensityForName(exerciseName)) {
-                IntensityLevel.HIGH -> Color(0xFFFF6B6B)
-                IntensityLevel.MED -> SolAccent
+                IntensityLevel.HIGH -> LowRed
+                IntensityLevel.MED -> WorkoutAccent
                 IntensityLevel.LOW -> lowAccent
             }
             drawRect(
@@ -252,22 +253,22 @@ fun WorkoutExerciseCard(
                                 TagChip(
                                     text = "Active",
                                     textColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    bgColor = SolAccent.copy(alpha = 0.15f),
-                                    borderColor = SolAccent.copy(alpha = 0.3f),
-                                    dotColor = SolAccent.copy(alpha = pulse)
+                                    bgColor = WorkoutAccent.copy(alpha = 0.15f),
+                                    borderColor = WorkoutAccent.copy(alpha = 0.3f),
+                                    dotColor = WorkoutAccent.copy(alpha = pulse)
                                 )
                             }
                             isComplete -> TagChip(
                                 text = "Done",
-                                textColor = Color(0xFF22C55E),
-                                bgColor = Color(0xFF22C55E).copy(alpha = 0.15f),
-                                borderColor = Color(0xFF22C55E).copy(alpha = 0.3f)
+                                textColor = HighGreen,
+                                bgColor = HighGreen.copy(alpha = 0.15f),
+                                borderColor = HighGreen.copy(alpha = 0.3f)
                             )
                             state == RingState.REST -> TagChip(
                                 text = "Rest",
-                                textColor = SolAccent,
-                                bgColor = SolAccent.copy(alpha = 0.15f),
-                                borderColor = SolAccent.copy(alpha = 0.3f)
+                                textColor = WorkoutAccent,
+                                bgColor = WorkoutAccent.copy(alpha = 0.15f),
+                                borderColor = WorkoutAccent.copy(alpha = 0.3f)
                             )
                         }
                     }
@@ -316,7 +317,7 @@ fun WorkoutExerciseCard(
                                         .height(8.dp)
                                         .clip(RoundedCornerShape(4.dp))
                                         .background(
-                                            Brush.horizontalGradient(listOf(SolAccent, SolAccent))
+                                            Brush.horizontalGradient(listOf(WorkoutAccent, WorkoutAccent))
                                         )
                                 )
                             }
@@ -334,7 +335,7 @@ fun WorkoutExerciseCard(
                                 SessionActionButton(
                                     text = "Done",
                                     onClick = onCompleteSet,
-                                    gradient = SolAccent to SolAccent,
+                                    gradient = WorkoutAccent to WorkoutAccent,
                                     modifier = Modifier.weight(1f)
                                 )
                             }
@@ -344,13 +345,13 @@ fun WorkoutExerciseCard(
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     "✓",
-                                    color = Color(0xFF22C55E),
+                                    color = HighGreen,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp
                                 )
                                 Text(
                                     "Completed",
-                                    color = Color(0xFF22C55E),
+                                    color = HighGreen,
                                     fontWeight = FontWeight.SemiBold,
                                     fontSize = 13.sp
                                 )
@@ -366,8 +367,8 @@ fun WorkoutExerciseCard(
                             Row(
                                 Modifier.fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))
-                                    .background(SolAccent.copy(alpha = 0.05f))
-                                    .border(1.dp, SolAccent.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
+                                    .background(WorkoutAccent.copy(alpha = 0.05f))
+                                    .border(1.dp, WorkoutAccent.copy(alpha = 0.15f), RoundedCornerShape(16.dp))
                                     .clickable(onClick = onRest)
                                     .padding(horizontal = 12.dp, vertical = 12.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -377,17 +378,17 @@ fun WorkoutExerciseCard(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Box(Modifier.size(8.dp).clip(CircleShape).background(SolAccent))
+                                    Box(Modifier.size(8.dp).clip(CircleShape).background(WorkoutAccent))
                                     Text(
                                         "Recovering",
-                                        color = SolAccent,
+                                        color = WorkoutAccent,
                                         fontWeight = FontWeight.SemiBold,
                                         fontSize = 13.sp
                                     )
                                 }
                                 Text(
                                     restDisplay,
-                                    color = SolAccent,
+                                    color = WorkoutAccent,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 22.sp
                                 )
@@ -398,7 +399,7 @@ fun WorkoutExerciseCard(
                             SessionActionButton(
                                 text = "Start Set",
                                 onClick = onStartSet,
-                                gradient = SolAccent to SolAccent,
+                                gradient = WorkoutAccent to WorkoutAccent,
                                 modifier = Modifier.fillMaxWidth()
                             )
                         }
@@ -500,7 +501,7 @@ fun SessionHeader(
                     Modifier
                         .size(40.dp)
                         .clip(RoundedCornerShape(16.dp))
-                        .background(brush = Brush.verticalGradient(listOf(SolAccent, Color(0xFFFF8A3D)))),
+                        .background(WorkoutAccent.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Text("🔥", fontSize = 18.sp)
@@ -561,7 +562,7 @@ fun SessionProgressBar(
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .background(
-                        Brush.horizontalGradient(listOf(SolAccent, SolAccent, SolAccent))
+                        Brush.horizontalGradient(listOf(WorkoutAccent, WorkoutAccent, WorkoutAccent))
                     )
             )
         }

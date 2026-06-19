@@ -49,6 +49,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.core.DateUtils
 import com.solofit.app.domain.model.SoloFitModule
+import com.solofit.app.sol.BurnoutLevel
 import com.solofit.app.sol.DailyPriority
 import com.solofit.app.sol.SetbackPrediction
 import com.solofit.app.sol.SolCard
@@ -62,8 +63,13 @@ import com.solofit.app.ui.dashboard.WeeklyReflection
 import com.solofit.app.ui.dashboard.MonthlyReflection
 import com.solofit.app.ui.dashboard.MonthlyReflectionData
 import com.solofit.app.ui.theme.Hairline
+import com.solofit.app.ui.theme.HabitsAccent
+import com.solofit.app.ui.theme.MeditationAccent
 import com.solofit.app.ui.theme.MossGreen
+import com.solofit.app.ui.theme.NutritionAccent
 import com.solofit.app.ui.theme.OliveClay
+import com.solofit.app.ui.theme.RecoveryAccent
+import com.solofit.app.ui.theme.WorkoutAccent
 import com.solofit.app.ui.theme.RustIron
 import com.solofit.app.ui.theme.Terracotta
 import com.solofit.app.ui.theme.TextPrimary
@@ -87,6 +93,7 @@ fun DashboardScreen(
     onOpenRecovery: () -> Unit = {},
     onOpenMeditation: () -> Unit = {},
     onOpenWalking: () -> Unit = {},
+    onOpenStress: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
     solViewModel: SolViewModel = hiltViewModel()
 ) {
@@ -213,6 +220,46 @@ fun DashboardScreen(
                     }
 
                     Spacer(Modifier.height(24.dp))
+
+                    // ── BURNOUT EARLY-WARNING (gentle, only when elevated) ──
+                    val burnout = solState.burnout
+                    if (burnout != null &&
+                        (burnout.level == BurnoutLevel.ELEVATED || burnout.level == BurnoutLevel.HIGH)
+                    ) {
+                        Card(
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.fillMaxWidth().clickable(onClick = onOpenStress),
+                            colors = CardDefaults.cardColors(
+                                containerColor = RecoveryAccent.copy(alpha = 0.08f)
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Box(Modifier.size(8.dp).clip(CircleShape).background(RecoveryAccent))
+                                    Spacer(Modifier.width(10.dp))
+                                    Text(
+                                        burnout.insight?.title ?: "Energy Appears Lower Than Usual",
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = TextPrimary,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                }
+                                Spacer(Modifier.height(6.dp))
+                                Text(
+                                    burnout.insight?.observation
+                                        ?: "A few recovery signals are moving the wrong way.",
+                                    fontSize = 13.sp, color = TextPrimary, lineHeight = 18.sp
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    "View energy & stress →",
+                                    fontSize = 12.sp, color = RecoveryAccent, fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(24.dp))
+                    }
 
                     // ── FIRST WEEK GOALS ──
                     if (state.isFirstWeek) {
@@ -565,6 +612,7 @@ fun DashboardScreen(
                     )
                     Spacer(Modifier.height(10.dp))
                     val quickLinks = listOf(
+                        QuickLink("Energy", onOpenStress),
                         QuickLink("Journal", onOpenJournal),
                         QuickLink("Body", onOpenBody),
                         QuickLink("Weight", onOpenWeight),
@@ -756,13 +804,13 @@ private fun QuickLinkChip(label: String, onClick: () -> Unit, modifier: Modifier
 }
 
 private fun priorityColor(priority: DailyPriority): Color = when (priority) {
-    DailyPriority.MOVEMENT -> MossGreen
-    DailyPriority.RECOVERY -> TwilightBlue
-    DailyPriority.NUTRITION -> Terracotta
-    DailyPriority.SLEEP -> TwilightBlue.copy(red = 0.4f, green = 0.3f, blue = 0.6f)
-    DailyPriority.PERFORMANCE -> RustIron
-    DailyPriority.CONSISTENCY -> OliveClay
-    DailyPriority.MINDFULNESS -> TextSecondary
+    DailyPriority.MOVEMENT -> WalkingAccent
+    DailyPriority.RECOVERY -> RecoveryAccent
+    DailyPriority.NUTRITION -> NutritionAccent
+    DailyPriority.SLEEP -> RecoveryAccent
+    DailyPriority.PERFORMANCE -> WorkoutAccent
+    DailyPriority.CONSISTENCY -> HabitsAccent
+    DailyPriority.MINDFULNESS -> MeditationAccent
 }
 
 private fun setbackPredColor(pred: SetbackPrediction): Color = when (pred.riskLevel) {

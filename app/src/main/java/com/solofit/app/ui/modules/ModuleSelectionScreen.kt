@@ -48,9 +48,11 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.BarChart
 import com.solofit.app.domain.model.SoloFitModule
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.JournalAccent
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
+import com.solofit.app.ui.theme.Hairline
+import com.solofit.app.ui.theme.CardSecondary
 import androidx.compose.material3.MaterialTheme
 
 @Composable
@@ -102,7 +104,7 @@ fun ModuleSelectionScreen(
                 enabled = selected.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().height(54.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = SolAccent)
+                colors = ButtonDefaults.buttonColors(containerColor = JournalAccent)
             ) {
                 Text("Continue", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
@@ -118,11 +120,11 @@ private fun ModuleCard(
     onToggle: () -> Unit
 ) {
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected) SolAccent else Color(0xFFE5E7EB),
+        targetValue = if (isSelected) JournalAccent else Hairline,
         animationSpec = tween(200), label = "border"
     )
     val iconTint by animateColorAsState(
-        targetValue = if (isSelected) SolAccent else SecondaryText,
+        targetValue = if (isSelected) JournalAccent else SecondaryText,
         animationSpec = tween(200), label = "icon"
     )
 
@@ -132,7 +134,7 @@ private fun ModuleCard(
             .clip(RoundedCornerShape(16.dp))
             .background(MaterialTheme.colorScheme.surface)
             .border(
-                border = if (isSelected) BorderStroke(1.5.dp, SolAccent) else BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                border = if (isSelected) BorderStroke(1.5.dp, JournalAccent) else BorderStroke(1.dp, Hairline),
                 shape = RoundedCornerShape(16.dp)
             )
             .clickable(onClick = onToggle)
@@ -140,7 +142,7 @@ private fun ModuleCard(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
-                Modifier.size(48.dp).clip(CircleShape).background(if (isSelected) SolAccent.copy(alpha = 0.12f) else Color(0xFFF3F4F6)),
+                Modifier.size(48.dp).clip(CircleShape).background(if (isSelected) JournalAccent.copy(alpha = 0.12f) else CardSecondary),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -156,7 +158,7 @@ private fun ModuleCard(
                 Text(module.description, fontSize = 12.sp, color = SecondaryText)
             }
             if (isSelected) {
-                Icon(Icons.Filled.CheckCircle, null, tint = SolAccent, modifier = Modifier.size(22.dp))
+                Icon(Icons.Filled.CheckCircle, null, tint = JournalAccent, modifier = Modifier.size(22.dp))
             }
         }
     }

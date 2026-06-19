@@ -45,16 +45,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
+import com.solofit.app.ui.theme.WorkoutAccent
+import com.solofit.app.ui.theme.WalkingAccent
+import com.solofit.app.ui.theme.MeditationAccent
+import com.solofit.app.ui.theme.RecoveryAccent
+import com.solofit.app.ui.theme.BodyRecompAccent
+import com.solofit.app.ui.theme.SuccessGreen
 
 data class YogaSession(val name: String, val durationMin: Int, val description: String, val color: Color)
 
 private val sessions = listOf(
-    YogaSession("Sun Salutation", 15, "12 classic poses in a flowing sequence", Color(0xFFFFB347)),
-    YogaSession("Morning Flow", 10, "Gentle stretches to start the day", Color(0xFFA8D5BA)),
-    YogaSession("Midday Reset", 5, "Quick desk-friendly mobility break", Color(0xFFFFD6A5)),
-    YogaSession("Hip Openers", 15, "Release tension built from sitting", Color(0xFFB5D8EB)),
-    YogaSession("Full Body Stretch", 20, "Complete flexibility routine", Color(0xFFD4B5E0)),
-    YogaSession("Evening Wind Down", 10, "Calming poses before bed", Color(0xFFA8D5BA))
+    YogaSession("Sun Salutation", 15, "12 classic poses in a flowing sequence", WorkoutAccent),
+    YogaSession("Morning Flow", 10, "Gentle stretches to start the day", SuccessGreen),
+    YogaSession("Midday Reset", 5, "Quick desk-friendly mobility break", WalkingAccent),
+    YogaSession("Hip Openers", 15, "Release tension built from sitting", MeditationAccent),
+    YogaSession("Full Body Stretch", 20, "Complete flexibility routine", BodyRecompAccent),
+    YogaSession("Evening Wind Down", 10, "Calming poses before bed", RecoveryAccent)
 )
 
 data class PoseStep(
@@ -207,7 +213,7 @@ private fun SunSalutationFlow(onBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             Card(
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFFFB347).copy(alpha = 0.08f)),
+                colors = CardDefaults.cardColors(containerColor = WorkoutAccent.copy(alpha = 0.08f)),
                 shape = RoundedCornerShape(16.dp)
             ) {
                 Column(Modifier.padding(16.dp)) {
@@ -221,7 +227,7 @@ private fun SunSalutationFlow(onBack: () -> Unit) {
                         "Cardiovascular workout in 15 min"
                     ).forEach { b ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(4.dp).clip(CircleShape).background(Color(0xFFFFB347)))
+                            Box(Modifier.size(4.dp).clip(CircleShape).background(WorkoutAccent))
                             Spacer(Modifier.width(8.dp))
                             Text(b, fontSize = 12.sp, color = TextSecondary)
                         }
@@ -276,7 +282,7 @@ private fun PoseCard(pose: PoseStep) {
 
 @Composable
 private fun BreathBadge(breath: String) {
-    val color = if (breath == "Inhale") Color(0xFF4CAF50) else Color(0xFF42A5F5)
+    val color = if (breath == "Inhale") SuccessGreen else MeditationAccent
     Box(
         Modifier
             .clip(RoundedCornerShape(6.dp))
@@ -289,7 +295,7 @@ private fun BreathBadge(breath: String) {
 
 @Composable
 private fun PoseFigure(poseNumber: Int, modifier: Modifier = Modifier) {
-    val color = Color(0xFFFFB347)
+    val color = WorkoutAccent
     Canvas(modifier) {
         val w = size.width
         val h = size.height

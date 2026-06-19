@@ -8,6 +8,7 @@ import com.solofit.app.BuildConfig
 import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.entity.DailyLogEntity
 import com.solofit.app.data.local.entity.FoodItemEntity
+import com.solofit.app.data.remote.GeminiGenerationConfig
 import com.solofit.app.data.remote.GeminiInlineData
 import com.solofit.app.data.remote.GeminiPart
 import com.solofit.app.data.remote.GeminiContent
@@ -60,9 +61,13 @@ data class AiFoodJson(
 )
 
 private val AI_PROMPT = """
-Analyze this food image. Return ONLY valid JSON with no markdown formatting, no code fences:
-{"name": "food name", "caloriesPer100g": number, "proteinPer100g": number, "carbsPer100g": number, "fatsPer100g": number, "fiberPer100g": number, "estimatedGrams": number}
-Focus on proteins, carbs, fats, and fibers. Default estimatedGrams to 200 if unsure.
+You are a nutrition estimator. Identify the food in the image and estimate its nutrition PER 100 GRAMS.
+Use realistic values for common foods. If the dish is mixed (e.g. curry, biryani, salad, sandwich),
+give a sensible overall estimate for the whole dish.
+Return a JSON object with exactly these keys:
+{"name": string, "caloriesPer100g": number, "proteinPer100g": number, "carbsPer100g": number, "fatsPer100g": number, "fiberPer100g": number, "estimatedGrams": number}
+"estimatedGrams" is the approximate total grams of food visible (use 200 if unsure).
+If you cannot recognize any food, set "name" to "" and all numbers to 0.
 """.trimIndent()
 
 private fun bitmapToBase64(bitmap: Bitmap): String {
@@ -79,7 +84,16 @@ private fun bitmapToBase64(bitmap: Bitmap): String {
 
 private val json = Json { ignoreUnknownKeys = true }
 
-private val jsonRegex = Regex("```(?:json)?\\s*([\\s\\S]*?)\\s*```|^\\s*([\\s\\S]*?)\\s*$")
+/**
+ * Pulls the JSON object out of a model reply. With JSON mode this is usually already
+ * clean, but this also survives stray markdown fences or prose by taking the substring
+ * between the first '{' and the last '}'.
+ */
+private fun extractJsonObject(raw: String): String {
+    val start = raw.indexOf('{')
+    val end = raw.lastIndexOf('}')
+    return if (start in 0 until end) raw.substring(start, end + 1) else raw.trim()
+}
 
 private fun inferMealCategory(): MealCategory {
     val hour = LocalTime.now().hour
@@ -158,9 +172,18 @@ class AiFoodScanViewModel @Inject constructor(
                                         )
                                     )
                                 )
+                            ),
+                            generationConfig = GeminiGenerationConfig(
+                                responseMimeType = "application/json",
+                                temperature = 0.2
                             )
                         )
                     )
+                }
+
+                // The model can decline an image for safety reasons → no usable candidate.
+                response.promptFeedback?.blockReason?.let {
+                    throw Exception("No response from AI")
                 }
 
                 val text = response.candidates?.firstOrNull()
@@ -168,12 +191,15 @@ class AiFoodScanViewModel @Inject constructor(
                     ?.text?.trim()
                     ?: throw Exception("No response from AI")
 
-                val cleaned = jsonRegex.find(text)?.let {
-                        it.groupValues[1].ifBlank { it.groupValues[2] }
-                    }?.trim() ?: text.trim()
-
                 val aiFood = withContext(Dispatchers.IO) {
-                    json.decodeFromString<AiFoodJson>(cleaned)
+                    json.decodeFromString<AiFoodJson>(extractJsonObject(text))
+                }
+
+                if (aiFood.name.isBlank() || aiFood.caloriesPer100g <= 0.0) {
+                    _scanResult.tryEmit(
+                        AiScanResult.Error("Couldn't recognize a food. Try a clearer, closer photo.")
+                    )
+                    return@launch
                 }
 
                 _scanResult.tryEmit(

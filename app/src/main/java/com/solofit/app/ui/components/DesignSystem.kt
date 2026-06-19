@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.DarkSurface
 import com.solofit.app.ui.theme.DarkText

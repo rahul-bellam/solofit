@@ -70,7 +70,8 @@ data class SolUiState(
     val setbackMessages: List<SetbackRecoveryMessage> = emptyList(),
     val confidence: String = "Low",
     val patternDiscoveries: List<PatternDiscovery> = emptyList(),
-    val setbackPrediction: SetbackPrediction? = null
+    val setbackPrediction: SetbackPrediction? = null,
+    val burnout: BurnoutAssessment? = null
 )
 
 private val BRIEFING_HEADERS = listOf(
@@ -159,18 +160,9 @@ class SolViewModel @Inject constructor(
             val prevSleep = yesterdayMetric?.sleepHours
             val prevSteps = yesterdayMetric?.steps
 
-            val journalSentiment: JournalSentiment? = if (recentEntries.isEmpty()) null else {
-                val positiveWords = setOf("grateful", "happy", "good", "great", "thankful", "love", "enjoy", "blessed", "wonderful", "amazing", "excited", "peaceful")
-                val challengingWords = setOf("struggle", "hard", "tired", "sad", "anxious", "stress", "difficult", "challenging", "overwhelmed", "exhausted", "frustrated", "worried")
-                val text = recentEntries.joinToString(" ") { it.text.lowercase() }
-                val posCount = positiveWords.count { it in text }
-                val negCount = challengingWords.count { it in text }
-                when {
-                    posCount > negCount -> JournalSentiment.POSITIVE
-                    negCount > posCount -> JournalSentiment.CHALLENGING
-                    else -> null
-                }
-            }
+            val journalSentiment: JournalSentiment? =
+                JournalSentimentEngine.classify(recentEntries.map { it.text })
+                    ?.takeUnless { it == JournalSentiment.NEUTRAL }
 
             // ── Weekly data aggregation ──
             val weekStart = now.minusDays(6)
@@ -508,6 +500,22 @@ class SolViewModel @Inject constructor(
                 topDriver = topDriver
             )
 
+            // ── Burnout Engine (knowledge-worker early-warning) ──
+            val burnout = BurnoutEngine.assess(
+                BurnoutInput(
+                    weeklySleep = weeklyMetrics.mapNotNull { it.sleepHours },
+                    weeklyRecovery = weeklyRecovery,
+                    weeklySteps = weeklySteps,
+                    recoveryScore = recoveryScore,
+                    sleepHours = metric?.sleepHours,
+                    stressLevel = wellness.stressLevel,
+                    journalSentiment = journalSentiment,
+                    usualWeeklyWorkouts = (workouts30d / 4.0).roundToInt(),
+                    recentWeeklyWorkouts = weeklyWorkoutCount,
+                    trainingLoadIncreasing = volumeIncrease
+                )
+            )
+
             // ── Online training (one example per day, after outcome is known) ──
             val lastTrainedDate = prefs.setbackLastTrainedDate.first()
             if (lastTrainedDate != yesterdayStr) {
@@ -621,7 +629,8 @@ class SolViewModel @Inject constructor(
                 identityMessage = identityMessage,
                 setbackMessages = setbackMessages,
                 confidence = confidence,
-                setbackPrediction = setbackPrediction
+                setbackPrediction = setbackPrediction,
+                burnout = burnout
             )
         }
     }

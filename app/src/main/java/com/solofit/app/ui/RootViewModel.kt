@@ -30,7 +30,7 @@ class RootViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StartState.Loading)
 
     val themeMode: StateFlow<ThemeMode> = prefs.themeMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.SYSTEM)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ThemeMode.LIGHT)
 
     fun setThemeMode(mode: ThemeMode) {
         viewModelScope.launch { prefs.setThemeMode(mode) }

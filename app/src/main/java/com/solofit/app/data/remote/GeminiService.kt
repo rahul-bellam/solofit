@@ -8,7 +8,8 @@ import retrofit2.http.POST
 import retrofit2.http.Query
 
 interface GeminiService {
-    @POST("v1beta/models/gemini-1.5-flash:generateContent")
+    // gemini-2.5-flash: current multimodal (vision) Flash model with JSON-mode support.
+    @POST("v1beta/models/gemini-2.5-flash:generateContent")
     suspend fun generateContent(
         @Query("key") apiKey: String = BuildConfig.GEMINI_API_KEY,
         @Body request: GeminiRequest
@@ -23,7 +24,8 @@ interface GeminiService {
 
 @Serializable
 data class GeminiRequest(
-    val contents: List<GeminiContent>
+    val contents: List<GeminiContent>,
+    val generationConfig: GeminiGenerationConfig? = null
 )
 
 @Serializable
@@ -43,14 +45,31 @@ data class GeminiInlineData(
     val data: String
 )
 
+/**
+ * Forces structured output. `responseMimeType = application/json` makes the model
+ * return raw JSON (no markdown fences / prose), which the scan flow can parse directly.
+ */
+@Serializable
+data class GeminiGenerationConfig(
+    val responseMimeType: String? = null,
+    val temperature: Double? = null
+)
+
 // --- Response DTOs ---
 
 @Serializable
 data class GeminiResponse(
-    val candidates: List<GeminiCandidate>? = null
+    val candidates: List<GeminiCandidate>? = null,
+    @SerialName("promptFeedback") val promptFeedback: GeminiPromptFeedback? = null
 )
 
 @Serializable
 data class GeminiCandidate(
-    val content: GeminiContent? = null
+    val content: GeminiContent? = null,
+    @SerialName("finishReason") val finishReason: String? = null
+)
+
+@Serializable
+data class GeminiPromptFeedback(
+    @SerialName("blockReason") val blockReason: String? = null
 )

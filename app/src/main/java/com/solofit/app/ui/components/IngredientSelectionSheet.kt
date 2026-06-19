@@ -43,7 +43,6 @@ import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.NutritionAccent
 import com.solofit.app.ui.theme.NutritionProtein
-import com.solofit.app.ui.theme.SolAccent
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
 import kotlin.math.roundToInt
@@ -191,8 +190,8 @@ fun IngredientSelectionSheet(
                                 valueRange = 5f..500f,
                                 steps = 48,
                                 colors = SliderDefaults.colors(
-                                    thumbColor = SolAccent,
-                                    activeTrackColor = SolAccent,
+                                    thumbColor = NutritionAccent,
+                                    activeTrackColor = NutritionAccent,
                                     inactiveTrackColor = Hairline
                                 ),
                                 modifier = Modifier.weight(1f)
@@ -237,7 +236,7 @@ fun IngredientSelectionSheet(
                 ) {
                     Text(
                         "Use These Ingredients",
-                        color = if (activeIngredients.isNotEmpty()) SolAccent else TextSecondary,
+                        color = if (activeIngredients.isNotEmpty()) NutritionAccent else TextSecondary,
                         fontWeight = FontWeight.SemiBold
                     )
                 }

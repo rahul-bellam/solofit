@@ -84,7 +84,7 @@ import com.solofit.app.ui.theme.ProteinColor
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
 import com.solofit.app.ui.theme.Hairline
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.NutritionAccent
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
 import kotlinx.coroutines.Dispatchers
@@ -220,7 +220,7 @@ fun NutritionScreen(
         ) {
             item {
                 NutritionHeader(
-                    colors = nutritionColors(isSystemInDarkTheme()),
+                    colors = nutritionColors(),
                     greeting = "Track what you eat",
                     tagline = "Nutrition"
                 )
@@ -238,7 +238,7 @@ fun NutritionScreen(
                             "$remaining",
                             fontSize = 80.sp,
                             fontWeight = FontWeight.Light,
-                            color = SolAccent,
+                            color = NutritionAccent,
                             letterSpacing = (-2).sp
                         )
                         Text(
@@ -251,13 +251,13 @@ fun NutritionScreen(
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     Modifier
-                                        .background(Color(0x332200FF), RoundedCornerShape(4.dp))
+                                        .background(NutritionAccent.copy(alpha = 0.15f), RoundedCornerShape(4.dp))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text(
                                         "auto-adjusted",
                                         fontSize = 10.sp,
-                                        color = Color(0xFF6633FF),
+                                        color = NutritionAccent,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
@@ -265,87 +265,8 @@ fun NutritionScreen(
                                     Spacer(Modifier.width(4.dp))
                                     Text(reasonText, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
                                 }
-    }
-
-    displayResult?.let { result ->
-        val confidence = when {
-            ingredientMealOverride != null -> NutritionConfidence.HIGH
-            else -> when (NutritionConfidenceEngine.fromSource(false, result.name)) {
-                NutritionConfidenceEngine.Level.HIGH -> NutritionConfidence.HIGH
-                NutritionConfidenceEngine.Level.MEDIUM -> NutritionConfidence.MEDIUM
-                NutritionConfidenceEngine.Level.LOW -> NutritionConfidence.LOW
-            }
-        }
-        PortionDialog(
-            title = result.name,
-            caloriesPer100g = result.caloriesPer100g,
-            proteinPer100g = result.proteinPer100g,
-            carbsPer100g = result.carbsPer100g,
-            fatsPer100g = result.fatsPer100g,
-            fiberPer100g = result.fiberPer100g,
-            confidence = confidence,
-            showIngredientOption = ingredientMealOverride == null,
-            onImproveAccuracy = {
-                pendingAiResult = aiResult
-                aiResult = null
-                showIngredientSheet = true
-            },
-            dailyProteinSoFar = dailyProtein,
-            dailyProteinTarget = proteinGoal,
-            frequentMeals = viewModel.frequentMeals.value,
-            onSelectFrequentMeal = { meal ->
-                val food = FoodItemEntity(
-                    name = meal.name, category = "Frequent",
-                    caloriesPer100g = meal.caloriesPer100g,
-                    proteinPer100g = meal.proteinPer100g,
-                    carbsPer100g = meal.carbsPer100g,
-                    fatsPer100g = meal.fatsPer100g,
-                    fiberPer100g = meal.fiberPer100g,
-                    isCustom = true
-                )
-                viewModel.logFood(food, 100.0, inferCategory())
-                aiResult = null; ingredientMealOverride = null
-            },
-            onDismiss = { aiResult = null; ingredientMealOverride = null },
-            onConfirm = { grams, category ->
-                viewModel.addCustomFood(
-                    result.name, result.caloriesPer100g, result.proteinPer100g,
-                    result.carbsPer100g, result.fatsPer100g, result.fiberPer100g
-                )
-                viewModel.logFood(
-                    FoodItemEntity(name = result.name, category = "AI Scan",
-                        caloriesPer100g = result.caloriesPer100g,
-                        proteinPer100g = result.proteinPer100g,
-                        carbsPer100g = result.carbsPer100g,
-                        fatsPer100g = result.fatsPer100g,
-                        fiberPer100g = result.fiberPer100g,
-                        isCustom = true),
-                    grams, category
-                )
-                aiResult = null; ingredientMealOverride = null
-            }
-        )
-    }
-
-    if (showIngredientSheet) {
-        val dishName = pendingAiResult?.name ?: "your meal"
-        val savedResult = pendingAiResult
-        IngredientSelectionSheet(
-            dishName = dishName,
-            onDismiss = {
-                showIngredientSheet = false
-                savedResult?.let { aiResult = it }
-                pendingAiResult = null
-            },
-            onConfirm = { meal ->
-                ingredientMealOverride = meal
-                showIngredientSheet = false
-                savedResult?.let { aiResult = it }
-                pendingAiResult = null
-            }
-        )
-    }
-}
+                            }
+                        }
                     }
                 }
             }
@@ -550,7 +471,7 @@ fun NutritionScreen(
                 if (allEntries.isEmpty()) {
                     item {
                         NutritionEmptyState(
-                            colors = nutritionColors(isSystemInDarkTheme()),
+                            colors = nutritionColors(),
                             onClick = { showCreateFood = true }
                         )
                     }
@@ -577,6 +498,85 @@ fun NutritionScreen(
         }
 
         SnackbarHost(snackbarHostState, Modifier.align(Alignment.BottomCenter))
+    }
+
+    displayResult?.let { result ->
+        val confidence = when {
+            ingredientMealOverride != null -> NutritionConfidence.HIGH
+            else -> when (NutritionConfidenceEngine.fromSource(false, result.name)) {
+                NutritionConfidenceEngine.Level.HIGH -> NutritionConfidence.HIGH
+                NutritionConfidenceEngine.Level.MEDIUM -> NutritionConfidence.MEDIUM
+                NutritionConfidenceEngine.Level.LOW -> NutritionConfidence.LOW
+            }
+        }
+        PortionDialog(
+            title = result.name,
+            caloriesPer100g = result.caloriesPer100g,
+            proteinPer100g = result.proteinPer100g,
+            carbsPer100g = result.carbsPer100g,
+            fatsPer100g = result.fatsPer100g,
+            fiberPer100g = result.fiberPer100g,
+            confidence = confidence,
+            showIngredientOption = ingredientMealOverride == null,
+            onImproveAccuracy = {
+                pendingAiResult = aiResult
+                aiResult = null
+                showIngredientSheet = true
+            },
+            dailyProteinSoFar = dailyProtein,
+            dailyProteinTarget = proteinGoal,
+            frequentMeals = viewModel.frequentMeals.value,
+            onSelectFrequentMeal = { meal ->
+                val food = FoodItemEntity(
+                    name = meal.name, category = "Frequent",
+                    caloriesPer100g = meal.caloriesPer100g,
+                    proteinPer100g = meal.proteinPer100g,
+                    carbsPer100g = meal.carbsPer100g,
+                    fatsPer100g = meal.fatsPer100g,
+                    fiberPer100g = meal.fiberPer100g,
+                    isCustom = true
+                )
+                viewModel.logFood(food, 100.0, inferCategory())
+                aiResult = null; ingredientMealOverride = null
+            },
+            onDismiss = { aiResult = null; ingredientMealOverride = null },
+            onConfirm = { grams, category ->
+                viewModel.addCustomFood(
+                    result.name, result.caloriesPer100g, result.proteinPer100g,
+                    result.carbsPer100g, result.fatsPer100g, result.fiberPer100g
+                )
+                viewModel.logFood(
+                    FoodItemEntity(name = result.name, category = "AI Scan",
+                        caloriesPer100g = result.caloriesPer100g,
+                        proteinPer100g = result.proteinPer100g,
+                        carbsPer100g = result.carbsPer100g,
+                        fatsPer100g = result.fatsPer100g,
+                        fiberPer100g = result.fiberPer100g,
+                        isCustom = true),
+                    grams, category
+                )
+                aiResult = null; ingredientMealOverride = null
+            }
+        )
+    }
+
+    if (showIngredientSheet) {
+        val dishName = pendingAiResult?.name ?: "your meal"
+        val savedResult = pendingAiResult
+        IngredientSelectionSheet(
+            dishName = dishName,
+            onDismiss = {
+                showIngredientSheet = false
+                savedResult?.let { aiResult = it }
+                pendingAiResult = null
+            },
+            onConfirm = { meal ->
+                ingredientMealOverride = meal
+                showIngredientSheet = false
+                savedResult?.let { aiResult = it }
+                pendingAiResult = null
+            }
+        )
     }
 
     selectedFood?.let { food ->
@@ -640,9 +640,9 @@ private fun ActionChip(icon: androidx.compose.ui.graphics.vector.ImageVector, la
     ) {
         Column(Modifier.fillMaxWidth().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             if (isScanning) {
-                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = SolAccent)
+                CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp, color = NutritionAccent)
             } else {
-                Icon(icon, null, tint = SolAccent, modifier = Modifier.size(22.dp))
+                Icon(icon, null, tint = NutritionAccent, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.height(4.dp))
             Text(label, fontSize = 11.sp, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Medium)

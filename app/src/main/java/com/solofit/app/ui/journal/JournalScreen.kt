@@ -65,6 +65,7 @@ import com.solofit.app.core.DateUtils
 import com.solofit.app.ui.theme.JournalAccent
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
+import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardPrimary
@@ -170,10 +171,10 @@ fun JournalScreen(
                                         ) {
                                             if (goal.done) Text("\u2713", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                                         }
-                                        Text(goal.text, modifier = Modifier.weight(1f), fontSize = 15.sp, textDecoration = if (goal.done) TextDecoration.LineThrough else null, color = if (goal.done) Color(0xFF9CA3AF) else PrimaryText)
+                                        Text(goal.text, modifier = Modifier.weight(1f), fontSize = 15.sp, textDecoration = if (goal.done) TextDecoration.LineThrough else null, color = if (goal.done) TextTertiary else PrimaryText)
                                         if (!goal.done) {
                                             IconButton(onClick = { view.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); viewModel.deleteGoal(goal.id) }, modifier = Modifier.size(28.dp)) {
-                                                Icon(Icons.Filled.Close, "Delete", tint = Color(0xFF9CA3AF), modifier = Modifier.size(16.dp))
+                                                Icon(Icons.Filled.Close, "Delete", tint = TextTertiary, modifier = Modifier.size(16.dp))
                                             }
                                         }
                                     }
@@ -233,7 +234,7 @@ fun JournalScreen(
                         ) {
                             Column(Modifier.padding(24.dp)) {
                                 recent.take(3).forEach { entry ->
-                                    Text(DateUtils.prettyMedium(entry.date), fontSize = 11.sp, color = Color(0xFF9CA3AF))
+                                    Text(DateUtils.prettyMedium(entry.date), fontSize = 11.sp, color = TextTertiary)
                                     Spacer(Modifier.height(4.dp))
                                     Text(entry.text, fontSize = 14.sp, color = PrimaryText)
                                     if (entry != recent.take(3).last()) Spacer(Modifier.height(12.dp))

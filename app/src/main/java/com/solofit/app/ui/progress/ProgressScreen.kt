@@ -42,6 +42,7 @@ import androidx.compose.material3.MaterialTheme
 import com.solofit.app.ui.theme.SlateBlue
 import com.solofit.app.ui.theme.TextPrimary
 import com.solofit.app.ui.theme.TextSecondary
+import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import java.text.NumberFormat
@@ -150,7 +151,7 @@ private fun StatItem(icon: ImageVector, label: String, value: String, unit: Stri
         Spacer(Modifier.height(8.dp))
         Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = PrimaryText)
         Text(label, fontSize = 12.sp, color = SecondaryText)
-        Text(unit, fontSize = 10.sp, color = Color(0xFF9CA3AF))
+        Text(unit, fontSize = 10.sp, color = TextTertiary)
     }
 }
 
@@ -166,14 +167,14 @@ private fun AchievementRow(title: String, description: String, unlocked: Boolean
         }
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (unlocked) PrimaryText else Color(0xFF9CA3AF))
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (unlocked) PrimaryText else TextTertiary)
             Text(description, fontSize = 12.sp, color = SecondaryText)
         }
         Text(
             if (unlocked) "Unlocked" else "Locked",
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            color = if (unlocked) SlateBlue else Color(0xFF9CA3AF)
+            color = if (unlocked) SlateBlue else TextTertiary
         )
     }
 }

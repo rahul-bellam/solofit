@@ -29,6 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import com.solofit.app.ui.theme.LocalSoloColors
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -64,31 +66,24 @@ data class NutritionColors(
     val trackColor: Color
 )
 
-fun nutritionColors(isDark: Boolean) = if (isDark) NutritionColors(
-    bg = DarkBg,
-    surface = DarkCard,
-    textPrimary = DarkText,
-    textMuted = DarkTextSecondary,
-    headerBg = Brush.verticalGradient(listOf(DarkSurface, DarkCard)),
-    cardBg = DarkCard,
-    iconBg = DarkSurface,
-    border = DarkSurface,
-    green = NutritionAccent,
-    greenLight = NutritionAccent.copy(alpha = 0.2f),
-    trackColor = DarkTextSecondary.copy(alpha = 0.2f)
-) else NutritionColors(
-    bg = SurfaceBg,
-    surface = CardPrimary,
-    textPrimary = PrimaryText,
-    textMuted = SecondaryText,
-    headerBg = Brush.verticalGradient(listOf(CardSecondary, CardPrimary)),
-    cardBg = CardPrimary,
-    iconBg = CardSecondary,
-    border = Hairline,
-    green = NutritionAccent,
-    greenLight = NutritionAccent.copy(alpha = 0.15f),
-    trackColor = SecondaryText.copy(alpha = 0.2f)
-)
+@androidx.compose.runtime.Composable
+@androidx.compose.runtime.ReadOnlyComposable
+fun nutritionColors(): NutritionColors {
+    val c = LocalSoloColors.current
+    return NutritionColors(
+        bg = c.canvas,
+        surface = c.surface,
+        textPrimary = c.ink,
+        textMuted = c.inkSoft,
+        headerBg = SolidColor(c.canvas), // flat — no gradients
+        cardBg = c.surface,
+        iconBg = c.surface2,
+        border = c.line,
+        green = NutritionAccent,
+        greenLight = NutritionAccent.copy(alpha = if (c.isDark) 0.20f else 0.15f),
+        trackColor = c.inkSoft.copy(alpha = 0.2f)
+    )
+}
 
 // ─── Header ───
 
@@ -191,11 +186,7 @@ fun DailyProgressCard(
                         .fillMaxWidth(animatedProgress.coerceIn(0f, 1f))
                         .height(12.dp)
                         .clip(RoundedCornerShape(6.dp))
-                        .background(
-                            Brush.horizontalGradient(
-                                listOf(colors.green, colors.green.copy(alpha = 0.7f))
-                            )
-                        )
+                        .background(colors.green)
                 )
             }
 

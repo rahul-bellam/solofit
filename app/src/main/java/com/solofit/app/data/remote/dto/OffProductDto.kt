@@ -18,6 +18,8 @@ data class OffProductResponse(
 @Serializable
 data class OffProduct(
     @SerialName("product_name") val productName: String? = null,
+    @SerialName("product_name_en") val productNameEn: String? = null,
+    @SerialName("generic_name") val genericName: String? = null,
     @SerialName("brands") val brands: String? = null,
     @SerialName("nutriments") val nutriments: OffNutriments? = null
 )

@@ -23,7 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.solofit.app.ui.theme.SolAccent
+import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardPrimary
 
@@ -38,27 +38,28 @@ fun GradientNavBar(
         modifier = Modifier
             .fillMaxWidth()
             .background(barColor)
-            .padding(horizontal = 8.dp, vertical = 6.dp),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+            .padding(horizontal = 4.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         destinations.forEach { dest ->
             val selected = selectedDestination == dest
             val iconTint by animateColorAsState(
-                targetValue = if (selected) SolAccent else SecondaryText,
+                targetValue = if (selected) PrimaryText else SecondaryText,
                 animationSpec = tween(250),
                 label = "navIcon"
             )
             val labelColor by animateColorAsState(
-                targetValue = if (selected) SolAccent else SecondaryText,
+                targetValue = if (selected) PrimaryText else SecondaryText,
                 animationSpec = tween(250),
                 label = "navLabel"
             )
             Column(
                 modifier = Modifier
+                    .weight(1f)
                     .clip(RoundedCornerShape(16.dp))
                     .clickable { onDestinationSelected(dest) }
-                    .padding(horizontal = 20.dp, vertical = 8.dp),
+                    .padding(vertical = 8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Icon(
@@ -72,6 +73,8 @@ fun GradientNavBar(
                     fontSize = 11.sp,
                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal,
                     color = labelColor,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.padding(top = 2.dp)
                 )
             }
