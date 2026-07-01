@@ -14,7 +14,6 @@ import com.solofit.app.data.remote.GeminiPart
 import com.solofit.app.data.remote.GeminiContent
 import com.solofit.app.data.remote.GeminiRequest
 import com.solofit.app.data.remote.GeminiService
-import com.solofit.app.domain.model.MealCategory
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.FoodRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -32,7 +31,6 @@ import kotlinx.serialization.json.Json
 import retrofit2.HttpException
 import java.io.ByteArrayOutputStream
 import java.io.IOException
-import java.time.LocalTime
 import javax.inject.Inject
 
 sealed interface AiScanResult {
@@ -95,17 +93,6 @@ private fun extractJsonObject(raw: String): String {
     return if (start in 0 until end) raw.substring(start, end + 1) else raw.trim()
 }
 
-private fun inferMealCategory(): MealCategory {
-    val hour = LocalTime.now().hour
-    return when {
-        hour in 5..10 -> MealCategory.BREAKFAST
-        hour in 11..13 -> MealCategory.LUNCH
-        hour in 14..16 -> MealCategory.SNACKS
-        hour in 17..20 -> MealCategory.DINNER
-        else -> MealCategory.SNACKS
-    }
-}
-
 @HiltViewModel
 class AiFoodScanViewModel @Inject constructor(
     private val geminiService: GeminiService,
@@ -151,6 +138,13 @@ class AiFoodScanViewModel @Inject constructor(
             ) {
                 _scanResult.tryEmit(
                     AiScanResult.Error("Set GEMINI_API_KEY in app/build.gradle.kts")
+                )
+                _isScanning.value = false
+                return@launch
+            }
+            if (!BuildConfig.GEMINI_API_KEY.startsWith("AIza")) {
+                _scanResult.tryEmit(
+                    AiScanResult.Error("Invalid API key format. Get a valid Gemini API key from aistudio.google.com.")
                 )
                 _isScanning.value = false
                 return@launch

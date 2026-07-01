@@ -42,9 +42,6 @@ import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.ui.components.WorkoutTheme
 import com.solofit.app.ui.components.WorkoutDisciplineCard
 import com.solofit.app.ui.theme.DarkBg
-import com.solofit.app.ui.theme.DarkCard
-import com.solofit.app.ui.theme.DarkText
-import com.solofit.app.ui.theme.DarkTextSecondary
 import com.solofit.app.ui.theme.DarkHairline
 import com.solofit.app.ui.theme.Ochre
 import com.solofit.app.ui.components.rememberAnimationsActive

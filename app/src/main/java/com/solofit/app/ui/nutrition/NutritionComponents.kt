@@ -38,15 +38,6 @@ import com.solofit.app.ui.theme.ProteinColor
 import com.solofit.app.ui.theme.CarbsColor
 import com.solofit.app.ui.theme.FatsColor
 import com.solofit.app.ui.theme.NutritionAccent
-import com.solofit.app.ui.theme.SurfaceBg
-import com.solofit.app.ui.theme.CardPrimary
-import com.solofit.app.ui.theme.CardSecondary
-import com.solofit.app.ui.theme.Hairline
-import com.solofit.app.ui.theme.DarkBg
-import com.solofit.app.ui.theme.DarkCard
-import com.solofit.app.ui.theme.DarkSurface
-import com.solofit.app.ui.theme.DarkText
-import com.solofit.app.ui.theme.DarkTextSecondary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 

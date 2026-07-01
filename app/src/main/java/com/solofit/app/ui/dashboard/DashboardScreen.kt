@@ -52,8 +52,6 @@ import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.sol.BurnoutLevel
 import com.solofit.app.sol.DailyPriority
 import com.solofit.app.sol.SetbackPrediction
-import com.solofit.app.sol.SolCard
-import com.solofit.app.sol.PersonalityDialog
 import com.solofit.app.sol.SolViewModel
 import com.solofit.app.ui.components.WaterTracker
 import com.solofit.app.ui.modules.ModuleSuggestion
@@ -81,7 +79,6 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
-    enabledModules: List<SoloFitModule> = SoloFitModule.DEFAULT_ENABLED,
     suggestions: List<ModuleSuggestion> = emptyList(),
     onEnableModule: (SoloFitModule) -> Unit = {},
     onLogMeal: () -> Unit,
@@ -95,12 +92,11 @@ fun DashboardScreen(
     onOpenWalking: () -> Unit = {},
     onOpenStress: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
-    solViewModel: SolViewModel = hiltViewModel()
+    solViewModel: SolViewModel
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val solState by solViewModel.state.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
-    var showPersonalityDialog by remember { mutableStateOf(false) }
 
     val visibilityCtx = remember(state.daysTracked, state.daysActiveThisWeek, state.streakDays,
         state.recoveryScore, state.workoutToday, solState.weeklyWorkoutCount,
@@ -126,18 +122,19 @@ fun DashboardScreen(
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) }
         ) { innerPadding ->
-            PullToRefreshBox(
-                isRefreshing = state.isRefreshing,
-                onRefresh = { viewModel.refresh(); solViewModel.refresh() },
-                modifier = Modifier.fillMaxSize().padding(innerPadding)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 20.dp)
+            Box(Modifier.fillMaxSize().padding(innerPadding)) {
+                PullToRefreshBox(
+                    isRefreshing = state.isRefreshing,
+                    onRefresh = { viewModel.refresh(); solViewModel.refresh() },
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Spacer(Modifier.height(48.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(horizontal = 20.dp)
+                    ) {
+                        Spacer(Modifier.height(48.dp))
 
                     // ── HERO: Calm Greeting ──
                     val greeting = when (java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)) {
@@ -290,7 +287,7 @@ fun DashboardScreen(
 
                     // ── MICRO WIN ──
                     val topWin = solState.microWins.firstOrNull()
-                    if (topWin != null) {
+                    if (topWin != null && FeatureVisibility.shouldShowMicroWins(visibilityCtx)) {
                         Spacer(Modifier.height(12.dp))
                         Card(
                             shape = RoundedCornerShape(8.dp),
@@ -450,19 +447,6 @@ fun DashboardScreen(
                         Spacer(Modifier.height(16.dp))
                     }
 
-                    // ── SOL COMPANION ──
-                    SolCard(
-                        state = solState,
-                        onToggleWhy = solViewModel::toggleWhy,
-                        onToggleWhat = solViewModel::toggleWhat,
-                        onListen = solViewModel::speak,
-                        onPersonalityChange = { showPersonalityDialog = true },
-                        onLogMeal = onLogMeal,
-                        onLogWorkout = onLogWorkout
-                    )
-
-                    Spacer(Modifier.height(16.dp))
-
                     // ── SETBACK RECOVERY ──
                     solState.setbackMessages.forEach { msg ->
                         Spacer(Modifier.height(12.dp))
@@ -571,7 +555,8 @@ fun DashboardScreen(
                         onAdd = { viewModel.addWater(it) },
                         onRemove = { viewModel.removeWater(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        prominent = FeatureVisibility.shouldShowWaterProminent(visibilityCtx)
+                        prominent = FeatureVisibility.shouldShowWaterProminent(visibilityCtx),
+                        reason = FeatureVisibility.waterProminentReason(visibilityCtx)
                     )
 
                     Spacer(Modifier.height(12.dp))
@@ -603,37 +588,41 @@ fun DashboardScreen(
                         Spacer(Modifier.height(16.dp))
                     }
 
-                    // ── EXPLORE (condensed) ──
-                    Text(
-                        "Explore",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = TextSecondary,
-                        letterSpacing = 0.5.sp
-                    )
-                    Spacer(Modifier.height(10.dp))
-                    val quickLinks = listOf(
-                        QuickLink("Energy", onOpenStress),
-                        QuickLink("Journal", onOpenJournal),
-                        QuickLink("Body", onOpenBody),
-                        QuickLink("Weight", onOpenWeight),
-                        QuickLink("Meditation", onOpenMeditation),
-                        QuickLink("Settings", onOpenSettings)
-                    )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        quickLinks.take(3).forEach { link ->
-                            QuickLinkChip(link.label, link.onClick, Modifier.weight(1f))
+                    // ── EXPLORE (adaptive) ──
+                    val quickLinks = buildList {
+                        this += QuickLink("Energy", onOpenStress)
+                        this += QuickLink("Walking", onOpenWalking)
+                        if (FeatureVisibility.shouldShowJournal(visibilityCtx)) {
+                            this += QuickLink("Journal", onOpenJournal)
                         }
+                        if (FeatureVisibility.shouldShowMeditation(visibilityCtx)) {
+                            this += QuickLink("Meditation", onOpenMeditation)
+                        }
+                        if (FeatureVisibility.shouldShowBodyRecomp(visibilityCtx)) {
+                            this += QuickLink("Body", onOpenBody)
+                        }
+                        this += QuickLink("Weight", onOpenWeight)
+                        this += QuickLink("Settings", onOpenSettings)
                     }
-                    Spacer(Modifier.height(8.dp))
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        quickLinks.drop(3).forEach { link ->
-                            QuickLinkChip(link.label, link.onClick, Modifier.weight(1f))
+                    if (quickLinks.isNotEmpty()) {
+                        Text(
+                            "Explore",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = TextSecondary,
+                            letterSpacing = 0.5.sp
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        val rows = quickLinks.chunked(3)
+                        rows.forEach { row ->
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                row.forEach { link ->
+                                    QuickLinkChip(link.label, link.onClick, Modifier.weight(1f))
+                                }
+                            }
+                            Spacer(Modifier.height(8.dp))
                         }
                     }
 
@@ -686,16 +675,11 @@ fun DashboardScreen(
                     Spacer(Modifier.height(80.dp))
                 }
             }
-        }
 
-        if (showPersonalityDialog) {
-            PersonalityDialog(
-                current = solState.personality,
-                onSelect = { solViewModel.setPersonality(it); showPersonalityDialog = false },
-                onDismiss = { showPersonalityDialog = false }
-            )
         }
     }
+}
+
 }
 
 private data class PillarData(

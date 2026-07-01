@@ -44,7 +44,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.solofit.app.ui.theme.LavenderGrey
 import com.solofit.app.ui.components.MeditationTheme
 import com.solofit.app.ui.theme.TextPrimary
-import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import androidx.compose.material3.MaterialTheme

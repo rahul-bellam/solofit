@@ -34,10 +34,10 @@ object DailyPriorityEngine {
         val rec = recoveryScore ?: 50
         val sleep = sleepHours ?: 7.0
 
-        val sleepBelowBaseline = baseline?.avgSleep7d != null && sleep < baseline.avgSleep7d!! - WellnessThresholds.SLEEP_BASELINE_DELTA
-        val stepsBelowBaseline = baseline?.avgSteps7d != null && (todaySteps ?: 0) < baseline.avgSteps7d!! * WellnessThresholds.BASELINE_STEPS_FRACTION
-        val proteinBelowBaseline = baseline?.avgProteinAdherence7d != null && (todayProtein ?: 0.0) < baseline.avgProteinAdherence7d!! - WellnessThresholds.PROTEIN_BASELINE_DELTA
-        val recBelowBaseline = baseline?.avgRecovery7d != null && rec < baseline.avgRecovery7d!! - WellnessThresholds.RECOVERY_WARNING_DELTA
+        val sleepBelowBaseline = baseline?.avgSleep7d?.let { sleep < it - WellnessThresholds.SLEEP_BASELINE_DELTA } ?: false
+        val stepsBelowBaseline = baseline?.avgSteps7d?.let { (todaySteps ?: 0) < it * WellnessThresholds.BASELINE_STEPS_FRACTION } ?: false
+        val proteinBelowBaseline = baseline?.avgProteinAdherence7d?.let { (todayProtein ?: 0.0) < it - WellnessThresholds.PROTEIN_BASELINE_DELTA } ?: false
+        val recBelowBaseline = baseline?.avgRecovery7d?.let { rec < it - WellnessThresholds.RECOVERY_WARNING_DELTA } ?: false
         val stressed = stressLevel != null && stressLevel >= 4
 
         return when {

@@ -51,6 +51,8 @@ import com.solofit.app.ui.settings.SettingsScreen
 import com.solofit.app.ui.reminders.RemindersScreen
 import com.solofit.app.ui.devtools.PerfScreen
 import com.solofit.app.ui.journal.JournalScreen
+import com.solofit.app.sol.SolFloatingWidget
+import com.solofit.app.sol.SolViewModel
 import com.solofit.app.ui.body.BodyScreen
 import com.solofit.app.ui.phase.EditPhaseScreen
 import com.solofit.app.ui.photos.ProgressPhotosScreen
@@ -69,7 +71,6 @@ import com.solofit.app.ui.habits.HabitsScreen
 import com.solofit.app.ui.yoga.YogaScreen
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ThemeMode
-import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.SurfaceBg
 
 private val SNAV_ROUTES = setOf(
@@ -84,6 +85,8 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
     val startState by rootViewModel.startState.collectAsStateWithLifecycle()
     val navController = rememberNavController()
     val moduleViewModel: ModuleViewModel = hiltViewModel()
+    val solViewModel: SolViewModel = hiltViewModel()
+    val solState by solViewModel.state.collectAsStateWithLifecycle()
 
     when (startState) {
         StartState.Loading -> {
@@ -119,106 +122,107 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
             val showBottomBar = currentRoute in allDestinations.map { it.route }
             val selectedDestination = allDestinations.firstOrNull { it.route == currentRoute }
 
-            Scaffold(
-                bottomBar = {
-                    if (showBottomBar) {
-                        GradientNavBar(
-                            destinations = allDestinations,
-                            selectedDestination = selectedDestination,
-                            onDestinationSelected = { dest ->
-                                navController.navigate(dest.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) {
-                                        saveState = true
+            Box(Modifier.fillMaxSize()) {
+                Scaffold(
+                    bottomBar = {
+                        if (showBottomBar) {
+                            GradientNavBar(
+                                destinations = allDestinations,
+                                selectedDestination = selectedDestination,
+                                onDestinationSelected = { dest ->
+                                    navController.navigate(dest.route) {
+                                        popUpTo(navController.graph.findStartDestination().id) {
+                                            saveState = true
+                                        }
+                                        launchSingleTop = true
+                                        restoreState = true
                                     }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            barColor = SurfaceBg
-                        )
-                    }
-                }
-            ) { padding ->
-                NavHost(
-                    navController = navController,
-                    startDestination = start,
-                    modifier = Modifier.padding(padding),
-                    enterTransition = { fadeIn(tween(250, delayMillis = 50)) + slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 3 } },
-                    exitTransition = { fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { -it / 6 } },
-                    popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(250)) { -it / 6 } },
-                    popExitTransition = { fadeOut(tween(150, delayMillis = 50)) + slideOutHorizontally(tween(250)) { it / 3 } }
-                ) {
-                    composable(Routes.ONBOARDING) {
-                        val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
-                        OnboardingScreen(
-                            themeMode = themeMode,
-                            onSetThemeMode = rootViewModel::setThemeMode,
-                            onComplete = {
-                                navController.navigate(Routes.DASHBOARD) {
-                                    popUpTo(Routes.ONBOARDING) { inclusive = true }
-                                }
-                            }
-                        )
-                    }
-                    composable(Routes.MODULE_SELECTION) {
-                        val moduleVm: ModuleViewModel = hiltViewModel()
-                        val selected = remember {
-                            mutableStateOf(SoloFitModule.DEFAULT_ENABLED.toSet())
+                                },
+                                barColor = SurfaceBg
+                            )
                         }
-                        ModuleSelectionScreen(
-                            selected = selected.value,
-                            onToggle = { module ->
-                                selected.value = if (module in selected.value)
-                                    selected.value - module
-                                else
-                                    selected.value + module
-                            },
-                            onContinue = {
-                                val modules = selected.value.toList().ifEmpty {
-                                    SoloFitModule.DEFAULT_ENABLED
+                    }
+                ) { padding ->
+                    NavHost(
+                        navController = navController,
+                        startDestination = start,
+                        modifier = Modifier.padding(padding),
+                        enterTransition = { fadeIn(tween(250, delayMillis = 50)) + slideInHorizontally(tween(350, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 3 } },
+                        exitTransition = { fadeOut(tween(200)) + slideOutHorizontally(tween(200)) { -it / 6 } },
+                        popEnterTransition = { fadeIn(tween(200)) + slideInHorizontally(tween(250)) { -it / 6 } },
+                        popExitTransition = { fadeOut(tween(150, delayMillis = 50)) + slideOutHorizontally(tween(250)) { it / 3 } }
+                    ) {
+                        composable(Routes.ONBOARDING) {
+                            val themeMode by rootViewModel.themeMode.collectAsStateWithLifecycle()
+                            OnboardingScreen(
+                                themeMode = themeMode,
+                                onSetThemeMode = rootViewModel::setThemeMode,
+                                onComplete = {
+                                    navController.navigate(Routes.DASHBOARD) {
+                                        popUpTo(Routes.ONBOARDING) { inclusive = true }
+                                    }
                                 }
-                                moduleVm.selectModules(modules)
-                                navController.navigate(Routes.DASHBOARD) {
-                                    popUpTo(Routes.MODULE_SELECTION) { inclusive = true }
-                                }
+                            )
+                        }
+                        composable(Routes.MODULE_SELECTION) {
+                            val moduleVm: ModuleViewModel = hiltViewModel()
+                            val selected = remember {
+                                mutableStateOf(SoloFitModule.DEFAULT_ENABLED.toSet())
                             }
-                        )
-                    }
-                    composable(Routes.DASHBOARD) {
-                        DashboardScreen(
-                            enabledModules = enabledModules,
-                            suggestions = suggestions,
-                            onEnableModule = { moduleViewModel.enableModule(it) },
-                            onLogMeal = {
-                                navController.navigate(Routes.NUTRITION) {
-                                    popUpTo(Routes.DASHBOARD) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
+                            ModuleSelectionScreen(
+                                selected = selected.value,
+                                onToggle = { module ->
+                                    selected.value = if (module in selected.value)
+                                        selected.value - module
+                                    else
+                                        selected.value + module
+                                },
+                                onContinue = {
+                                    val modules = selected.value.toList().ifEmpty {
+                                        SoloFitModule.DEFAULT_ENABLED
+                                    }
+                                    moduleVm.selectModules(modules)
+                                    navController.navigate(Routes.DASHBOARD) {
+                                        popUpTo(Routes.MODULE_SELECTION) { inclusive = true }
+                                    }
                                 }
-                            },
-                            onLogWorkout = {
-                                navController.navigate(Routes.WORKOUT) {
-                                    popUpTo(Routes.DASHBOARD) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            onOpenSettings = { navController.navigate(Routes.SETTINGS) },
-                            onOpenJournal = { navController.navigate(Routes.JOURNAL) },
-                            onOpenBody = { navController.navigate(Routes.BODY) },
-                            onOpenWeight = { navController.navigate(Routes.WEIGHT) },
-                            onOpenRecovery = {
-                                navController.navigate(Routes.RECOVERY) {
-                                    popUpTo(Routes.DASHBOARD) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            onOpenMeditation = { navController.navigate(Routes.MEDITATION) },
-                            onOpenWalking = { navController.navigate(Routes.WALKING) },
-                            onOpenStress = { navController.navigate(Routes.STRESS) }
-                        )
-                    }
+                            )
+                        }
+                        composable(Routes.DASHBOARD) {
+                            DashboardScreen(
+                                solViewModel = solViewModel,
+                                suggestions = suggestions,
+                                onEnableModule = { moduleViewModel.enableModule(it) },
+                                onLogMeal = {
+                                    navController.navigate(Routes.NUTRITION) {
+                                        popUpTo(Routes.DASHBOARD) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                onLogWorkout = {
+                                    navController.navigate(Routes.WORKOUT) {
+                                        popUpTo(Routes.DASHBOARD) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                onOpenSettings = { navController.navigate(Routes.SETTINGS) },
+                                onOpenJournal = { navController.navigate(Routes.JOURNAL) },
+                                onOpenBody = { navController.navigate(Routes.BODY) },
+                                onOpenWeight = { navController.navigate(Routes.WEIGHT) },
+                                onOpenRecovery = {
+                                    navController.navigate(Routes.RECOVERY) {
+                                        popUpTo(Routes.DASHBOARD) { saveState = true }
+                                        launchSingleTop = true
+                                        restoreState = true
+                                    }
+                                },
+                                onOpenMeditation = { navController.navigate(Routes.MEDITATION) },
+                                onOpenWalking = { navController.navigate(Routes.WALKING) },
+                                onOpenStress = { navController.navigate(Routes.STRESS) }
+                            )
+                        }
                     composable(Routes.NUTRITION) {
                         NutritionScreen(
                             onScanBarcode = { navController.navigate(Routes.SCAN) },
@@ -345,6 +349,16 @@ fun SoloFitApp(rootViewModel: RootViewModel = hiltViewModel()) {
                     }
                 }
             }
+
+            // ── Sol floating widget — visible from every screen ──
+            SolFloatingWidget(
+                state = solState,
+                onListen = solViewModel::speak,
+                onStopSpeaking = solViewModel::stopSpeaking,
+                onVoiceModeChange = solViewModel::setVoiceMode
+            )
+
         }
     }
+}
 }

@@ -64,12 +64,10 @@ import com.solofit.app.ui.components.rememberAnimationsActive
 import com.solofit.app.core.DateUtils
 import com.solofit.app.ui.theme.JournalAccent
 import com.solofit.app.ui.theme.TextPrimary
-import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardPrimary
-import com.solofit.app.ui.theme.Hairline
 import androidx.compose.material3.MaterialTheme
 
 @Composable

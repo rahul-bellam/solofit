@@ -11,25 +11,6 @@ class InsightEngine @Inject constructor() {
         const val MIN_DAYS_FOR_PATTERNS = 14
     }
 
-    fun compute(input: SolInput): SolInsight {
-        val timeOfDay = LocalTime.now()
-        val morning = timeOfDay.hour < 12
-        val recovery = input.recoveryScore
-        val greeting = if (morning) greetingForRecovery(recovery) else ""
-
-        val (insight, _) = pickPrimaryInsight(input, morning, timeOfDay.hour >= 17)
-
-        return SolInsight(
-            greeting = greeting,
-            headline = insight.headline,
-            detail = insight.detail,
-            reasoning = insight.reasoning,
-            recommendations = insight.recommendations,
-            voiceLine = insight.voiceLine.ifEmpty { "$greeting ${insight.headline}".trim() },
-            type = insight.type
-        )
-    }
-
     fun computeBriefing(input: SolInput, memory: SolMemoryData? = null): SolBriefing {
         val timeOfDay = LocalTime.now()
         val morning = timeOfDay.hour < 12
@@ -218,7 +199,7 @@ class InsightEngine @Inject constructor() {
             val fallback = if (morning) fallbackMorning(input) else if (evening) fallbackEvening(input) else fallbackMorning(input)
             candidates.add(PrioritizedInsight(fallback, 10))
         }
-        return candidates.maxByOrNull { it.priority }!!
+        return candidates.maxByOrNull { it.priority } ?: PrioritizedInsight(fallbackMorning(input), 10)
     }
 
     private fun populateCandidates(input: SolInput, morning: Boolean, evening: Boolean, candidates: MutableList<PrioritizedInsight>) {

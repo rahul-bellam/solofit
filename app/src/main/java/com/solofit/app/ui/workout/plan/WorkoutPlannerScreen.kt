@@ -95,11 +95,12 @@ fun WorkoutPlannerScreen(
                 }
             }
 
-            if (selectedDay != null) {
+            val day = selectedDay
+            if (day != null) {
                 item {
                     Spacer(Modifier.height(8.dp))
                     PlanNameEditor(
-                        dayName = DAY_NAMES[selectedDay!! - 1],
+                        dayName = DAY_NAMES[day - 1],
                         onSave = viewModel::savePlan
                     )
                 }

@@ -33,7 +33,7 @@ class AdaptiveTargetEngine @Inject constructor(
         } else 0.0
         val weightChanged = weightDiff >= 1.0
 
-        val useWeight = if (weightChanged) effectiveWeight!! else profile.weightKg
+        val useWeight = effectiveWeight ?: profile.weightKg
 
         val recalculated = calculateTargets(
             CalculateNutritionTargetsUseCase.Params(
@@ -66,7 +66,7 @@ class AdaptiveTargetEngine @Inject constructor(
         val reasons = mutableListOf<String>()
 
         if (weightChanged) {
-            reasons.add("adjusted for ${effectiveWeight!!.roundToInt()} kg")
+            reasons.add("adjusted for ${(effectiveWeight ?: profile.weightKg).roundToInt()} kg")
         }
 
         if (extraProteinG > 0) {

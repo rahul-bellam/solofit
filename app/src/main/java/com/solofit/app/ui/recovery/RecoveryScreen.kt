@@ -53,7 +53,6 @@ import com.solofit.app.ui.theme.MidAmber
 import com.solofit.app.ui.theme.LowRed
 import com.solofit.app.ui.theme.Hairline
 import com.solofit.app.ui.theme.TextPrimary
-import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText

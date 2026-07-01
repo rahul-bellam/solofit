@@ -41,3 +41,10 @@ enum class MealCategory(val displayName: String) {
     DINNER("Dinner"),
     SNACKS("Snacks")
 }
+
+/** Determines how Sol delivers voice output when the floating widget opens. */
+enum class VoiceMode(val displayName: String) {
+    OFF("Off"),
+    TEXT_ONLY("Text Only"),
+    AUTO_WHEN_OPENED("Auto When Opened")
+}

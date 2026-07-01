@@ -23,9 +23,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.DarkSurface
-import com.solofit.app.ui.theme.DarkText
-import com.solofit.app.ui.theme.PrimaryText
-import com.solofit.app.ui.theme.SecondaryText
 
 val AppShapes = Shapes(
     small = RoundedCornerShape(12.dp),

@@ -40,8 +40,6 @@ import com.solofit.app.ui.components.ProgressTheme
 import com.solofit.app.ui.components.WellnessStaticCard
 import androidx.compose.material3.MaterialTheme
 import com.solofit.app.ui.theme.SlateBlue
-import com.solofit.app.ui.theme.TextPrimary
-import com.solofit.app.ui.theme.TextSecondary
 import com.solofit.app.ui.theme.TextTertiary
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText

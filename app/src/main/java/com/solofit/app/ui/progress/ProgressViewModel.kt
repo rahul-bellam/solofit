@@ -6,12 +6,9 @@ import com.solofit.app.data.local.dao.CompletedSetRow
 import com.solofit.app.data.local.dao.ExerciseVolume
 import com.solofit.app.data.local.entity.WeightEntryEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
-import com.solofit.app.data.repository.ProfileRepositoryImpl
-import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.domain.repository.WorkoutRepository
-import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.data.local.UserPreferences
 import dagger.hilt.android.lifecycle.HiltViewModel

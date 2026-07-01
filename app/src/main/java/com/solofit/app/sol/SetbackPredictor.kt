@@ -97,12 +97,6 @@ object SetbackPredictor {
         else -> "Low"
     }
 
-    fun riskColor(risk: String): String = when (risk) {
-        "Elevated" -> "#9E4733"
-        "Moderate" -> "#E09F3E"
-        else -> "#556B2F"
-    }
-
     fun topDriver(weights: DoubleArray, features: DoubleArray): String {
         val featureNames = listOf(
             "days since last workout",

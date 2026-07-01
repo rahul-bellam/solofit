@@ -86,8 +86,6 @@ class DashboardViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     private val _snackbar = Channel<SnackbarEvent>(Channel.CONFLATED)
     val snackbarEvent = _snackbar.receiveAsFlow()
-    private var lastWaterRemovedMl = 0
-
     private val dayFlow = MutableStateFlow(java.time.LocalDate.now().dayOfWeek.value)
 
     init {
@@ -269,7 +267,6 @@ class DashboardViewModel @Inject constructor(
 
     fun removeWater(ml: Int) = viewModelScope.launch {
         try {
-            lastWaterRemovedMl = ml
             profileRepository.addWaterMl(today, -ml)
             _snackbar.send(
                 SnackbarEvent(

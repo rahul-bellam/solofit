@@ -7,14 +7,12 @@ object WellnessThresholds {
     const val LOW_MOVEMENT_STEPS = 4000
     const val MODERATE_MOVEMENT_STEPS = 5000
     const val PERFORMANCE_STEPS = 6000
-    const val GOOD_MOVEMENT_STEPS = 8000
     const val DEFAULT_STEP_GOAL = 8000
 
     // ─── Recovery Score (0–100) ───
     const val RECOVERY_VERY_LOW = 30
     const val RECOVERY_LOW = 40
     const val RECOVERY_MODERATE = 50
-    const val RECOVERY_EARLY_WARNING_MIN = 40
     const val RECOVERY_EARLY_WARNING_MAX = 55
     const val RECOVERY_GOOD = 60
     const val RECOVERY_PERFORMANCE = 65
@@ -60,8 +58,6 @@ object WellnessThresholds {
 
     // ─── Streak Milestones ───
     const val STREAK_MILESTONE_7 = 7
-    const val STREAK_MILESTONE_30 = 30
-    const val STREAK_MILESTONE_100 = 100
 
     // ─── Body Recomp (4-week rates) ───
     const val RECOMP_WAIST_DECREASE_CM = 0.5
@@ -73,7 +69,6 @@ object WellnessThresholds {
 
     // ─── Baseline Comparison Multipliers ───
     const val BASELINE_STEPS_FRACTION = 0.7
-    const val BASELINE_PROTEIN_DELTA = 0.2
 
     // ─── Recovery Score Weights ───
     const val RECOVERY_WEIGHT_SLEEP = 0.40
@@ -86,8 +81,6 @@ object WellnessThresholds {
     const val PRIORITY_STREAK_100 = 1000
     const val PRIORITY_STREAK_30 = 900
     const val PRIORITY_STREAK_7 = 800
-    const val PRIORITY_VERY_LOW_RECOVERY = 700
-    const val PRIORITY_DECLINING_RECOVERY_HIGH_VOLUME = 550
     const val PRIORITY_WORKLOAD_BALANCE = 530
     const val PRIORITY_POOR_SLEEP = 500
     const val PRIORITY_RECOVERY_EARLY_WARNING = 450
@@ -96,12 +89,6 @@ object WellnessThresholds {
     const val PRIORITY_NEAR_PROTEIN_GOAL = 390
     const val PRIORITY_LOW_PROTEIN = 380
     const val PRIORITY_PROTEIN_SLIPPING = 375
-    const val PRIORITY_CALORIE_GOAL_MET = 370
-    const val PRIORITY_POSITIVE_RECOMP = 360
-    const val PRIORITY_MUSCLE_GAIN = 340
-    const val PRIORITY_FAT_LOSS = 330
-    const val PRIORITY_WORKOUT_STREAK = 310
-    const val PRIORITY_WORKOUT_COMPLETED = 300
     const val PRIORITY_MISSED_WORKOUT = 290
     const val PRIORITY_WALKING_GOAL = 280
     const val PRIORITY_SEDENTARY_DAY = 270

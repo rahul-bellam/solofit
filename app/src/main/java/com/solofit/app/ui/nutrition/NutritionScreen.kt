@@ -200,10 +200,10 @@ fun NutritionScreen(
     val dailyFats = sections.sumOf { s -> s.totals.fatsG.roundToInt() }
     val adapted = adaptedTargets
     val useAdapted = adapted?.isAdapted == true
-    val calGoal = if (useAdapted) adapted!!.targetCalories else (profile?.targetCalories ?: 2000)
-    val proteinGoal = if (useAdapted) adapted!!.targetProteinG else (profile?.targetProtein ?: 85)
-    val carbsGoal = if (useAdapted) adapted!!.targetCarbsG else (profile?.targetCarbs ?: 220)
-    val fatGoal = if (useAdapted) adapted!!.targetFatsG else (profile?.targetFats ?: 65)
+    val calGoal = adapted?.takeIf { it.isAdapted }?.targetCalories ?: (profile?.targetCalories ?: 2000)
+    val proteinGoal = adapted?.takeIf { it.isAdapted }?.targetProteinG ?: (profile?.targetProtein ?: 85)
+    val carbsGoal = adapted?.takeIf { it.isAdapted }?.targetCarbsG ?: (profile?.targetCarbs ?: 220)
+    val fatGoal = adapted?.takeIf { it.isAdapted }?.targetFatsG ?: (profile?.targetFats ?: 65)
     val remaining = (calGoal - dailyCalories).coerceAtLeast(0)
     val reasonText = adapted?.reason
 
@@ -327,12 +327,13 @@ fun NutritionScreen(
                         }
 
                         val pattern by viewModel.proteinPattern.collectAsStateWithLifecycle()
-                        if (pattern != null) {
+                        val p = pattern
+                        if (p != null) {
                             Spacer(Modifier.height(12.dp))
                             Box(
                                 Modifier.fillMaxWidth()
                                     .background(
-                                        if (pattern!!.todayStatus != ProteinDayStatus.ON_TRACK)
+                                        if (p.todayStatus != ProteinDayStatus.ON_TRACK)
                                             Color(0xFFC49A4A).copy(alpha = 0.06f)
                                         else MossGreen.copy(alpha = 0.04f),
                                         RoundedCornerShape(8.dp)
@@ -342,15 +343,15 @@ fun NutritionScreen(
                                 Column {
                                     Row(verticalAlignment = Alignment.CenterVertically) {
                                         Text(
-                                            text = pattern!!.message,
-                                            color = if (pattern!!.todayStatus != ProteinDayStatus.ON_TRACK) Color(0xFFC49A4A) else MossGreen,
+                                            text = p.message,
+                                            color = if (p.todayStatus != ProteinDayStatus.ON_TRACK) Color(0xFFC49A4A) else MossGreen,
                                             fontSize = 13.sp,
                                             fontWeight = FontWeight.Medium
                                         )
                                     }
-                                    if (pattern!!.todayStatus != ProteinDayStatus.ON_TRACK) {
+                                    if (p.todayStatus != ProteinDayStatus.ON_TRACK) {
                                         Text(
-                                            text = pattern!!.action,
+                                            text = p.action,
                                             color = TextSecondary,
                                             fontSize = 12.sp
                                         )
@@ -541,10 +542,6 @@ fun NutritionScreen(
             },
             onDismiss = { aiResult = null; ingredientMealOverride = null },
             onConfirm = { grams, category ->
-                viewModel.addCustomFood(
-                    result.name, result.caloriesPer100g, result.proteinPer100g,
-                    result.carbsPer100g, result.fatsPer100g, result.fiberPer100g
-                )
                 viewModel.logFood(
                     FoodItemEntity(name = result.name, category = "AI Scan",
                         caloriesPer100g = result.caloriesPer100g,

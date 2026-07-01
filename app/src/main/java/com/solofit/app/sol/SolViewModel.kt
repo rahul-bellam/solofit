@@ -5,6 +5,7 @@ import android.speech.tts.TextToSpeech
 import android.speech.tts.UtteranceProgressListener
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.solofit.app.domain.model.VoiceMode
 import com.solofit.app.core.DateUtils
 import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.domain.repository.BodyRepository
@@ -44,8 +45,6 @@ data class SolUiState(
     val signals: List<SignalSummary> = emptyList(),
     val trends: List<TrendSummary> = emptyList(),
     val supplementaryHeadlines: List<String> = emptyList(),
-    val expandedWhy: Boolean = false,
-    val expandedWhat: Boolean = false,
     val isSpeaking: Boolean = false,
     val personality: VoicePersonality = VoicePersonality.COMPANION,
     val hasStreakMilestone: Boolean = false,
@@ -71,7 +70,10 @@ data class SolUiState(
     val confidence: String = "Low",
     val patternDiscoveries: List<PatternDiscovery> = emptyList(),
     val setbackPrediction: SetbackPrediction? = null,
-    val burnout: BurnoutAssessment? = null
+    val burnout: BurnoutAssessment? = null,
+    val voiceMode: VoiceMode = VoiceMode.AUTO_WHEN_OPENED,
+    val transcript: String = "",
+    val userTwin: UserTwin? = null
 )
 
 private val BRIEFING_HEADERS = listOf(
@@ -105,7 +107,7 @@ class SolViewModel @Inject constructor(
         refresh()
     }
 
-    fun refresh(screenRole: ScreenRole = ScreenRole.GUIDE) {
+    fun refresh() {
         viewModelScope.launch {
             val now = LocalDate.now()
             val todayStr = DateUtils.today()
@@ -122,6 +124,7 @@ class SolViewModel @Inject constructor(
             val yesterdayWellness = prefs.dailyWellness(yesterdayStr).first()
             val waterMlToday = prefs.waterMl(todayStr).first()
             val personality = prefs.voicePersonality.first()
+            val voiceMode = prefs.voiceMode.first()
 
             val dates = history.map { it.session.date }
 
@@ -592,6 +595,36 @@ class SolViewModel @Inject constructor(
                 prefs.setSetbackLastTrainedDate(yesterdayStr)
             }
 
+            val waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML
+            val userTwin = UserTwinBuilder.build(
+                profile = profile,
+                metric = metric,
+                prevMetric = prevMetric,
+                totals = totals,
+                weeklyMetrics = weeklyMetrics,
+                weeklyTotals = weeklyTotals,
+                history = history,
+                measurements = measurements,
+                wellness = wellness,
+                yesterdayWellness = yesterdayWellness,
+                waterMlToday = waterMlToday,
+                waterGoalMl = waterGoalMl,
+                recentGratitude = recentEntries,
+                stepGoal = stepGoal,
+                fullBaseline = fullBaseline,
+                dailyPriority = dailyPriority,
+                momentum = momentum,
+                lifestyleMode = lifestyleMode,
+                microWins = microWins,
+                identityMessage = identityMessage,
+                setbackMessages = setbackMessages,
+                patternDiscoveries = patternDiscoveries,
+                burnout = burnout,
+                setbackPrediction = setbackPrediction,
+                confidence = confidence,
+                daysTracked = daysTracked
+            )
+
             _state.value = SolUiState(
                 visible = true,
                 userName = profile?.name ?: "",
@@ -607,7 +640,6 @@ class SolViewModel @Inject constructor(
                 signals = briefing.signals,
                 trends = briefing.trends,
                 supplementaryHeadlines = briefing.supplementary.map { s -> s.headline },
-                expandedWhy = true,
                 personality = personality,
                 hasStreakMilestone = streakMilestone > 0,
                 streakMilestone = streakMilestone,
@@ -630,27 +662,22 @@ class SolViewModel @Inject constructor(
                 setbackMessages = setbackMessages,
                 confidence = confidence,
                 setbackPrediction = setbackPrediction,
-                burnout = burnout
+                burnout = burnout,
+                voiceMode = voiceMode,
+                transcript = transformedVoice,
+                userTwin = userTwin
             )
         }
     }
 
-    fun toggleWhy() {
-        _state.value = _state.value.copy(expandedWhy = !_state.value.expandedWhy)
+    fun setVoiceMode(mode: VoiceMode) {
+        _state.value = _state.value.copy(voiceMode = mode)
+        viewModelScope.launch { prefs.setVoiceMode(mode) }
     }
 
-    fun toggleWhat() {
-        _state.value = _state.value.copy(expandedWhat = !_state.value.expandedWhat)
-    }
-
-    fun setPersonality(personality: VoicePersonality) {
-        _state.value = _state.value.copy(personality = personality)
-        viewModelScope.launch {
-            prefs.setVoicePersonality(personality)
-            val s = _state.value
-            val transformed = VoicePersonalityTransformer.transform(s.voiceLine, personality)
-            _state.value = _state.value.copy(voiceLine = transformed)
-        }
+    fun stopSpeaking() {
+        tts?.stop()
+        _state.value = _state.value.copy(isSpeaking = false)
     }
 
     fun speak() {

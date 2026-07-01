@@ -52,13 +52,14 @@ fun WaterTracker(
     modifier: Modifier = Modifier,
     glassMl: Int = 250,
     prominent: Boolean = false,
-    accentColor: Color = MaterialTheme.colorScheme.secondary
+    accentColor: Color = MaterialTheme.colorScheme.secondary,
+    reason: String = ""
 ) {
     val fraction = if (goalMl > 0) (currentMl.toFloat() / goalMl).coerceIn(0f, 1f) else 0f
     val goalHit = goalMl > 0 && currentMl >= goalMl
 
     if (prominent) {
-        ProminentWaterCard(currentMl, goalMl, fraction, goalHit, onAdd, onRemove, glassMl, accentColor, modifier)
+        ProminentWaterCard(currentMl, goalMl, fraction, goalHit, onAdd, onRemove, glassMl, accentColor, reason, modifier)
     } else {
         CompactWaterWidget(currentMl, goalMl, fraction, goalHit, onAdd, onRemove, glassMl, accentColor, modifier)
     }
@@ -150,6 +151,7 @@ private fun ProminentWaterCard(
     onRemove: (Int) -> Unit,
     glassMl: Int,
     accentColor: Color,
+    reason: String,
     modifier: Modifier
 ) {
     androidx.compose.material3.Card(
@@ -177,7 +179,10 @@ private fun ProminentWaterCard(
                         .background(accentColor)
                 )
             }
-            Spacer(Modifier.height(12.dp))
+            if (reason.isNotEmpty()) {
+                Text(reason, fontSize = 11.sp, color = TextSecondary, lineHeight = 15.sp)
+                Spacer(Modifier.height(10.dp))
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
                     Modifier.weight(1f).clip(RoundedCornerShape(10.dp))

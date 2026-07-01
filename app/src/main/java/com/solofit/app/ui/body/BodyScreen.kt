@@ -49,7 +49,6 @@ import com.solofit.app.ui.components.WellnessStaticCard
 import com.solofit.app.ui.theme.SlateBlue
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
-import com.solofit.app.ui.theme.TextSecondary
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt

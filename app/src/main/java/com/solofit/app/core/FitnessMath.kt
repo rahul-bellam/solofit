@@ -83,45 +83,6 @@ object FitnessMath {
         else -> "Rest day"
     }
 
-    /** Auto-progression suggestion for an exercise's completed sets. */
-    enum class Progression(val message: String) {
-        INCREASE("Increase weight next session 💪"),
-        HOLD("Repeat — aim for more reps next time"),
-        DELOAD("Drop the weight a little and rebuild form"),
-        NONE("")
-    }
-
-    /**
-     * Decide progression from completed sets of one exercise.
-     * @param repsPerSet reps achieved on each completed working set
-     * @param rirPerSet matching RIR per set (null where not recorded)
-     * @param topOfRange the top of the target rep range (e.g. 12 for 8-12)
-     *
-     * Rules (simple double-progression):
-     *  - all sets >= topOfRange AND (RIR unknown or <=1)  -> INCREASE
-     *  - any set very low (< topOfRange/2) with RIR 0       -> DELOAD
-     *  - otherwise                                          -> HOLD
-     */
-    fun progression(
-        repsPerSet: List<Int>,
-        rirPerSet: List<Int?>,
-        topOfRange: Int
-    ): Progression {
-        val working = repsPerSet.filter { it > 0 }
-        if (working.isEmpty() || topOfRange <= 0) return Progression.NONE
-        val allHitTop = working.all { it >= topOfRange }
-        val lowRir = rirPerSet.filterNotNull()
-        val rirOk = lowRir.isEmpty() || lowRir.all { it <= 1 }
-        val struggled = working.any { it < topOfRange / 2 } &&
-            rirPerSet.filterNotNull().any { it == 0 }
-        return when {
-            allHitTop && rirOk -> Progression.INCREASE
-            struggled -> Progression.DELOAD
-            else -> Progression.HOLD
-        }
-    }
-
-
     /**
      * Transformation Score (0..100): a single number blending the things that
      * actually predict physique change, weighted by the user's TrainingGoal.
