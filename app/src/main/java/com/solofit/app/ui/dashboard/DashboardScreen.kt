@@ -52,6 +52,7 @@ import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.sol.BurnoutLevel
 import com.solofit.app.sol.DailyPriority
 import com.solofit.app.sol.SetbackPrediction
+import com.solofit.app.sol.themeColor
 import com.solofit.app.sol.SolViewModel
 import com.solofit.app.ui.components.WaterTracker
 import com.solofit.app.ui.modules.ModuleSuggestion
@@ -175,36 +176,75 @@ fun DashboardScreen(
 
                     Spacer(Modifier.height(24.dp))
 
-                    // ── TODAY'S PRIORITY (Hero) ──
+                    // ── TODAY'S STORY (Points 5 + 7 — Daily Narrative) ──
                     Card(
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surface
+                            containerColor = solState.todayTheme.themeColor().copy(alpha = 0.06f)
                         ),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                     ) {
                         Column(Modifier.fillMaxWidth().padding(20.dp)) {
                             Text(
-                                "Today's Priority",
+                                "Today's Theme",
                                 style = MaterialTheme.typography.titleSmall,
-                                color = TextSecondary,
+                                color = solState.todayTheme.themeColor(),
                                 letterSpacing = 0.5.sp
                             )
-                            Spacer(Modifier.height(8.dp))
+                            Spacer(Modifier.height(6.dp))
                             Text(
-                                solState.dailyPriority.displayName,
+                                solState.todayTheme.displayName,
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = priorityColor(solState.dailyPriority),
+                                color = solState.todayTheme.themeColor(),
                                 fontWeight = FontWeight.SemiBold,
                                 letterSpacing = 1.sp
                             )
                             Spacer(Modifier.height(6.dp))
                             Text(
-                                solState.priorityReason,
+                                solState.themeReason.ifEmpty { solState.todayTheme.description },
                                 fontSize = 14.sp,
                                 color = TextPrimary,
                                 lineHeight = 20.sp
+                            )
+
+                            // ── Causal explanation (Point 7) ──
+                            if (solState.causalExplanation.isNotEmpty()) {
+                                Spacer(Modifier.height(10.dp))
+                                Text(
+                                    "Why",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = TextSecondary,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Spacer(Modifier.height(4.dp))
+                                Text(
+                                    solState.causalExplanation,
+                                    fontSize = 13.sp,
+                                    color = TextPrimary,
+                                    lineHeight = 18.sp
+                                )
+                            }
+
+                            // ── Priority (feeds into the narrative) ──
+                            Spacer(Modifier.height(12.dp))
+                            Box(
+                                Modifier.fillMaxWidth().height(1.dp)
+                                    .background(Hairline.copy(alpha = 0.4f))
+                            )
+                            Spacer(Modifier.height(12.dp))
+                            Text(
+                                "Today's Priority",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                                letterSpacing = 1.sp
+                            )
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                solState.dailyPriority.displayName,
+                                fontSize = 15.sp,
+                                color = priorityColor(solState.dailyPriority),
+                                fontWeight = FontWeight.SemiBold
                             )
                             Spacer(Modifier.height(4.dp))
                             Text(

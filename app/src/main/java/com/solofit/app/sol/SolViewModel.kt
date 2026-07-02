@@ -11,6 +11,7 @@ import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.JournalRepository
+import com.solofit.app.domain.repository.FriendRepository
 import com.solofit.app.domain.repository.ProfileRepository
 import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.domain.repository.WorkoutRepository
@@ -42,6 +43,15 @@ data class SolUiState(
     val voiceLine: String = "",
     val type: InsightType = InsightType.MORNING_GREETING,
     val dayLabel: DayLabel = DayLabel.BALANCED,
+    // ── Daily Narrative (Point 5) ──
+    val todayTheme: DayTheme = DayTheme.BALANCED,
+    val themeReason: String = "",
+    // ── Causal explanation (Point 7) ──
+    val causalExplanation: String = "",
+    // ── Current Screen (Point 1 — context-aware Sol) ──
+    val currentScreen: String = "",
+    // ── Life Context (Point 6) ──
+    val lifeContext: LifeContext = LifeContext(),
     val signals: List<SignalSummary> = emptyList(),
     val trends: List<TrendSummary> = emptyList(),
     val supplementaryHeadlines: List<String> = emptyList(),
@@ -73,7 +83,13 @@ data class SolUiState(
     val burnout: BurnoutAssessment? = null,
     val voiceMode: VoiceMode = VoiceMode.AUTO_WHEN_OPENED,
     val transcript: String = "",
-    val userTwin: UserTwin? = null
+    val userTwin: UserTwin? = null,
+    val friendActivitySummary: String = "",
+    val circleHealth: String = "",
+    val mutualMomentum: String = "",
+    val circleMomentumLabel: String = "",
+    val activeCircleCount: Int = 0,
+    val encouragementNeeded: List<String> = emptyList()
 )
 
 private val BRIEFING_HEADERS = listOf(
@@ -87,15 +103,16 @@ private val BRIEFING_HEADERS = listOf(
 
 @HiltViewModel
 class SolViewModel @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @ApplicationContext private val ctx: Context,
     private val profileRepository: ProfileRepository,
-    private val dailyLogRepository: DailyLogRepository,
-    private val workoutRepository: WorkoutRepository,
     private val bodyRepository: BodyRepository,
-    private val journalRepository: JournalRepository,
+    private val dailyLogRepository: DailyLogRepository,
     private val weightRepository: WeightRepository,
-    private val prefs: UserPreferences,
-    private val insightEngine: InsightEngine
+    private val workoutRepository: WorkoutRepository,
+    private val journalRepository: JournalRepository,
+    private val friendRepository: FriendRepository,
+    private val insightEngine: InsightEngine,
+    private val prefs: UserPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SolUiState())
@@ -125,6 +142,8 @@ class SolViewModel @Inject constructor(
             val waterMlToday = prefs.waterMl(todayStr).first()
             val personality = prefs.voicePersonality.first()
             val voiceMode = prefs.voiceMode.first()
+            val lifeContext = prefs.lifeContext.first()
+
 
             val dates = history.map { it.session.date }
 
@@ -167,16 +186,23 @@ class SolViewModel @Inject constructor(
                 JournalSentimentEngine.classify(recentEntries.map { it.text })
                     ?.takeUnless { it == JournalSentiment.NEUTRAL }
 
-            // ── Weekly data aggregation ──
+            // ── Weekly data aggregation (batch queries, not N+1) ──
             val weekStart = now.minusDays(6)
+            val weekStartStr = weekStart.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
             val daysInWeek = (0..6).map { weekStart.plusDays(it.toLong()) }
             val dateStrings = daysInWeek.map { it.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE) }
 
+            val weeklyMetricsAll = runCatching {
+                bodyRepository.observeMetricsSince(weekStartStr).first()
+            }.getOrDefault(emptyList())
             val weeklyMetrics = dateStrings.mapNotNull { date ->
-                runCatching { bodyRepository.getMetric(date) }.getOrNull()
+                weeklyMetricsAll.find { it.date == date }
             }
+            val weeklyTotalsAll = runCatching {
+                dailyLogRepository.getDailyTotalsSince(weekStartStr)
+            }.getOrDefault(emptyList())
             val weeklyTotals = dateStrings.mapNotNull { date ->
-                runCatching { dailyLogRepository.observeTotalsForDate(date).first() }.getOrNull()
+                weeklyTotalsAll.find { it.first == date }?.second
             }
 
             val weeklySteps = weeklyMetrics.mapNotNull { it.steps }
@@ -199,11 +225,16 @@ class SolViewModel @Inject constructor(
                 targetProtein > 0 && t.proteinG >= targetProtein
             }
 
-            // ── Calculate weekly step trend ──
+            // ── Calculate weekly step trend (batch query, not N+1) ──
             val prevWeekStart = weekStart.minusDays(7)
+            val prevWeekStartStr = prevWeekStart.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)
             val prevWeekDates = (0..6).map { prevWeekStart.plusDays(it.toLong()) }
-            val prevWeekMetrics = prevWeekDates.mapNotNull { date ->
-                runCatching { bodyRepository.getMetric(date.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)) }.getOrNull()
+            val prevWeekDateStrings = prevWeekDates.map { it.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE) }
+            val prevWeekMetricsAll = runCatching {
+                bodyRepository.observeMetricsSince(prevWeekStartStr).first()
+            }.getOrDefault(emptyList())
+            val prevWeekMetrics = prevWeekDateStrings.mapNotNull { date ->
+                prevWeekMetricsAll.find { it.date == date }
             }
             val currentWeekTotalSteps = weeklySteps.sum()
             val prevWeekTotalSteps = prevWeekMetrics.sumOf { it.steps ?: 0 }
@@ -400,8 +431,8 @@ class SolViewModel @Inject constructor(
                     waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML, energyScore = m.energyScore
                 )
             }
-            val protein30d = if (targetProtein > 0) totals30d.map { it.proteinG / targetProtein } else emptyList()
-            val protein90d = if (targetProtein > 0) totals90d.map { it.proteinG / targetProtein } else emptyList()
+            val protein30d = if (targetProtein > 0) totals30d.map { it.second.proteinG / targetProtein } else emptyList()
+            val protein90d = if (targetProtein > 0) totals90d.map { it.second.proteinG / targetProtein } else emptyList()
             val meditation30dTotal = metrics30d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
             val meditation90dTotal = metrics90d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
             val bodyWeight30d = weight30d.map { it.weightKg }
@@ -596,6 +627,14 @@ class SolViewModel @Inject constructor(
             }
 
             val waterGoalMl = WellnessThresholds.WATER_DEFAULT_GOAL_ML
+
+            val community = runCatching {
+                val friends = friendRepository.observeAccepted().first()
+                val friendEvents = friends.associate { f ->
+                    f.id to friendRepository.observeEvents(f.id).first()
+                }
+                FriendIntelligenceEngine.compute(friends, friendEvents, daysTracked)
+            }.getOrDefault(CommunityState())
             val userTwin = UserTwinBuilder.build(
                 profile = profile,
                 metric = metric,
@@ -637,6 +676,9 @@ class SolViewModel @Inject constructor(
                 voiceLine = transformedVoice,
                 type = briefing.primary.type,
                 dayLabel = briefing.dayLabel,
+                todayTheme = briefing.todayTheme,
+                themeReason = briefing.themeReason,
+                causalExplanation = briefing.causalExplanation,
                 signals = briefing.signals,
                 trends = briefing.trends,
                 supplementaryHeadlines = briefing.supplementary.map { s -> s.headline },
@@ -664,8 +706,15 @@ class SolViewModel @Inject constructor(
                 setbackPrediction = setbackPrediction,
                 burnout = burnout,
                 voiceMode = voiceMode,
+                lifeContext = lifeContext,
                 transcript = transformedVoice,
-                userTwin = userTwin
+                userTwin = userTwin.copy(community = community),
+                friendActivitySummary = if (community.friends.isNotEmpty()) "${community.activeCircleCount} active in your circle" else "",
+                circleHealth = community.circleHealth,
+                mutualMomentum = community.mutualMomentum,
+                circleMomentumLabel = community.circleMomentumLabel,
+                activeCircleCount = community.activeCircleCount,
+                encouragementNeeded = community.encouragementNeeded
             )
         }
     }
@@ -673,6 +722,20 @@ class SolViewModel @Inject constructor(
     fun setVoiceMode(mode: VoiceMode) {
         _state.value = _state.value.copy(voiceMode = mode)
         viewModelScope.launch { prefs.setVoiceMode(mode) }
+    }
+
+    fun onScreenChanged(screen: String) {
+        _state.value = _state.value.copy(currentScreen = screen)
+    }
+
+    fun setLifeContext(context: LifeContext) {
+        _state.value = _state.value.copy(lifeContext = context)
+        viewModelScope.launch { prefs.setLifeContext(context) }
+    }
+
+    fun clearLifeContext() {
+        _state.value = _state.value.copy(lifeContext = LifeContext())
+        viewModelScope.launch { prefs.setLifeContext(LifeContext()) }
     }
 
     fun stopSpeaking() {
@@ -692,7 +755,7 @@ class SolViewModel @Inject constructor(
 
     private fun speakText(text: String) {
         if (tts == null) {
-            tts = TextToSpeech(context) { status ->
+            tts = TextToSpeech(ctx) { status ->
                 if (status == TextToSpeech.SUCCESS) {
                     this@SolViewModel.tts?.language = Locale.US
                     doSpeak(text)

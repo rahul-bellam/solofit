@@ -75,15 +75,15 @@ object UserTwinBuilder {
 
         val signals = buildList {
             add(ModuleSignal("sleep", "Sleep Duration", metric?.sleepHours, prevMetric?.sleepHours, "hours",
-                TrendDirection.STABLE, if ((metric?.sleepHours ?: 0.0) >= 7.0) SignalStatus.GOOD else SignalStatus.LOW,
-                if ((metric?.sleepHours ?: 0.0) < 7.0) "Sleep is below the 7-hour recovery threshold" else ""
+                TrendDirection.STABLE, if ((metric?.sleepHours ?: 0.0) >= WellnessThresholds.SLEEP_OPTIMAL) SignalStatus.GOOD else SignalStatus.LOW,
+                if ((metric?.sleepHours ?: 0.0) < WellnessThresholds.SLEEP_OPTIMAL) "Sleep is below the 7-hour recovery threshold" else ""
             ))
             add(ModuleSignal("movement", "Daily Steps", metric?.steps?.toDouble(), prevMetric?.steps?.toDouble(), "steps",
                 TrendDirection.STABLE, if ((metric?.steps ?: 0) >= stepGoal) SignalStatus.GOOD else SignalStatus.ON_TRACK,
                 if ((metric?.steps ?: 0) < stepGoal) "Steps are below your daily target" else ""
             ))
-            add(ModuleSignal("workouts", "Workouts This Week", StreakCalculator.daysActiveInWindow(dates, now, 7).toDouble(), null, "sessions",
-                TrendDirection.STABLE, if (StreakCalculator.daysActiveInWindow(dates, now, 7) >= 3) SignalStatus.GOOD else SignalStatus.ON_TRACK
+            add(ModuleSignal("workouts", "Workouts This Week", StreakCalculator.daysActiveInWindow(dates, now, WellnessThresholds.TREND_WINDOW_DAYS).toDouble(), null, "sessions",
+                TrendDirection.STABLE, if (StreakCalculator.daysActiveInWindow(dates, now, WellnessThresholds.TREND_WINDOW_DAYS) >= WellnessThresholds.MIN_STRENGTH_SAMPLES) SignalStatus.GOOD else SignalStatus.ON_TRACK
             ))
             add(ModuleSignal("nutrition", "Protein Adherence", if (targetProtein > 0) (totals.proteinG / targetProtein * 100) else null, null, "%",
                 TrendDirection.STABLE, if (targetProtein > 0 && totals.proteinG >= targetProtein) SignalStatus.GOOD else SignalStatus.ON_TRACK
@@ -98,7 +98,7 @@ object UserTwinBuilder {
             }
             wellness.stressLevel?.let {
                 add(ModuleSignal("stress", "Stress Level", it.toDouble(), yesterdayWellness.stressLevel?.toDouble(), "/10",
-                    TrendDirection.STABLE, if (it <= 4) SignalStatus.GOOD else if (it <= 7) SignalStatus.ON_TRACK else SignalStatus.LOW
+                    TrendDirection.STABLE, if (it <= WellnessThresholds.STRESS_HIGH_THRESHOLD) SignalStatus.GOOD else if (it <= WellnessThresholds.STRESS_CRITICAL_THRESHOLD) SignalStatus.ON_TRACK else SignalStatus.LOW
                 ))
             }
         }
@@ -108,27 +108,27 @@ object UserTwinBuilder {
                 val first = weeklySteps.first().toDouble()
                 val last = weeklySteps.last().toDouble()
                 val change = if (first > 0) ((last - first) / first * 100).roundToInt() else 0
-                add(WellnessTrend("Steps Trend", if (change > 5) TrendDirection.UP else if (change < -5) TrendDirection.DOWN else TrendDirection.STABLE,
-                    change, 7, if (change > 0) SignalStatus.GOOD else SignalStatus.LOW))
+                add(WellnessTrend("Steps Trend", if (change > WellnessThresholds.STEPS_TREND_SIGNIFICANT_PCT) TrendDirection.UP else if (change < -WellnessThresholds.STEPS_TREND_SIGNIFICANT_PCT) TrendDirection.DOWN else TrendDirection.STABLE,
+                    change, WellnessThresholds.TREND_WINDOW_DAYS, if (change > 0) SignalStatus.GOOD else SignalStatus.LOW))
             }
             if (weeklyRecovery.size >= 2) {
                 val first = weeklyRecovery.first().toDouble()
                 val last = weeklyRecovery.last().toDouble()
                 val change = if (first > 0) ((last - first) / first * 100).roundToInt() else 0
-                add(WellnessTrend("Recovery Trend", if (change > 5) TrendDirection.UP else if (change < -5) TrendDirection.DOWN else TrendDirection.STABLE,
-                    change, 7, if (change >= 0) SignalStatus.GOOD else SignalStatus.LOW))
+                add(WellnessTrend("Recovery Trend", if (change > WellnessThresholds.STEPS_TREND_SIGNIFICANT_PCT) TrendDirection.UP else if (change < -WellnessThresholds.STEPS_TREND_SIGNIFICANT_PCT) TrendDirection.DOWN else TrendDirection.STABLE,
+                    change, WellnessThresholds.TREND_WINDOW_DAYS, if (change >= 0) SignalStatus.GOOD else SignalStatus.LOW))
             }
         }
 
         val risks = buildList<RiskFactor> {
-            if ((metric?.sleepHours ?: 0.0) < 6.0) {
-                add(RiskFactor("sleep", 0.7f, "Chronic sleep deprivation", TrendDirection.DOWN))
+            if ((metric?.sleepHours ?: 0.0) < WellnessThresholds.SLEEP_DEFICIENCY_HOURS) {
+                add(RiskFactor("sleep", WellnessThresholds.RISK_SEVERITY_SLEEP, "Chronic sleep deprivation", TrendDirection.DOWN))
             }
-            if (wellness.stressLevel != null && wellness.stressLevel >= 7) {
-                add(RiskFactor("stress", 0.6f, "Elevated stress levels", TrendDirection.UP))
+            if ((wellness.stressLevel ?: 0) >= WellnessThresholds.STRESS_CRITICAL_THRESHOLD) {
+                add(RiskFactor("stress", WellnessThresholds.RISK_SEVERITY_STRESS, "Elevated stress levels", TrendDirection.UP))
             }
-            if (weeklySteps.isNotEmpty() && weeklySteps.average() < 3000) {
-                add(RiskFactor("movement", 0.5f, "Consistently low step count", TrendDirection.STABLE))
+            if (weeklySteps.isNotEmpty() && weeklySteps.average() < WellnessThresholds.MOVEMENT_RISK_LOW_AVG) {
+                add(RiskFactor("movement", WellnessThresholds.RISK_SEVERITY_MOVEMENT, "Consistently low step count", TrendDirection.STABLE))
             }
             burnout?.let { b ->
                 if (b.level == BurnoutLevel.ELEVATED || b.level == BurnoutLevel.HIGH) {
@@ -138,10 +138,10 @@ object UserTwinBuilder {
         }
 
         val strengths = buildList<Strength> {
-            if (StreakCalculator.daysActiveInWindow(dates, now, 7) >= 3) {
+            if (StreakCalculator.daysActiveInWindow(dates, now, WellnessThresholds.TREND_WINDOW_DAYS) >= WellnessThresholds.MIN_STRENGTH_SAMPLES) {
                 add(Strength("workouts", "Workout Consistency", "${StreakCalculator.currentStreak(dates, now)} day streak", "Keeping your training routine builds long-term results"))
             }
-            if (recentGratitude.size >= 3) {
+            if (recentGratitude.size >= WellnessThresholds.MIN_STRENGTH_SAMPLES) {
                 add(Strength("journal", "Journaling Habit", "${recentGratitude.size} entries this week", "Regular reflection supports mental clarity"))
             }
             if (microWins.isNotEmpty()) {
@@ -149,18 +149,18 @@ object UserTwinBuilder {
             }
         }
 
-        val daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7)
+        val daysActiveThisWeek = StreakCalculator.daysActiveInWindow(dates, now, WellnessThresholds.TREND_WINDOW_DAYS)
         val streakDays = StreakCalculator.currentStreak(dates, now)
         val weeklyProteinDaysCount = weeklyTotals.count { t ->
             targetProtein > 0 && t.proteinG >= targetProtein
         }
 
         val overallConsistency = listOf(
-            daysActiveThisWeek.toFloat() / 7f,
-            if (targetProtein > 0) weeklyProteinPct.filter { it >= 0.8 }.size.toFloat() / weeklyProteinPct.size.coerceAtLeast(1) else 0f,
+            daysActiveThisWeek.toFloat() / WellnessThresholds.TREND_WINDOW_DAYS.toFloat(),
+            if (targetProtein > 0) weeklyProteinPct.filter { it >= WellnessThresholds.PROTEIN_ADHERENCE_RATIO }.size.toFloat() / weeklyProteinPct.size.coerceAtLeast(1) else 0f,
             if (weeklySteps.isNotEmpty()) weeklySteps.count { it >= stepGoal / 2 }.toFloat() / weeklySteps.size else 0f,
-            if (weeklySleep.isNotEmpty()) weeklySleep.count { it >= 6.0 }.toFloat() / weeklySleep.size else 0f,
-            recentGratitude.size.toFloat() / 7f
+            if (weeklySleep.isNotEmpty()) weeklySleep.count { it >= WellnessThresholds.SLEEP_DEFICIENCY_HOURS }.toFloat() / weeklySleep.size else 0f,
+            recentGratitude.size.toFloat() / WellnessThresholds.TREND_WINDOW_DAYS.toFloat()
         )
         val consistencyScore = overallConsistency.average().toFloat()
 
@@ -211,10 +211,10 @@ object UserTwinBuilder {
             reflections = ReflectionState(identityMessage = identityMessage, setbackMessages = setbackMessages, patternDiscoveries = patternDiscoveries),
             signals = signals,
             currentState = when {
-                daysTracked < 3 -> WellnessState.INSUFFICIENT_DATA
-                consistencyScore >= 0.7f && recoveryScore != null && recoveryScore >= 60 -> WellnessState.THRIVING
-                consistencyScore >= 0.4f -> WellnessState.MAINTAINING
-                risks.any { it.severity >= 0.6f } -> WellnessState.AT_RISK
+                daysTracked < WellnessThresholds.MIN_DAYS_FOR_MEANINGFUL_DATA -> WellnessState.INSUFFICIENT_DATA
+                consistencyScore >= WellnessThresholds.THRIVING_CONSISTENCY_SCORE && recoveryScore != null && recoveryScore >= WellnessThresholds.THRIVING_RECOVERY_SCORE -> WellnessState.THRIVING
+                consistencyScore >= WellnessThresholds.MAINTAINING_CONSISTENCY_SCORE -> WellnessState.MAINTAINING
+                risks.any { it.severity >= WellnessThresholds.AT_RISK_SEVERITY_THRESHOLD } -> WellnessState.AT_RISK
                 else -> WellnessState.STRUGGLING
             },
             trends = trends,
@@ -224,12 +224,12 @@ object UserTwinBuilder {
             burnoutRisk = burnout,
             setbackPrediction = setbackPrediction,
             consistency = ConsistencyProfile(
-                workoutConsistency = daysActiveThisWeek.toFloat() / 7f,
-                nutritionConsistency = if (targetProtein > 0) weeklyProteinPct.count { it >= 0.8 }.toFloat() / weeklyProteinPct.size.coerceAtLeast(1) else 0f,
+                workoutConsistency = daysActiveThisWeek.toFloat() / WellnessThresholds.TREND_WINDOW_DAYS.toFloat(),
+                nutritionConsistency = if (targetProtein > 0) weeklyProteinPct.count { it >= WellnessThresholds.PROTEIN_ADHERENCE_RATIO }.toFloat() / weeklyProteinPct.size.coerceAtLeast(1) else 0f,
                 movementConsistency = if (weeklySteps.isNotEmpty()) weeklySteps.count { it >= stepGoal / 2 }.toFloat() / weeklySteps.size else 0f,
                 meditationConsistency = 0f,
-                journalConsistency = recentGratitude.size.toFloat() / 7f,
-                sleepConsistency = if (weeklySleep.isNotEmpty()) weeklySleep.count { it >= 6.0 }.toFloat() / weeklySleep.size else 0f,
+                journalConsistency = recentGratitude.size.toFloat() / WellnessThresholds.TREND_WINDOW_DAYS.toFloat(),
+                sleepConsistency = if (weeklySleep.isNotEmpty()) weeklySleep.count { it >= WellnessThresholds.SLEEP_DEFICIENCY_HOURS }.toFloat() / weeklySleep.size else 0f,
                 waterConsistency = 0f,
                 overallScore = consistencyScore
             ),

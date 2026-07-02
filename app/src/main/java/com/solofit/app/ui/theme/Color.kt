@@ -71,7 +71,6 @@ val PrimaryText: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.c
 val SecondaryText: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.inkSoft
 val CardCream: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.surface
 val DarkBg: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.canvas
-val DarkCard: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.surface
 val DarkSurface: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.surface2
 val DarkHairline: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.line
 val DarkText: Color @Composable @ReadOnlyComposable get() = LocalSoloColors.current.ink
@@ -79,7 +78,6 @@ val DarkTextSecondary: Color @Composable @ReadOnlyComposable get() = LocalSoloCo
 
 // ─── SOL — Honey Gold. Reserved for Sol only (never generic buttons). ───
 val SolGold = Color(0xFFC98A3D)
-val HoneyGold = SolGold
 val SolAccent = SolGold
 
 // ─── SECTION ACCENTS (earthy leather & aged metal) ───
@@ -92,15 +90,6 @@ val JournalAccent = Color(0xFF9A6E58)    // Clay
 val BodyRecompAccent = Color(0xFFA17A50) // Aged Bronze
 val HabitsAccent = Color(0xFF8B7355)     // Weathered Bronze
 
-// Raw accent names (kept for compatibility).
-val Copper = WorkoutAccent
-val OliveLeather = NutritionAccent
-val SlateBronze = RecoveryAccent
-val SmokedTaupe = MeditationAccent
-val WeatheredStone = WalkingAccent
-val Clay = JournalAccent
-val AgedBronze = BodyRecompAccent
-
 // Legacy accent aliases — repointed onto the earthy palette (no more blue/lavender).
 val Terracotta = JournalAccent
 val MossGreen = NutritionAccent
@@ -109,7 +98,6 @@ val TwilightBlue = RecoveryAccent
 val LavenderGrey = MeditationAccent
 val SlateBlue = BodyRecompAccent
 val OliveClay = NutritionAccent
-val WorkoutActiveTimer = WorkoutAccent
 val Ochre = WorkoutAccent
 
 // ─── SEMANTIC SIGNALS ───
@@ -120,9 +108,6 @@ val ErrorClay = Color(0xFFA06052)
 val HighGreen = SuccessGreen
 val MidAmber = WarningAmber
 val LowRed = ErrorClay
-val DarkSuccess = SuccessGreen
-val DarkWarning = WarningAmber
-val DarkError = ErrorClay
 
 // ─── MACRO NUTRIENTS (warm & distinct — no teal/blue) ───
 val ProteinColor = Color(0xFFA66A4D) // Sienna

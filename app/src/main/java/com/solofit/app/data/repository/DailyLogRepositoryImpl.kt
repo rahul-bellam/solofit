@@ -1,6 +1,7 @@
 package com.solofit.app.data.repository
 
 import com.solofit.app.data.local.dao.DailyLogDao
+import com.solofit.app.data.local.dao.DailyTotalsWithDate
 import com.solofit.app.data.local.dao.LoggedFoodRow
 import com.solofit.app.domain.model.MacroTotals
 import com.solofit.app.data.local.entity.DailyLogEntity
@@ -27,9 +28,9 @@ class DailyLogRepositoryImpl @Inject constructor(
     override suspend fun logFood(entry: DailyLogEntity): Long = dao.insert(entry)
     override suspend fun removeEntry(entry: DailyLogEntity) = dao.delete(entry)
 
-    override suspend fun getDailyTotalsSince(startDate: String): List<MacroTotals> =
+    override suspend fun getDailyTotalsSince(startDate: String): List<Pair<String, MacroTotals>> =
         dao.getDailyTotalsSince(startDate).map { t ->
-            MacroTotals(
+            t.date to MacroTotals(
                 calories = t.calories ?: 0.0,
                 proteinG = t.proteinG ?: 0.0,
                 carbsG = t.carbsG ?: 0.0,

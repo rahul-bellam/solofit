@@ -761,7 +761,17 @@ private fun CreateFoodDialog(onDismiss: () -> Unit, onConfirm: (name: String, kc
     var fats by remember { mutableStateOf("") }
     var fiber by remember { mutableStateOf("") }
 
-    val valid = name.isNotBlank() && kcal.toDoubleOrNull() != null && protein.toDoubleOrNull() != null && carbs.toDoubleOrNull() != null && fats.toDoubleOrNull() != null
+    val kcalNum = kcal.toDoubleOrNull()
+    val proteinNum = protein.toDoubleOrNull()
+    val carbsNum = carbs.toDoubleOrNull()
+    val fatsNum = fats.toDoubleOrNull()
+    val fiberNum = fiber.toDoubleOrNull()
+    val valid = name.isNotBlank() && name.length <= 100 &&
+        kcalNum != null && kcalNum in 0.0..900.0 &&
+        proteinNum != null && proteinNum in 0.0..100.0 &&
+        carbsNum != null && carbsNum in 0.0..100.0 &&
+        fatsNum != null && fatsNum in 0.0..100.0 &&
+        fiberNum != null && fiberNum in 0.0..100.0
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -770,7 +780,7 @@ private fun CreateFoodDialog(onDismiss: () -> Unit, onConfirm: (name: String, kc
             Column {
                 Text("Macros per 100g", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Food name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = name, onValueChange = { if (it.length <= 100) name = it }, label = { Text("Food name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
                 DecimalField("Calories", kcal, { kcal = it })
                 DecimalField("Protein (g)", protein, { protein = it })
@@ -779,7 +789,7 @@ private fun CreateFoodDialog(onDismiss: () -> Unit, onConfirm: (name: String, kc
                 DecimalField("Fiber (g)", fiber, { fiber = it })
             }
         },
-        confirmButton = { TextButton(onClick = { onConfirm(name, kcal.toDouble(), protein.toDouble(), carbs.toDouble(), fats.toDouble(), fiber.toDoubleOrNull() ?: 0.0) }, enabled = valid) { Text("Save") } },
+        confirmButton = { TextButton(onClick = { onConfirm(name.trim(), kcalNum!!, proteinNum!!, carbsNum!!, fatsNum!!, fiberNum!!) }, enabled = valid) { Text("Save") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

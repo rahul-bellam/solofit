@@ -19,8 +19,7 @@ import javax.inject.Singleton
 
 data class HealthConnectData(
     val sleepHours: Double? = null,
-    val steps: Int? = null,
-    val activeCalories: Int? = null
+    val steps: Int? = null
 )
 
 @Singleton
@@ -33,15 +32,6 @@ class HealthConnectRepository @Inject constructor(
         return HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
     }
 
-    private fun initClient(): HealthConnectClient? {
-        if (client == null) {
-            client = runCatching {
-                HealthConnectClient.getOrCreate(context, context.packageName)
-            }.getOrNull()
-        }
-        return client
-    }
-
     suspend fun hasAllPermissions(): Boolean {
         val hcc = initClient() ?: return false
         val granted = hcc.permissionController.getGrantedPermissions()
@@ -51,6 +41,15 @@ class HealthConnectRepository @Inject constructor(
             HealthPermission.getReadPermission(ExerciseSessionRecord::class)
         )
         return granted.containsAll(needed)
+    }
+
+    private fun initClient(): HealthConnectClient? {
+        if (client == null) {
+            client = runCatching {
+                HealthConnectClient.getOrCreate(context, context.packageName)
+            }.getOrNull()
+        }
+        return client
     }
 
     fun getPermissionIntent() = runCatching {

@@ -3,6 +3,7 @@ package com.solofit.app.sol
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.IsoFields
+import com.solofit.app.sol.WellnessThresholds
 import kotlin.random.Random
 
 data class PatternDiscovery(
@@ -34,7 +35,7 @@ object PatternDiscoveryEngine {
         }
 
         if (shownThisWeek.size >= MAX_PER_WEEK) return emptyList()
-        if (daysTracked < 14) return emptyList()
+        if (daysTracked < WellnessThresholds.MIN_DAYS_FOR_PATTERNS) return emptyList()
 
         val discoveries = mutableListOf<PatternDiscovery>()
 

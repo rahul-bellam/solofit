@@ -1,5 +1,55 @@
 package com.solofit.app.sol
 
+import androidx.compose.ui.graphics.Color
+
+// ── Today's Theme (Daily Narrative — Point 5) ──
+enum class DayTheme(
+    val displayName: String,
+    val description: String
+) {
+    RECOVERY("Recovery Day", "Your best investment today is restoring energy"),
+    MOVEMENT("Movement Day", "Staying active is today's anchor habit"),
+    NUTRITION("Nutrition Day", "Fuel and hydration deserve extra attention today"),
+    PERFORMANCE("Performance Day", "Your body is ready for a strong session"),
+    MINDFULNESS("Mindfulness Day", "Mental recovery and reflection take centre stage"),
+    CONSISTENCY("Consistency Day", "Small actions compound — just show up"),
+    REST("Rest Day", "True progress sometimes means doing nothing"),
+    BUILDING("Building Day", "Foundations are still forming — keep going"),
+    BALANCED("Balanced Day", "Everything is within a healthy range")
+}
+
+fun DayTheme.themeColor(): Color = when (this) {
+    DayTheme.RECOVERY -> Color(0xFF6E655B)   // Slate Bronze
+    DayTheme.MOVEMENT -> Color(0xFF827A6E)   // Weathered Stone
+    DayTheme.NUTRITION -> Color(0xFF7A6B4A)  // Olive Leather
+    DayTheme.PERFORMANCE -> Color(0xFFB45F38) // Burnished Copper
+    DayTheme.MINDFULNESS -> Color(0xFF8A7C72) // Smoked Taupe
+    DayTheme.CONSISTENCY -> Color(0xFF8B7355) // Weathered Bronze
+    DayTheme.REST -> Color(0xFF756F69)        // TextSecondary light
+    DayTheme.BUILDING -> Color(0xFFC98A3D)    // SolGold
+    DayTheme.BALANCED -> Color(0xFF8B7355)    // Weathered Bronze
+}
+
+// ── Life Context (Point 6) ──
+data class LifeContext(
+    val situation: String = "",
+    val active: Boolean = false,
+    val setAt: Long = 0L
+) {
+    companion object {
+        val PRESETS = mapOf(
+            "busy" to "Busy Week",
+            "travelling" to "Travelling",
+            "exams" to "Exams",
+            "night_shifts" to "Night Shifts",
+            "working_from_home" to "Working from Home",
+            "vacation" to "Vacation",
+            "injured" to "Injured",
+            "sick" to "Sick"
+        )
+    }
+}
+
 data class SolInput(
     val recoveryScore: Int?,
     val previousRecoveryScore: Int?,
@@ -90,7 +140,9 @@ data class Script(
     val reasoning: List<String>,
     val recommendations: List<String>,
     val voiceLine: String,
-    val type: InsightType
+    val type: InsightType,
+    // ── Causal explanation (Point 7) — why something changed ──
+    val causalExplanation: String = ""
 )
 
 data class SolBriefing(
@@ -98,6 +150,11 @@ data class SolBriefing(
     val primary: Script,
     val supplementary: List<Script>,
     val dayLabel: DayLabel,
+    // ── Daily Narrative (Point 5) ──
+    val todayTheme: DayTheme = DayTheme.BALANCED,
+    val themeReason: String = "",
+    // ── Causal explanation for the primary signal change (Point 7) ──
+    val causalExplanation: String = "",
     val signals: List<SignalSummary>,
     val trends: List<TrendSummary> = emptyList(),
     val hasSufficientData: Boolean = true,
@@ -311,6 +368,8 @@ data class UserTwin(
     val lifestyleMode: LifestyleMode = LifestyleMode.REBUILDING,
     val dailyPriority: DailyPriority = DailyPriority.CONSISTENCY,
     val microWins: List<MicroWin> = emptyList(),
+    // ── Community (Friends / Circle) ──
+    val community: CommunityState = CommunityState(),
     // ── Data Quality ──
     val daysTracked: Int = 0,
     val confidence: String = "Low"

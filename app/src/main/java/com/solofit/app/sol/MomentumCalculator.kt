@@ -30,8 +30,8 @@ object MomentumCalculator {
 
         val active = daysActiveThisWeek >= WellnessThresholds.ACTIVE_WEEK_DAYS
         val recGood = recoveryScore != null && recoveryScore >= WellnessThresholds.RECOVERY_GOOD
-        val stepsGood = weeklySteps.takeLast(3).average().toInt() >= WellnessThresholds.MODERATE_MOVEMENT_STEPS
-        val proteinGood = weeklyProteinPct.takeLast(3).average() >= WellnessThresholds.PROTEIN_SLIPPING_THRESHOLD
+        val stepsGood = weeklySteps.takeLast(WellnessThresholds.TRAILING_WINDOW_SIZE).average().toInt() >= WellnessThresholds.MODERATE_MOVEMENT_STEPS
+        val proteinGood = weeklyProteinPct.takeLast(WellnessThresholds.TRAILING_WINDOW_SIZE).average() >= WellnessThresholds.PROTEIN_SLIPPING_THRESHOLD
         val sleepOk = sleepHours != null && sleepHours >= WellnessThresholds.SLEEP_ADEQUATE
         val hasStreak = streakDays >= WellnessThresholds.STREAK_MILESTONE_7
 
@@ -42,19 +42,19 @@ object MomentumCalculator {
         if (sleepOk) positives.add("sleep")
 
         if (!active) negatives.add("workout")
-        if (recoveryScore != null && recoveryScore < 40) negatives.add("recovery")
-        if (weeklySteps.size >= 3 && stepsGood.not()) negatives.add("movement")
-        if (weeklyProteinPct.size >= 3 && proteinGood.not()) negatives.add("nutrition")
-        if (sleepHours != null && sleepHours < 6.0) negatives.add("sleep")
+        if (recoveryScore != null && recoveryScore < WellnessThresholds.MOMENTUM_RECOVERY_NEGATIVE) negatives.add("recovery")
+        if (weeklySteps.size >= WellnessThresholds.TRAILING_WINDOW_SIZE && stepsGood.not()) negatives.add("movement")
+        if (weeklyProteinPct.size >= WellnessThresholds.TRAILING_WINDOW_SIZE && proteinGood.not()) negatives.add("nutrition")
+        if (sleepHours != null && sleepHours < WellnessThresholds.SLEEP_DEFICIENCY_HOURS) negatives.add("sleep")
 
         val posCount = positives.size
         val negCount = negatives.size
         val ratio = if (posCount + negCount > 0) posCount.toDouble() / (posCount + negCount) else 0.0
 
         val level = when {
-            posCount >= 4 && negCount <= 1 -> MomentumLevel.EXCELLENT
-            posCount >= 3 && ratio >= 0.6 -> MomentumLevel.STRONG
-            posCount >= 2 -> MomentumLevel.STABLE
+            posCount >= WellnessThresholds.MOMENTUM_POS_COUNT_EXCELLENT && negCount <= WellnessThresholds.MOMENTUM_NEG_COUNT_EXCELLENT -> MomentumLevel.EXCELLENT
+            posCount >= WellnessThresholds.MOMENTUM_POS_COUNT_STRONG && ratio >= WellnessThresholds.MOMENTUM_RATIO_STRONG -> MomentumLevel.STRONG
+            posCount >= WellnessThresholds.MOMENTUM_POS_COUNT_STABLE -> MomentumLevel.STABLE
             else -> MomentumLevel.BUILDING
         }
 

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.solofit.app.sol.TrendDirection
 import com.solofit.app.ui.components.LineChart
 import com.solofit.app.ui.theme.BodyRecompAccent
 import com.solofit.app.ui.theme.HighGreen

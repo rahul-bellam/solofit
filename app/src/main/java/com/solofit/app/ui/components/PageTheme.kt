@@ -11,7 +11,6 @@ import com.solofit.app.ui.theme.NutritionAccent
 import com.solofit.app.ui.theme.RecoveryAccent
 import com.solofit.app.ui.theme.SolGold
 import com.solofit.app.ui.theme.SoloFitTheme
-import com.solofit.app.ui.theme.WalkingAccent
 import com.solofit.app.ui.theme.WorkoutAccent
 
 data class PageAccent(
@@ -52,10 +51,6 @@ fun MeditationTheme(content: @Composable () -> Unit) =
 @Composable
 fun BodyTheme(content: @Composable () -> Unit) =
     SectionAccent(BodyRecompAccent, "body", content)
-
-@Composable
-fun WalkingTheme(content: @Composable () -> Unit) =
-    SectionAccent(WalkingAccent, "walking", content)
 
 // ── Workout & Strength force the dark "intense" skin, regardless of app theme. ──
 @Composable

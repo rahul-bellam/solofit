@@ -28,6 +28,15 @@ data class DailyTotals(
     val fiberG: Double?
 )
 
+data class DailyTotalsWithDate(
+    val date: String,
+    val calories: Double?,
+    val proteinG: Double?,
+    val carbsG: Double?,
+    val fatsG: Double?,
+    val fiberG: Double?
+)
+
 @Dao
 interface DailyLogDao {
 
@@ -79,6 +88,7 @@ interface DailyLogDao {
     @Query(
         """
         SELECT 
+            dl.date AS date,
             SUM(dl.gramsConsumed / 100.0 * fi.caloriesPer100g) AS calories,
             SUM(dl.gramsConsumed / 100.0 * fi.proteinPer100g)  AS proteinG,
             SUM(dl.gramsConsumed / 100.0 * fi.carbsPer100g)    AS carbsG,
@@ -91,5 +101,5 @@ interface DailyLogDao {
         ORDER BY dl.date ASC
         """
     )
-    suspend fun getDailyTotalsSince(startDate: String): List<DailyTotals>
+    suspend fun getDailyTotalsSince(startDate: String): List<DailyTotalsWithDate>
 }

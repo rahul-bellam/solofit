@@ -5,7 +5,7 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "weekly_plans")
+@Entity(tableName = "weekly_plans", indices = [Index("dayOfWeek")])
 data class WeeklyPlanEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val dayOfWeek: Int, // 1=Monday … 7=Sunday
@@ -22,7 +22,7 @@ data class WeeklyPlanEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("planId")]
+    indices = [Index("planId"), Index("isCompleted")]
 )
 data class PlannedExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

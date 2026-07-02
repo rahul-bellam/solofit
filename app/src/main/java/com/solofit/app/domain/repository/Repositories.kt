@@ -81,7 +81,7 @@ interface DailyLogRepository {
     fun observeTotalsForDate(date: String): Flow<com.solofit.app.domain.model.MacroTotals>
     suspend fun logFood(entry: DailyLogEntity): Long
     suspend fun removeEntry(entry: DailyLogEntity)
-    suspend fun getDailyTotalsSince(startDate: String): List<com.solofit.app.domain.model.MacroTotals>
+    suspend fun getDailyTotalsSince(startDate: String): List<Pair<String, com.solofit.app.domain.model.MacroTotals>>
 }
 
 interface WorkoutRepository {

@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.PrimaryText
 import com.solofit.app.ui.theme.SecondaryText
 import com.solofit.app.ui.theme.CardCream
-import com.solofit.app.ui.theme.DarkSuccess
+import com.solofit.app.ui.theme.SuccessGreen
 
 data class MonthlyReflectionData(
     val workoutsCompleted: Int = 0,
@@ -62,7 +62,7 @@ fun MonthlyReflection(
                 buildImprovement(data),
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = DarkSuccess,
+                color = SuccessGreen,
                 lineHeight = 18.sp
             )
 

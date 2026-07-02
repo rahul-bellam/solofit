@@ -118,6 +118,12 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 
+    // Security (encrypted prefs for private keys)
+    implementation(libs.androidx.security.crypto)
+
+    // ZXing for QR code generation
+    implementation("com.google.zxing:core:3.5.3")
+
     // --- Barcode pipeline ---
     implementation(libs.play.services.code.scanner)
 

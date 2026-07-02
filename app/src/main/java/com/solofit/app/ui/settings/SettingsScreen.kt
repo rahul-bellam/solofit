@@ -52,6 +52,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onEditProfile: () -> Unit,
     onManageModules: () -> Unit = {},
+    onFriends: () -> Unit = {},
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val profile by viewModel.profile.collectAsStateWithLifecycle()
@@ -180,6 +181,29 @@ fun SettingsScreen(
                         )
                     }
                     Text("Edit", color = MaterialTheme.colorScheme.primary)
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // ---- Accountability ----
+            SectionTitle("Accountability")
+            Card(
+                Modifier.fillMaxWidth().clickable(onClick = onFriends)
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text("My Circle", fontWeight = FontWeight.SemiBold)
+                        Text(
+                            "Friends, groups, permissions, and shared events",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Text("Manage", color = MaterialTheme.colorScheme.primary)
                 }
             }
 

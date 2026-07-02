@@ -10,6 +10,9 @@ import android.database.sqlite.SQLiteException
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.solofit.app.data.local.dao.DailyLogDao
 import com.solofit.app.data.local.dao.FoodDao
+import com.solofit.app.data.local.dao.FriendDao
+import com.solofit.app.data.local.dao.FriendEventDao
+import com.solofit.app.data.local.dao.SoloIdentityDao
 import com.solofit.app.data.local.dao.UserProfileDao
 import com.solofit.app.data.local.dao.JournalDao
 import com.solofit.app.data.local.dao.BodyMeasurementDao
@@ -24,8 +27,14 @@ import com.solofit.app.data.local.entity.DailyLogEntity
 import com.solofit.app.data.local.entity.ExerciseEntity
 import com.solofit.app.data.local.entity.ExerciseSetEntity
 import com.solofit.app.data.local.entity.FoodItemEntity
+import com.solofit.app.data.local.entity.FriendEntity
+import com.solofit.app.data.local.entity.FriendEventEntity
+import com.solofit.app.data.local.entity.FriendGroupEntity
+import com.solofit.app.data.local.entity.FriendPermissionEntity
+import com.solofit.app.data.local.entity.GroupMemberEntity
 import com.solofit.app.data.local.entity.PersonalRecordEntity
 import com.solofit.app.data.local.entity.RoutineEntity
+import com.solofit.app.data.local.entity.SoloIdentityEntity
 import com.solofit.app.data.local.entity.UserProfileEntity
 import com.solofit.app.data.local.entity.GoalItemEntity
 import com.solofit.app.data.local.entity.GratitudeEntryEntity
@@ -59,9 +68,15 @@ import kotlinx.coroutines.launch
         WeeklyPlanEntity::class,
         PlannedExerciseEntity::class,
         PersonalRecordEntity::class,
-        FrequentMealEntity::class
+        FrequentMealEntity::class,
+        SoloIdentityEntity::class,
+        FriendEntity::class,
+        FriendPermissionEntity::class,
+        FriendGroupEntity::class,
+        GroupMemberEntity::class,
+        FriendEventEntity::class
     ],
-    version = 12,
+    version = 15,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -78,6 +93,9 @@ abstract class SoloFitDatabase : RoomDatabase() {
     abstract fun progressPhotoDao(): ProgressPhotoDao
     abstract fun weeklyPlanDao(): WeeklyPlanDao
     abstract fun frequentMealDao(): FrequentMealDao
+    abstract fun soloIdentityDao(): SoloIdentityDao
+    abstract fun friendDao(): FriendDao
+    abstract fun friendEventDao(): FriendEventDao
 
     companion object {
         const val DB_NAME = "solofit.db"
@@ -338,6 +356,91 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v12 -> v13: add missing database indexes for query performance. */
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_sessions_isCompleted ON workout_sessions(isCompleted)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_sets_isCompleted ON exercise_sets(isCompleted)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_exercise_sets_exerciseName ON exercise_sets(exerciseName)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_personal_records_exerciseName ON personal_records(exerciseName)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_weekly_plans_dayOfWeek ON weekly_plans(dayOfWeek)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_planned_exercises_isCompleted ON planned_exercises(isCompleted)")
+            }
+        }
+
+        /** v14 -> v15: add relationshipType to friends. */
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE friends ADD COLUMN relationshipType TEXT NOT NULL DEFAULT 'accountability_partner'")
+            }
+        }
+
+        /** v13 -> v14: friend system tables. */
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS solo_identity (
+                        id INTEGER NOT NULL PRIMARY KEY,
+                        soloId TEXT NOT NULL,
+                        displayName TEXT NOT NULL,
+                        publicKey BLOB NOT NULL,
+                        createdAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS friends (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        soloId TEXT NOT NULL,
+                        displayName TEXT NOT NULL,
+                        publicKey BLOB NOT NULL,
+                        status TEXT NOT NULL DEFAULT 'pending',
+                        addedAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_friends_soloId ON friends(soloId)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS friend_permissions (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        friendId INTEGER NOT NULL,
+                        category TEXT NOT NULL,
+                        level TEXT NOT NULL DEFAULT 'private',
+                        FOREIGN KEY (friendId) REFERENCES friends(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_friend_permissions_friend_category ON friend_permissions(friendId, category)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS friend_groups (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        name TEXT NOT NULL,
+                        createdAt INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS group_members (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        groupId INTEGER NOT NULL,
+                        friendId INTEGER NOT NULL,
+                        joinedAt INTEGER NOT NULL,
+                        FOREIGN KEY (groupId) REFERENCES friend_groups(id) ON DELETE CASCADE,
+                        FOREIGN KEY (friendId) REFERENCES friends(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS idx_group_members_group_friend ON group_members(groupId, friendId)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS friend_events (
+                        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        friendId INTEGER NOT NULL,
+                        type TEXT NOT NULL,
+                        payload TEXT NOT NULL DEFAULT '',
+                        createdAt INTEGER NOT NULL,
+                        FOREIGN KEY (friendId) REFERENCES friends(id) ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_friend_events_friendId ON friend_events(friendId)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_friend_events_friend_created ON friend_events(friendId, createdAt)")
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
             val db = Room.databaseBuilder(
                 context.applicationContext,
@@ -347,7 +450,8 @@ abstract class SoloFitDatabase : RoomDatabase() {
                 .addMigrations(
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                     MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
-                    MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12
+                    MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
+                    MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15
                 )
 
                 .addCallback(object : Callback() {

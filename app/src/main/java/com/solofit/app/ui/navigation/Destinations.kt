@@ -2,6 +2,7 @@ package com.solofit.app.ui.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 
@@ -12,7 +13,6 @@ object Routes {
     const val DASHBOARD = "dashboard"
     const val NUTRITION = "nutrition"
     const val WORKOUT = "workout"
-    const val HISTORY = "history"
     const val WALKING = "walking"
     const val YOGA = "yoga"
     const val HABITS = "habits"
@@ -27,9 +27,7 @@ object Routes {
     const val REMINDERS = "reminders"
     const val WEIGHT = "weight"
     const val JOURNAL = "journal"
-    const val PERF = "perf"
     const val BODY = "body"
-    const val EDIT_PHASE = "edit_phase"
     const val STRENGTH = "strength"
     const val PHOTOS = "photos"
     const val FOOD_LOOKUP = "food_lookup"
@@ -37,9 +35,15 @@ object Routes {
     const val RECOVERY = "recovery"
     const val STRESS = "stress"
     const val MEDITATION = "meditation"
-    const val WELLNESS = "wellness"
     const val PROGRESS = "progress"
-    const val BODY_RECOMP = "body_recomp"
+    const val SOL = "sol"
+
+    const val FRIENDS = "friends"
+    const val ADD_FRIEND = "add_friend"
+    const val FRIEND_DETAIL = "friend_detail/{friendId}"
+    const val GROUPS = "groups"
+
+    fun friendDetail(friendId: Long) = "friend_detail/$friendId"
 }
 
 data class BottomDestination(
@@ -54,6 +58,11 @@ data class BottomDestination(
             route = Routes.DASHBOARD,
             label = "Home",
             icon = Icons.Filled.Home
+        )
+        val SOL = BottomDestination(
+            route = Routes.SOL,
+            label = "Sol",
+            icon = Icons.Filled.AutoAwesome
         )
     }
 }

@@ -58,6 +58,8 @@ object WellnessThresholds {
 
     // ─── Streak Milestones ───
     const val STREAK_MILESTONE_7 = 7
+    const val STREAK_MILESTONE_30 = 30
+    const val STREAK_MILESTONE_100 = 100
 
     // ─── Body Recomp (4-week rates) ───
     const val RECOMP_WAIST_DECREASE_CM = 0.5
@@ -76,6 +78,63 @@ object WellnessThresholds {
     const val RECOVERY_WEIGHT_WORKOUT = 0.15
     const val RECOVERY_WEIGHT_WATER = 0.15
     const val RECOVERY_WEIGHT_ENERGY = 0.10
+
+    // ─── Trend & Delta Thresholds ───
+    const val STEPS_SIGNIFICANT_CHANGE = 500
+    const val STEPS_TREND_SIGNIFICANT_PCT = 5
+    const val STEPS_IMPROVEMENT_FACTOR = 1.2
+    const val RECOVERY_SIGNIFICANT_DELTA = 5
+    const val RECOVERY_MICRO_WIN_DELTA = 3
+    const val SLEEP_SIGNIFICANT_DELTA_HOURS = 0.3
+    const val STRESS_HIGH_THRESHOLD = 4
+    const val STRESS_CRITICAL_THRESHOLD = 7
+    const val STRESS_IMPROVEMENT_DELTA = 1
+    const val SLEEP_DEFICIENCY_HOURS = 6.0
+    const val MOVEMENT_RISK_LOW_AVG = 3000
+    const val TREND_WINDOW_DAYS = 7
+    const val CONSISTENCY_WINDOW_DAYS = 7
+
+    // ─── Risk Severity Weights ───
+    const val RISK_SEVERITY_SLEEP = 0.7f
+    const val RISK_SEVERITY_STRESS = 0.6f
+    const val RISK_SEVERITY_MOVEMENT = 0.5f
+
+    // ─── Wellness State Thresholds ───
+    const val THRIVING_CONSISTENCY_SCORE = 0.7f
+    const val THRIVING_RECOVERY_SCORE = 60
+    const val MAINTAINING_CONSISTENCY_SCORE = 0.4f
+    const val AT_RISK_SEVERITY_THRESHOLD = 0.6f
+    const val MIN_DAYS_FOR_MEANINGFUL_DATA = 3
+    const val MIN_DAYS_FOR_PATTERNS = 14
+
+    // ─── Momentum Thresholds ───
+    const val MOMENTUM_RECOVERY_NEGATIVE = 40
+    const val MOMENTUM_POS_COUNT_EXCELLENT = 4
+    const val MOMENTUM_NEG_COUNT_EXCELLENT = 1
+    const val MOMENTUM_POS_COUNT_STRONG = 3
+    const val MOMENTUM_RATIO_STRONG = 0.6
+    const val MOMENTUM_POS_COUNT_STABLE = 2
+
+    // ─── Trailing Window ───
+    const val TRAILING_WINDOW_SIZE = 3
+
+    // ─── Micro-Win Thresholds ───
+    const val PROTEIN_GRAMS_MULTIPLIER = 150
+
+    // ─── Calorie Goal Range ───
+    const val CALORIE_GOAL_RANGE_LOW = 0.9
+    const val CALORIE_GOAL_RANGE_HIGH = 1.1
+
+    // ─── Journal ───
+    const val JOURNAL_STREAK_DAYS = 3
+
+    // ─── Trend Building ───
+    const val MIN_TREND_POINTS = 2
+    const val MIN_STRENGTH_SAMPLES = 3
+    const val SUPPLEMENTARY_INSIGHT_COUNT = 3
+
+    // ─── Protein Adherence ───
+    const val PROTEIN_ADHERENCE_RATIO = 0.8
 
     // ─── Insight Priority ───
     const val PRIORITY_STREAK_100 = 1000

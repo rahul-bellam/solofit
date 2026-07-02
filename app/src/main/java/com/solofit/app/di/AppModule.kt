@@ -5,6 +5,9 @@ import com.solofit.app.data.local.SoloFitDatabase
 import com.solofit.app.data.local.UserPreferences
 import com.solofit.app.data.local.dao.DailyLogDao
 import com.solofit.app.data.local.dao.FoodDao
+import com.solofit.app.data.local.dao.FriendDao
+import com.solofit.app.data.local.dao.FriendEventDao
+import com.solofit.app.data.local.dao.SoloIdentityDao
 import com.solofit.app.data.local.dao.UserProfileDao
 import com.solofit.app.data.local.dao.JournalDao
 import com.solofit.app.data.local.dao.BodyMeasurementDao
@@ -61,6 +64,10 @@ object AppModule {
     @Provides fun provideProgressPhotoDao(db: SoloFitDatabase): ProgressPhotoDao = db.progressPhotoDao()
     @Provides fun provideWeeklyPlanDao(db: SoloFitDatabase): WeeklyPlanDao = db.weeklyPlanDao()
     @Provides fun provideFrequentMealDao(db: SoloFitDatabase): FrequentMealDao = db.frequentMealDao()
+
+    @Provides fun provideSoloIdentityDao(db: SoloFitDatabase): SoloIdentityDao = db.soloIdentityDao()
+    @Provides fun provideFriendDao(db: SoloFitDatabase): FriendDao = db.friendDao()
+    @Provides fun provideFriendEventDao(db: SoloFitDatabase): FriendEventDao = db.friendEventDao()
 
     @Provides
     @Singleton

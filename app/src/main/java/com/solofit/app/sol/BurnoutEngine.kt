@@ -170,7 +170,7 @@ object BurnoutEngine {
     ): BurnoutInsight? {
         val lowSleepStreak = input.weeklySleep.trailingLowSleepDays(WellnessThresholds.SLEEP_LOW)
         val recoveryLow = (avgRecovery ?: 100.0) < WellnessThresholds.RECOVERY_MODERATE
-        val stressHigh = input.stressLevel >= 4
+        val stressHigh = (input.stressLevel ?: 0) >= WellnessThresholds.STRESS_HIGH_THRESHOLD
         val journalNegative = input.journalSentiment == JournalSentiment.CHALLENGING
 
         // 1. Recovery Spiral — sustained short sleep dragging recovery down.

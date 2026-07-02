@@ -76,7 +76,7 @@ object SetbackPredictor {
         if (avgRecovery7d != null) 1.0 - avgRecovery7d.toDouble() / 100.0 else 0.5,
         if (avgSleep3d != null) 1.0 - min(avgSleep3d / 8.0, 1.0) else 0.5,
         if (avgProteinAdherence7d != null) 1.0 - min(avgProteinAdherence7d, 1.0) else 0.5,
-        if (avgSteps3d != null) 1.0 - min(avgSteps3d.toDouble() / 8000.0, 1.0) else 0.5,
+        if (avgSteps3d != null) 1.0 - min(avgSteps3d.toDouble() / WellnessThresholds.DEFAULT_STEP_GOAL.toDouble(), 1.0) else 0.5,
         if (meditatedAny7d) 1.0 else 0.0,
         if (journaledAny7d) 1.0 else 0.0,
         if (isWeekend) 1.0 else 0.0,

@@ -44,7 +44,7 @@ object MicroWinEngine {
         if (todayProtein != null && yesterdayProtein != null && yesterdayProtein > 0) {
             val delta = todayProtein - yesterdayProtein
             if (delta > WellnessThresholds.PROTEIN_MICRO_WIN_DELTA) {
-                val grams = (delta * 150).toInt()
+                val grams = (delta * WellnessThresholds.PROTEIN_GRAMS_MULTIPLIER).toInt()
                 wins.add(MicroWin(
                     "protein", "Protein intake improved by ${grams}g.",
                     "Protein intake is improving.", WellnessThresholds.PRIORITY_MICRO_WIN_PROTEIN
@@ -52,7 +52,7 @@ object MicroWinEngine {
             }
         }
 
-        if (todayRecovery != null && yesterdayRecovery != null && todayRecovery > yesterdayRecovery + 3) {
+        if (todayRecovery != null && yesterdayRecovery != null && todayRecovery > yesterdayRecovery + WellnessThresholds.RECOVERY_MICRO_WIN_DELTA) {
             val delta = todayRecovery - yesterdayRecovery
             wins.add(MicroWin(
                 "recovery", "Recovery score improved by $delta points.",
@@ -70,11 +70,4 @@ object MicroWinEngine {
         return wins.sortedByDescending { it.priority }
     }
 
-    fun directionPositive(
-        todayValue: Double?,
-        yesterdayValue: Double?
-    ): Boolean {
-        if (todayValue == null || yesterdayValue == null) return false
-        return todayValue > yesterdayValue
-    }
 }

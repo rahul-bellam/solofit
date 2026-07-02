@@ -43,7 +43,8 @@ data class OnboardingState(
 class OnboardingViewModel @Inject constructor(
     private val repository: ProfileRepository,
     private val calculate: CalculateNutritionTargetsUseCase,
-    private val prefs: UserPreferences
+    private val prefs: UserPreferences,
+    private val identityRepository: com.solofit.app.domain.repository.SoloIdentityRepository
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(OnboardingState())
@@ -130,6 +131,7 @@ class OnboardingViewModel @Inject constructor(
                     tdee = targets.tdee
                 )
             )
+            identityRepository.createIfNeeded(s.name.trim())
             repository.setOnboardingComplete(true)
             prefs.setEnabledModules(SoloFitModule.DEFAULT_ENABLED)
             prefs.setModuleOrder(SoloFitModule.DEFAULT_ENABLED)

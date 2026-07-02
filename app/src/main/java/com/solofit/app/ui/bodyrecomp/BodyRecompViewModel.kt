@@ -7,6 +7,7 @@ import com.solofit.app.data.local.entity.WeightEntryEntity
 import com.solofit.app.domain.repository.BodyRepository
 import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.core.FitnessMath
+import com.solofit.app.sol.TrendDirection
 import com.solofit.app.sol.WellnessThresholds
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,7 +36,6 @@ data class BodyRecompState(
     val waistInput: String = ""
 )
 
-enum class TrendDirection { UP, DOWN, STABLE }
 enum class RecompConfidence { LOW, MEDIUM, HIGH }
 enum class RecompStatus {
     INSUFFICIENT_DATA,

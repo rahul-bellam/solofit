@@ -7,8 +7,6 @@ class InsightEngine @Inject constructor() {
 
     companion object {
         const val MIN_DAYS_FOR_TRENDS = 3
-        const val MIN_DAYS_FOR_WEEKLY = 7
-        const val MIN_DAYS_FOR_PATTERNS = 14
     }
 
     fun computeBriefing(input: SolInput, memory: SolMemoryData? = null): SolBriefing {
@@ -26,6 +24,8 @@ class InsightEngine @Inject constructor() {
                 primary = EMPTY_STATE_SCRIPT,
                 supplementary = emptyList(),
                 dayLabel = DayLabel.BALANCED,
+                todayTheme = DayTheme.BUILDING,
+                themeReason = "We're still getting to know you. A few more days of tracking will unlock your personalised theme.",
                 signals = emptyList(),
                 trends = emptyList(),
                 hasSufficientData = false,
@@ -50,6 +50,13 @@ class InsightEngine @Inject constructor() {
         val signals = buildSignals(input)
         val trends = buildTrends(input)
 
+        // ── Today's Theme (Point 5) ──
+        val theme = determineTheme(input, dayLabel)
+        val themeReason = buildThemeReason(input, theme)
+
+        // ── Causal explanation for primary change (Point 7) ──
+        val causalExplanation = buildCausalExplanation(input, primary.insight)
+
         val memoryLine = memory?.let { m ->
             buildString {
                 if (m.strongestDay.isNotBlank()) append("You usually train on ${m.strongestDay}. ")
@@ -60,15 +67,23 @@ class InsightEngine @Inject constructor() {
         val enrichedPrimary = if (memoryLine != null) {
             primary.insight.copy(
                 reasoning = primary.insight.reasoning + memoryLine,
-                voiceLine = primary.insight.voiceLine + " " + memoryLine
+                voiceLine = primary.insight.voiceLine + " " + memoryLine,
+                causalExplanation = causalExplanation
             )
-        } else primary.insight
+        } else {
+            if (causalExplanation.isNotEmpty()) {
+                primary.insight.copy(causalExplanation = causalExplanation)
+            } else primary.insight
+        }
 
         return SolBriefing(
             greeting = greeting,
             primary = enrichedPrimary,
             supplementary = supplementary.map { it.insight },
             dayLabel = dayLabel,
+            todayTheme = theme,
+            themeReason = themeReason,
+            causalExplanation = causalExplanation,
             signals = signals,
             trends = trends,
             hasSufficientData = true,
@@ -76,10 +91,130 @@ class InsightEngine @Inject constructor() {
         )
     }
 
+    /** Determines today's narrative theme (Point 5). */
+    private fun determineTheme(input: SolInput, dayLabel: DayLabel): DayTheme {
+        val rec = input.recoveryScore
+        val sleep = input.sleepHours
+        val stress = input.stressLevel
+        val steps = input.steps
+        val proteinPct = if (input.targetProtein > 0) input.consumedProtein.toDouble() / input.targetProtein else 0.0
+        val workoutToday = input.workoutToday
+        val journaled = input.journalDays > 0
+        val meditated = (input.meditationMinutes ?: 0) > 0
+
+        return when {
+            // Rest: very low recovery or consecutive low sleep
+            (rec != null && rec < WellnessThresholds.RECOVERY_VERY_LOW) ||
+                (sleep != null && sleep < WellnessThresholds.SLEEP_VERY_POOR) -> DayTheme.REST
+
+            // Recovery: low recovery or declining trend
+            (rec != null && rec < WellnessThresholds.RECOVERY_LOW) ||
+                (sleep != null && sleep < WellnessThresholds.SLEEP_POOR) -> DayTheme.RECOVERY
+
+            // Mindfulness: high stress, journaled, meditated
+            (stress != null && stress >= WellnessThresholds.STRESS_HIGH_THRESHOLD) || journaled || meditated -> DayTheme.MINDFULNESS
+
+            // Performance: high recovery + workout today
+            rec != null && rec >= WellnessThresholds.RECOVERY_HIGH && workoutToday &&
+                sleep != null && sleep >= WellnessThresholds.SLEEP_OPTIMAL &&
+                steps != null && steps >= WellnessThresholds.PERFORMANCE_STEPS -> DayTheme.PERFORMANCE
+
+            // Nutrition: low protein or needing attention
+            (proteinPct < WellnessThresholds.PROTEIN_LOW) || (proteinPct in WellnessThresholds.PROTEIN_LOW..WellnessThresholds.PROTEIN_NEAR) -> DayTheme.NUTRITION
+
+            // Movement: steps below moderate threshold
+            steps != null && steps < WellnessThresholds.MODERATE_MOVEMENT_STEPS -> DayTheme.MOVEMENT
+
+            // Consistency: active week or streak
+            input.daysActiveThisWeek >= WellnessThresholds.CONSISTENT_WEEK_DAYS || input.streakDays >= WellnessThresholds.STREAK_MILESTONE_7 -> DayTheme.CONSISTENCY
+
+            // Building: early days
+            input.daysTracked < 14 -> DayTheme.BUILDING
+
+            else -> DayTheme.BALANCED
+        }
+    }
+
+    /** Builds a human-readable reason for the theme (Point 5). */
+    private fun buildThemeReason(input: SolInput, theme: DayTheme): String = when (theme) {
+        DayTheme.REST -> "Your recovery signals are asking for a break today."
+        DayTheme.RECOVERY -> "Sleep and recovery metrics suggest prioritising rest."
+        DayTheme.MOVEMENT -> "Step count is lower than usual — movement could help reset your energy."
+        DayTheme.NUTRITION -> "Nutrition data indicates room for improvement today."
+        DayTheme.PERFORMANCE -> "Your body is showing strong readiness signals."
+        DayTheme.MINDFULNESS -> "Stress or reflection signals suggest a mindful approach today."
+        DayTheme.CONSISTENCY -> "You've been showing up consistently — that's the foundation of progress."
+        DayTheme.BUILDING -> "Foundations are still forming. Consistency matters more than intensity."
+        DayTheme.BALANCED -> "Everything is within a healthy range. Maintain your current rhythm."
+    }
+
+    /** Builds a causal explanation for what changed and why (Point 7). */
+    private fun buildCausalExplanation(input: SolInput, primary: Script): String {
+        val parts = mutableListOf<String>()
+
+        // Recovery delta
+        val rec = input.recoveryScore
+        val prevRec = input.previousRecoveryScore
+        if (rec != null && prevRec != null) {
+            val diff = rec - prevRec
+            if (diff < -WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) {
+                val sleep = input.sleepHours
+                val prevSleep = input.previousSleepHours
+                if (sleep != null && prevSleep != null && sleep < prevSleep - WellnessThresholds.SLEEP_SIGNIFICANT_DELTA_HOURS) {
+                    val mins = ((prevSleep - sleep) * 60).toInt()
+                    parts.add("Sleep shortened by $mins minutes")
+                }
+                val stress = input.stressLevel
+                val prevStress = input.previousStressLevel
+                if (stress != null && prevStress != null && stress > prevStress) {
+                    parts.add("Stress increased")
+                }
+                if (parts.isEmpty()) {
+                    parts.add("Recovery score dropped by ${-diff} points")
+                }
+                parts.add("Recovery followed")
+            } else if (diff > WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) {
+                val sleep = input.sleepHours
+                val prevSleep = input.previousSleepHours
+                if (sleep != null && prevSleep != null && sleep > prevSleep + WellnessThresholds.SLEEP_SIGNIFICANT_DELTA_HOURS) {
+                    val mins = ((sleep - prevSleep) * 60).toInt()
+                    parts.add("Sleep increased by $mins minutes")
+                }
+                if (parts.isEmpty()) {
+                    parts.add("Recovery score improved by $diff points")
+                }
+            }
+        }
+
+        // Sleep delta (when primary is sleep-related)
+        if (primary.type == InsightType.SLEEP) {
+            val sleep = input.sleepHours
+            val prevSleep = input.previousSleepHours
+            if (sleep != null && prevSleep != null) {
+                val diffHours = sleep - prevSleep
+                val mins = (kotlin.math.abs(diffHours) * 60).toInt()
+                if (diffHours < 0) parts.add("Sleep was $mins minutes shorter than yesterday")
+                else if (diffHours > 0) parts.add("Sleep was $mins minutes longer than yesterday")
+            }
+        }
+
+        // Steps delta
+        val steps = input.steps
+        val prevSteps = input.previousSteps
+        if (steps != null && prevSteps != null && primary.type == InsightType.WALKING) {
+            val diff = steps - prevSteps
+            if (diff > WellnessThresholds.STEPS_SIGNIFICANT_CHANGE) parts.add("Step count is up by $diff compared to yesterday")
+            else if (diff < -WellnessThresholds.STEPS_SIGNIFICANT_CHANGE) parts.add("Step count is down by ${-diff} compared to yesterday")
+        }
+
+        if (parts.isEmpty()) return ""
+        return parts.joinToString(". ") + "."
+    }
+
     private fun classifyDay(input: SolInput): DayLabel {
         val rec = input.recoveryScore ?: return DayLabel.BALANCED
         val sleep = input.sleepHours ?: WellnessThresholds.SLEEP_ADEQUATE
-        val stress = input.stressLevel ?: 3
+        val stress = input.stressLevel ?: WellnessThresholds.STRESS_HIGH_THRESHOLD - 1
         val steps = input.steps ?: 0
         val proteinPct = if (input.targetProtein > 0) input.consumedProtein.toDouble() / input.targetProtein else 0.0
 
@@ -90,7 +225,7 @@ class InsightEngine @Inject constructor() {
             rec < WellnessThresholds.RECOVERY_LOW || input.recentTrainingVolumeIncrease || sleep < WellnessThresholds.SLEEP_VERY_POOR -> DayLabel.RECOVERY_FOCUS
             rec >= WellnessThresholds.RECOVERY_HIGH && input.workoutToday && sleep >= WellnessThresholds.SLEEP_OPTIMAL && steps >= WellnessThresholds.PERFORMANCE_STEPS -> DayLabel.PERFORMANCE
             proteinPct < WellnessThresholds.PROTEIN_LOW && input.workoutToday -> DayLabel.NUTRITION_FOCUS
-            stress >= 4 && meditated || journaled -> DayLabel.MINDFULNESS
+            stress >= WellnessThresholds.STRESS_HIGH_THRESHOLD && meditated || journaled -> DayLabel.MINDFULNESS
             input.daysActiveThisWeek >= WellnessThresholds.CONSISTENT_WEEK_DAYS || input.streakDays >= WellnessThresholds.STREAK_MILESTONE_7 -> DayLabel.CONSISTENCY
             else -> DayLabel.BALANCED
         }
@@ -141,7 +276,7 @@ class InsightEngine @Inject constructor() {
             val diff = last - first
             trends.add(
                 TrendSummary("Recovery",
-                    if (diff > 5) TrendDirection.UP else if (diff < -5) TrendDirection.DOWN else TrendDirection.STABLE,
+                    if (diff > WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) TrendDirection.UP else if (diff < -WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) TrendDirection.DOWN else TrendDirection.STABLE,
                     if (first > 0) ((diff.toDouble() / first) * 100).toInt() else 0,
                     input.weeklyRecovery,
                     if (last >= WellnessThresholds.RECOVERY_GOOD) SignalStatus.GOOD else if (last >= WellnessThresholds.RECOVERY_LOW) SignalStatus.ON_TRACK else SignalStatus.LOW
@@ -169,7 +304,7 @@ class InsightEngine @Inject constructor() {
             val diff = last - first
             trends.add(
                 TrendSummary("Walking",
-                    if (diff > 500) TrendDirection.UP else if (diff < -500) TrendDirection.DOWN else TrendDirection.STABLE,
+                    if (diff > WellnessThresholds.STEPS_SIGNIFICANT_CHANGE) TrendDirection.UP else if (diff < -WellnessThresholds.STEPS_SIGNIFICANT_CHANGE) TrendDirection.DOWN else TrendDirection.STABLE,
                     if (first > 0) ((diff.toDouble() / first) * 100).toInt() else 0,
                     input.weeklySteps,
                     if (last >= WellnessThresholds.DEFAULT_STEP_GOAL) SignalStatus.GOOD else if (last >= WellnessThresholds.MODERATE_MOVEMENT_STEPS) SignalStatus.ON_TRACK else SignalStatus.LOW
@@ -197,9 +332,9 @@ class InsightEngine @Inject constructor() {
         populateCandidates(input, morning, evening, candidates)
         if (candidates.isEmpty()) {
             val fallback = if (morning) fallbackMorning(input) else if (evening) fallbackEvening(input) else fallbackMorning(input)
-            candidates.add(PrioritizedInsight(fallback, 10))
+            candidates.add(PrioritizedInsight(fallback, WellnessThresholds.PRIORITY_FALLBACK))
         }
-        return candidates.maxByOrNull { it.priority } ?: PrioritizedInsight(fallbackMorning(input), 10)
+        return candidates.maxByOrNull { it.priority } ?: PrioritizedInsight(fallbackMorning(input), WellnessThresholds.PRIORITY_FALLBACK)
     }
 
     private fun populateCandidates(input: SolInput, morning: Boolean, evening: Boolean, candidates: MutableList<PrioritizedInsight>) {
@@ -208,8 +343,8 @@ class InsightEngine @Inject constructor() {
 
         if (!minData) return
 
-        if (input.streakDays == 100) candidates += PrioritizedInsight(STREAK_100, WellnessThresholds.PRIORITY_STREAK_100)
-        if (input.streakDays == 30) candidates += PrioritizedInsight(STREAK_30, WellnessThresholds.PRIORITY_STREAK_30)
+        if (input.streakDays == WellnessThresholds.STREAK_MILESTONE_100) candidates += PrioritizedInsight(STREAK_100, WellnessThresholds.PRIORITY_STREAK_100)
+        if (input.streakDays == WellnessThresholds.STREAK_MILESTONE_30) candidates += PrioritizedInsight(STREAK_30, WellnessThresholds.PRIORITY_STREAK_30)
         if (input.streakDays == WellnessThresholds.STREAK_MILESTONE_7) candidates += PrioritizedInsight(STREAK_7, WellnessThresholds.PRIORITY_STREAK_7)
 
         if (rec != null && rec < WellnessThresholds.RECOVERY_VERY_LOW) candidates += PrioritizedInsight(
@@ -228,8 +363,8 @@ class InsightEngine @Inject constructor() {
                 listOf("Training volume is elevated", "Recovery is trending downward"), listOf("Take a recovery day", "Focus on sleep", "Light movement only"),
                 "You've trained hard several days in a row. A recovery-focused day may help maintain performance.", InsightType.OVERTRAINING), 550)
 
-        if (rec != null && rec in WellnessThresholds.RECOVERY_LOW..WellnessThresholds.RECOVERY_EARLY_WARNING_MAX && input.weeklyRecovery.size >= 3) {
-            val declining = input.weeklyRecovery.takeLast(3).let { it[0] >= it[1] && it[1] >= it[2] }
+        if (rec != null && rec in WellnessThresholds.RECOVERY_LOW..WellnessThresholds.RECOVERY_EARLY_WARNING_MAX && input.weeklyRecovery.size >= WellnessThresholds.TRAILING_WINDOW_SIZE) {
+            val declining = input.weeklyRecovery.takeLast(WellnessThresholds.TRAILING_WINDOW_SIZE).let { it[0] >= it[1] && it[1] >= it[2] }
             if (declining) candidates += PrioritizedInsight(RECOVERY_EARLY_WARNING, WellnessThresholds.PRIORITY_RECOVERY_EARLY_WARNING)
         }
 
@@ -255,12 +390,12 @@ class InsightEngine @Inject constructor() {
         else if (proteinPct >= WellnessThresholds.PROTEIN_NEAR) candidates += PrioritizedInsight(NEAR_PROTEIN_GOAL, WellnessThresholds.PRIORITY_NEAR_PROTEIN_GOAL)
         else if (evening && proteinPct < WellnessThresholds.PROTEIN_LOW) candidates += PrioritizedInsight(LOW_PROTEIN, WellnessThresholds.PRIORITY_LOW_PROTEIN)
 
-        if (input.weeklyProteinPct.size >= 3 && input.weeklyProteinPct.takeLast(3).all { it < WellnessThresholds.PROTEIN_SLIPPING_THRESHOLD }) {
+        if (input.weeklyProteinPct.size >= WellnessThresholds.TRAILING_WINDOW_SIZE && input.weeklyProteinPct.takeLast(WellnessThresholds.TRAILING_WINDOW_SIZE).all { it < WellnessThresholds.PROTEIN_SLIPPING_THRESHOLD }) {
             candidates += PrioritizedInsight(PROTEIN_SLIPPING, WellnessThresholds.PRIORITY_PROTEIN_SLIPPING)
         }
 
         val calPct = if (input.targetCalories > 0) input.consumedCalories.toDouble() / input.targetCalories else 0.0
-        if (evening && calPct in 0.9..1.1) candidates += PrioritizedInsight(CALORIE_GOAL_MET, 370)
+        if (evening && calPct in WellnessThresholds.CALORIE_GOAL_RANGE_LOW..WellnessThresholds.CALORIE_GOAL_RANGE_HIGH) candidates += PrioritizedInsight(CALORIE_GOAL_MET, 370)
 
         if (input.measurementImproving == true && input.strengthIncreasing == true) candidates += PrioritizedInsight(POSITIVE_RECOMP, 360)
         else if (input.strengthIncreasing == true) candidates += PrioritizedInsight(MUSCLE_GAIN_TREND, 340)
@@ -270,25 +405,25 @@ class InsightEngine @Inject constructor() {
 
         if (input.workoutToday) {
             candidates += PrioritizedInsight(WORKOUT_COMPLETED, 300)
-            if (input.daysActiveThisWeek >= 4) candidates += PrioritizedInsight(WORKOUT_STREAK, 310)
+            if (input.daysActiveThisWeek >= WellnessThresholds.CONSISTENT_WEEK_DAYS) candidates += PrioritizedInsight(WORKOUT_STREAK, 310)
         } else if (morning && rec != null && rec >= WellnessThresholds.RECOVERY_MODERATE) candidates += PrioritizedInsight(MISSED_WORKOUT, WellnessThresholds.PRIORITY_MISSED_WORKOUT)
 
         val steps = input.steps
         val prevSteps = input.previousSteps
         if (steps != null && steps >= WellnessThresholds.DEFAULT_STEP_GOAL) candidates += PrioritizedInsight(WALKING_GOAL_MET, WellnessThresholds.PRIORITY_WALKING_GOAL)
         else if (steps != null && evening && steps < WellnessThresholds.SEDENTARY_STEPS) candidates += PrioritizedInsight(SEDENTARY_DAY, WellnessThresholds.PRIORITY_SEDENTARY_DAY)
-        if (steps != null && prevSteps != null && prevSteps > 0 && steps > prevSteps * 1.2) candidates += PrioritizedInsight(WALKING_IMPROVED, WellnessThresholds.PRIORITY_WALKING_IMPROVED)
+        if (steps != null && prevSteps != null && prevSteps > 0 && steps > prevSteps * WellnessThresholds.STEPS_IMPROVEMENT_FACTOR) candidates += PrioritizedInsight(WALKING_IMPROVED, WellnessThresholds.PRIORITY_WALKING_IMPROVED)
 
-        if (input.weeklySteps.size >= 5) {
-            val recent = input.weeklySteps.takeLast(5)
+        if (input.weeklySteps.size >= WellnessThresholds.ACTIVE_WEEK_DAYS + 2) {
+            val recent = input.weeklySteps.takeLast(WellnessThresholds.ACTIVE_WEEK_DAYS + 2)
             val decline = recent.zipWithNext().all { (a, b) -> b <= a }
             if (decline && recent.last() < WellnessThresholds.MODERATE_MOVEMENT_STEPS) candidates += PrioritizedInsight(LOW_MOVEMENT_WEEK, WellnessThresholds.PRIORITY_LOW_MOVEMENT_WEEK)
         }
 
         val pr = input.previousRecoveryScore
         if (rec != null && pr != null) {
-            if (rec > pr + 5) candidates += PrioritizedInsight(RECOVERY_IMPROVING, WellnessThresholds.PRIORITY_RECOVERY_IMPROVING)
-            else if (rec < pr - 5) candidates += PrioritizedInsight(RECOVERY_DECLINING, WellnessThresholds.PRIORITY_RECOVERY_DECLINING)
+            if (rec > pr + WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) candidates += PrioritizedInsight(RECOVERY_IMPROVING, WellnessThresholds.PRIORITY_RECOVERY_IMPROVING)
+            else if (rec < pr - WellnessThresholds.RECOVERY_SIGNIFICANT_DELTA) candidates += PrioritizedInsight(RECOVERY_DECLINING, WellnessThresholds.PRIORITY_RECOVERY_DECLINING)
             else candidates += PrioritizedInsight(RECOVERY_STABLE, WellnessThresholds.PRIORITY_RECOVERY_STABLE)
         }
 
@@ -296,10 +431,10 @@ class InsightEngine @Inject constructor() {
 
         val stress = input.stressLevel
         val prevStress = input.previousStressLevel
-        if (stress != null && stress >= 4) candidates += PrioritizedInsight(HIGH_STRESS, WellnessThresholds.PRIORITY_HIGH_STRESS)
-        if (stress != null && prevStress != null && stress < prevStress - 1) candidates += PrioritizedInsight(STRESS_IMPROVED, WellnessThresholds.PRIORITY_STRESS_IMPROVED)
+        if (stress != null && stress >= WellnessThresholds.STRESS_HIGH_THRESHOLD) candidates += PrioritizedInsight(HIGH_STRESS, WellnessThresholds.PRIORITY_HIGH_STRESS)
+        if (stress != null && prevStress != null && stress < prevStress - WellnessThresholds.STRESS_IMPROVEMENT_DELTA) candidates += PrioritizedInsight(STRESS_IMPROVED, WellnessThresholds.PRIORITY_STRESS_IMPROVED)
 
-        if (input.journalDays >= 3) candidates += PrioritizedInsight(JOURNAL_STREAK, WellnessThresholds.PRIORITY_JOURNAL_STREAK)
+        if (input.journalDays >= WellnessThresholds.JOURNAL_STREAK_DAYS) candidates += PrioritizedInsight(JOURNAL_STREAK, WellnessThresholds.PRIORITY_JOURNAL_STREAK)
         when (input.journalSentiment) {
             JournalSentiment.POSITIVE -> candidates += PrioritizedInsight(JOURNAL_POSITIVE, WellnessThresholds.PRIORITY_JOURNAL_POSITIVE)
             JournalSentiment.CHALLENGING -> candidates += PrioritizedInsight(JOURNAL_CHALLENGING, WellnessThresholds.PRIORITY_JOURNAL_CHALLENGING)

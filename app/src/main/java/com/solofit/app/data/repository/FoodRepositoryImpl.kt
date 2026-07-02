@@ -1,5 +1,6 @@
 package com.solofit.app.data.repository
 
+import com.solofit.app.core.cache.LruTtlCache
 import com.solofit.app.data.local.dao.FoodDao
 import com.solofit.app.data.local.entity.FoodItemEntity
 import com.solofit.app.data.remote.UsdaFoodService
@@ -7,11 +8,19 @@ import com.solofit.app.core.perf.PerfTrace
 import com.solofit.app.domain.repository.FoodRepository
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class FoodRepositoryImpl @Inject constructor(
     private val dao: FoodDao,
     private val usdaService: UsdaFoodService
 ) : FoodRepository {
+
+    private val usdaResultCache = LruTtlCache<String, List<FoodItemEntity>>(
+        maxEntries = 32,
+        ttlMillis = 10 * 60 * 1000L
+    )
+
     override fun observeAll(): Flow<List<FoodItemEntity>> = dao.observeAll()
     override fun search(query: String): Flow<List<FoodItemEntity>> = dao.search(query.trim())
     override suspend fun getById(id: Long): FoodItemEntity? = dao.getById(id)
@@ -19,7 +28,9 @@ class FoodRepositoryImpl @Inject constructor(
 
     override suspend fun searchUsda(query: String): List<FoodItemEntity> {
         if (query.isBlank()) return emptyList()
-        return try {
+        val trimmed = query.trim().lowercase()
+        usdaResultCache.get(trimmed)?.let { return it }
+        val result = try {
             val response = usdaService.searchFoods(query = query.trim())
             response.foods.mapNotNull { usda ->
                 val kcal = usda.foodNutrients.find { it.nutrientId == 1008 }?.value
@@ -42,6 +53,8 @@ class FoodRepositoryImpl @Inject constructor(
         } catch (_: Exception) {
             emptyList()
         }
+        usdaResultCache.put(trimmed, result)
+        return result
     }
 
     override suspend fun warmUp() {

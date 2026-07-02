@@ -48,11 +48,11 @@ class ProgressPhotoRepositoryImpl @Inject constructor(
             dao.insert(ProgressPhotoEntity(date = date, pose = pose, fileName = fileName))
         }
 
-    override fun fileFor(fileName: String): File = File(dir, fileName)
+    override fun fileFor(fileName: String): File = File(dir, File(fileName).name)
 
     override suspend fun delete(id: Long) = withContext(io) {
         dao.getById(id)?.let { entity ->
-            runCatching { File(dir, entity.fileName).delete() }
+            runCatching { File(dir, File(entity.fileName).name).delete() }
             dao.delete(id)
         }
         Unit

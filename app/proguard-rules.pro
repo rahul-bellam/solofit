@@ -46,3 +46,12 @@
 -keep class com.google.mlkit.** { *; }
 -keep class com.google.android.gms.** { *; }
 -dontwarn com.google.mlkit.**
+
+# ---- Jetpack Compose ----
+-keepclasseswithmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
+-keepclassmembers class * {
+    @androidx.compose.runtime.Composable <methods>;
+}
+-keep class androidx.compose.** { *; }

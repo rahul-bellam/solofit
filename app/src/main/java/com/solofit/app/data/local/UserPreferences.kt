@@ -58,6 +58,7 @@ class UserPreferences @Inject constructor(
     private val quietEndKey = intPreferencesKey("rem_quiet_end")
     private val stepGoalKey = intPreferencesKey("step_goal")
     private val voiceModeKey = stringPreferencesKey("voice_mode")
+    private val lifeContextKey = stringPreferencesKey("life_context")
 
     // ── Setback Predictor (ML model persistence) ──
     private val setbackPredictorWeightsKey = stringPreferencesKey("sp_weights")
@@ -146,6 +147,26 @@ class UserPreferences @Inject constructor(
     suspend fun setVoiceMode(mode: com.solofit.app.domain.model.VoiceMode) {
         context.dataStore.edit { it[voiceModeKey] = mode.name }
     }
+
+    suspend fun setLifeContext(ctx: com.solofit.app.sol.LifeContext) {
+        context.dataStore.edit { prefs ->
+            prefs[lifeContextKey] = "${ctx.situation}|${ctx.active}|${ctx.setAt}"
+        }
+    }
+
+    val lifeContext: Flow<com.solofit.app.sol.LifeContext> =
+        context.dataStore.data.map { prefs ->
+            prefs[lifeContextKey]?.let { raw ->
+                val parts = raw.split("|")
+                if (parts.size == 3) {
+                    com.solofit.app.sol.LifeContext(
+                        situation = parts[0],
+                        active = parts[1].toBoolean(),
+                        setAt = parts[2].toLongOrNull() ?: 0L
+                    )
+                } else null
+            } ?: com.solofit.app.sol.LifeContext()
+        }
 
     val onboardingFocus: Flow<OnboardingFocus?> =
         context.dataStore.data.map { prefs ->

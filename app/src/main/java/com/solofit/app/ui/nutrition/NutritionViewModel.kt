@@ -67,7 +67,7 @@ class NutritionViewModel @Inject constructor(
         .flatMapLatest { (profile, weight) ->
             if (profile == null) flowOf<AdaptedTargets?>(null)
             else flow {
-                val recent = dailyLogRepository.getDailyTotalsSince(DateUtils.daysAgo(7))
+                val recent = dailyLogRepository.getDailyTotalsSince(DateUtils.daysAgo(7)).map { it.second }
                 emit(adaptiveTargetEngine(profile, weight, recent))
             }
         }
@@ -165,7 +165,7 @@ class NutritionViewModel @Inject constructor(
         val targetProtein = profile?.targetProtein?.toDouble() ?: return
         val recentTotals = dailyLogRepository.getDailyTotalsSince(DateUtils.daysAgo(14))
 
-        val recentDays = recentTotals.map { totals ->
+        val recentDays = recentTotals.map { (_, totals) ->
             totals.proteinG to targetProtein
         }
 

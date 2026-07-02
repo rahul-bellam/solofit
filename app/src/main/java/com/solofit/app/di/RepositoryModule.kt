@@ -2,8 +2,11 @@ package com.solofit.app.di
 
 import com.solofit.app.data.repository.BarcodeRepositoryImpl
 import com.solofit.app.data.repository.BodyRepositoryImpl
+import com.solofit.app.data.repository.FriendRepositoryImpl
+import com.solofit.app.data.repository.GroupRepositoryImpl
 import com.solofit.app.data.repository.ProgressPhotoRepositoryImpl
 import com.solofit.app.data.repository.JournalRepositoryImpl
+import com.solofit.app.data.repository.SoloIdentityRepositoryImpl
 import com.solofit.app.data.repository.WeightRepositoryImpl
 import com.solofit.app.data.repository.DailyLogRepositoryImpl
 import com.solofit.app.data.repository.FoodRepositoryImpl
@@ -12,8 +15,11 @@ import com.solofit.app.data.repository.WeeklyPlanRepositoryImpl
 import com.solofit.app.data.repository.WorkoutRepositoryImpl
 import com.solofit.app.domain.repository.BarcodeRepository
 import com.solofit.app.domain.repository.BodyRepository
+import com.solofit.app.domain.repository.FriendRepository
+import com.solofit.app.domain.repository.GroupRepository
 import com.solofit.app.domain.repository.ProgressPhotoRepository
 import com.solofit.app.domain.repository.JournalRepository
+import com.solofit.app.domain.repository.SoloIdentityRepository
 import com.solofit.app.domain.repository.WeightRepository
 import com.solofit.app.domain.repository.DailyLogRepository
 import com.solofit.app.domain.repository.FoodRepository
@@ -59,4 +65,13 @@ abstract class RepositoryModule {
 
     @Binds @Singleton
     abstract fun bindWeeklyPlanRepository(impl: WeeklyPlanRepositoryImpl): WeeklyPlanRepository
+
+    @Binds @Singleton
+    abstract fun bindSoloIdentityRepository(impl: SoloIdentityRepositoryImpl): SoloIdentityRepository
+
+    @Binds @Singleton
+    abstract fun bindFriendRepository(impl: FriendRepositoryImpl): FriendRepository
+
+    @Binds @Singleton
+    abstract fun bindGroupRepository(impl: GroupRepositoryImpl): GroupRepository
 }

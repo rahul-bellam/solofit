@@ -54,7 +54,7 @@ data class ExerciseEntity(
             onDelete = ForeignKey.SET_NULL
         )
     ],
-    indices = [Index("routineId"), Index("date")]
+    indices = [Index("routineId"), Index("date"), Index("isCompleted")]
 )
 data class WorkoutSessionEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -80,7 +80,7 @@ data class WorkoutSessionEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index("sessionId")]
+    indices = [Index("sessionId"), Index("isCompleted"), Index("exerciseName")]
 )
 data class ExerciseSetEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
@@ -105,7 +105,7 @@ data class ExerciseSetEntity(
 /**
  * Tracks personal records (estimated 1RM) per exercise over time.
  */
-@Entity(tableName = "personal_records")
+@Entity(tableName = "personal_records", indices = [Index("exerciseName")])
 data class PersonalRecordEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val exerciseName: String,
