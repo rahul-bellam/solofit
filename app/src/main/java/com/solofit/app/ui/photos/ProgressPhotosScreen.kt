@@ -105,10 +105,11 @@ fun ProgressPhotosScreen(
                     }
                 } catch (_: Exception) { null }
                 if (bmp != null) {
+                    // save() takes ownership of the bitmap and recycles it after
+                    // compressing — recycling here would race that background write.
                     withContext(Dispatchers.Main) {
                         viewModel.save(bmp, pose)
                     }
-                    bmp.recycle()
                 }
             }
         }
@@ -143,10 +144,10 @@ fun ProgressPhotosScreen(
             scope.launch(Dispatchers.IO) {
                 val bmp = BitmapUtils.decodeSampled(context.contentResolver, uri, maxEdge = 1080)
                 if (bmp != null) {
+                    // save() owns and recycles the bitmap; don't recycle here.
                     withContext(Dispatchers.Main) {
                         viewModel.save(bmp, pose)
                     }
-                    bmp.recycle()
                 }
             }
         }

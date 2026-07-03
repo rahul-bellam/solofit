@@ -35,6 +35,29 @@ interface WorkoutDao {
     @Query("DELETE FROM exercises WHERE routineId = :routineId")
     suspend fun clearExercises(routineId: Long)
 
+    /**
+     * Atomically create/update a routine and (re)write its exercise list. Wrapping
+     * the update + clear + insert in one transaction prevents a half-applied save
+     * (e.g. process death after clearExercises) from leaving a routine with no
+     * exercises. Pass [routine] with id == 0 to insert; the exercises' routineId is
+     * overwritten with the resulting routine id.
+     */
+    @Transaction
+    suspend fun saveRoutineWithExercises(
+        routine: RoutineEntity,
+        exercises: List<ExerciseEntity>
+    ): Long {
+        val id = if (routine.id == 0L) {
+            insertRoutine(routine)
+        } else {
+            updateRoutine(routine)
+            clearExercises(routine.id)
+            routine.id
+        }
+        insertExercises(exercises.map { it.copy(routineId = id) })
+        return id
+    }
+
     @Transaction
     @Query("SELECT * FROM routines ORDER BY createdAt DESC")
     fun observeRoutines(): Flow<List<RoutineWithExercises>>

@@ -4,16 +4,21 @@
 
     <!--
       PRIVACY NOTE (v1.1):
-      SoloFit was originally 100% offline. Two opt-in features now require
-      limited connectivity / hardware:
-        * INTERNET  -> ONLY used to query the Open Food Facts API for barcode
-                       lookups. Network is restricted to that domain via
-                       res/xml/network_security_config.xml (cleartext disabled,
-                       all other domains blocked by default).
-        * CAMERA    -> Used by the Google Code Scanner and the photo-classifier.
-                       The TFLite model runs fully on-device; images are never
-                       uploaded anywhere.
-      All nutrition logic, the food DB, and workout tracking remain on-device.
+      SoloFit is offline-first. Core nutrition logic, the food DB, and workout
+      tracking all run fully on-device. A few opt-in features require limited
+      connectivity / hardware:
+        * INTERNET  -> Used ONLY by three opt-in features, each restricted to a
+                       single allowlisted host in res/xml/network_security_config.xml
+                       (cleartext disabled, every other domain blocked):
+                         - Open Food Facts barcode lookups  (openfoodfacts.org)
+                         - USDA FoodData Central search      (nal.usda.gov)
+                         - AI food-photo estimation          (googleapis.com / Gemini)
+                       NOTE: the AI food-scan feature UPLOADS the captured photo to
+                       Google's Gemini API for nutrition estimation. It only runs
+                       when the user explicitly taps "AI scan" and a key is set.
+        * CAMERA    -> Used by the Google Code Scanner (on-device) for barcodes,
+                       for progress photos (kept in app-private storage), and to
+                       capture the food image sent to Gemini when AI scan is used.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.CAMERA" />

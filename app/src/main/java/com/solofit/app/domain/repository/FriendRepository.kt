@@ -11,6 +11,7 @@ interface FriendRepository {
     fun observePending(): Flow<List<FriendEntity>>
     fun observeAcceptedCount(): Flow<Int>
     suspend fun getById(id: Long): FriendEntity?
+    fun observeById(id: Long): Flow<FriendEntity?>
     suspend fun getBySoloId(soloId: String): FriendEntity?
     suspend fun addFriend(soloId: String, displayName: String, publicKey: ByteArray): Long
     suspend fun acceptFriend(id: Long)

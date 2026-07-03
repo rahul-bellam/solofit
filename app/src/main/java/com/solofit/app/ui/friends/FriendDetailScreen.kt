@@ -13,6 +13,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -56,7 +57,7 @@ private val PERMISSION_LEVELS = listOf("private", "specific", "group")
 @Composable
 fun FriendDetailScreen(
     friendId: Long,
-    viewModel: FriendViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: FriendViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     onBack: () -> Unit
 ) {
     val detailState by viewModel.detailState.collectAsState()
@@ -198,7 +199,7 @@ private fun RelationshipTypeSelector(currentType: String, onTypeSelected: (Strin
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text(type.displayName, modifier = Modifier.weight(1f))
-                            if (type == selected) Text("✓", color = MaterialTheme.colorScheme.primary)
+                            if (type == selected) Icon(Icons.Filled.Check, contentDescription = "Selected", tint = MaterialTheme.colorScheme.primary)
                         }
                     }
                 }

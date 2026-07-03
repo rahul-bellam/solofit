@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -16,9 +15,8 @@ import androidx.compose.ui.unit.dp
 
 // The design system forbids glassmorphism (a known "made-by-AI" tell). This is now a
 // flat, matte card with a hairline border and a hint of the section accent — no blur,
-// no translucency, no glow.
-private val cardShape = RoundedCornerShape(16.dp)
-
+// no translucency, no glow. Shares the one canonical card radius (AppCardShape) so an
+// accented section card and a plain content card never disagree on their corners.
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -27,7 +25,7 @@ fun GlassCard(
 ) {
     Card(
         modifier = modifier,
-        shape = cardShape,
+        shape = AppCardShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         ),

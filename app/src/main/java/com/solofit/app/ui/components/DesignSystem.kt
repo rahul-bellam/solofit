@@ -24,13 +24,24 @@ import androidx.compose.ui.unit.sp
 import com.solofit.app.ui.theme.CardPrimary
 import com.solofit.app.ui.theme.DarkSurface
 
+// ── Single source of truth for corner radii ──
+// The app previously scattered 13 different radii (2..28dp) across screens. Per the
+// Design Constitution there are exactly three: Small 12 / Medium 16 / Large 24.
+// "Never random radii." Any surface should use one of these.
+object Radius {
+    val small = 12.dp   // chips, inputs, small controls
+    val medium = 16.dp  // list rows, compact cards
+    val large = 24.dp   // the canonical card radius
+}
+
 val AppShapes = Shapes(
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(16.dp),
-    large = RoundedCornerShape(24.dp)
+    small = RoundedCornerShape(Radius.small),
+    medium = RoundedCornerShape(Radius.medium),
+    large = RoundedCornerShape(Radius.large)
 )
 
-val AppCardShape = RoundedCornerShape(24.dp)
+/** THE card radius (Large). Both [WellnessCard] and GlassCard resolve to this. */
+val AppCardShape = RoundedCornerShape(Radius.large)
 
 // ─── Flat card (no elevation, no shadows) ───
 @Composable

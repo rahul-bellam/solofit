@@ -14,8 +14,13 @@ lower footprint. This documents what's already implemented and what to do next.
 - `PhotoScreen` now caps the camera preview bitmap before holding/classifying it.
 - Only **one** bitmap is retained at a time (`lastBitmap`), replaced per capture.
 
-### 2. TFLite inference (speed + steady RAM)
-`data/ml/FoodClassifier.kt`:
+### 2. TFLite inference (speed + steady RAM) — OBSOLETE
+> ⚠️ **Historical.** The on-device TFLite classifier (`data/ml/FoodClassifier.kt`)
+> and its dependencies were removed in the v2.2 pivot. AI food estimation now runs
+> in the cloud via Gemini (`ui/scan/AiFoodScanViewModel.kt`), so the notes below no
+> longer describe shipping code — kept only as a record of the previous approach.
+
+`data/ml/FoodClassifier.kt` (removed):
 - Model is **memory-mapped** (mmap) — not copied to the Java heap.
 - Interpreter created **once, lazily**, and reused (no per-call model load).
 - `ImageProcessor`, `TensorImage`, and the output `TensorBuffer` are **reused**

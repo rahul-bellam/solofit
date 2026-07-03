@@ -1,11 +1,13 @@
 package com.solofit.app.data.local
 
+import android.content.ContentValues
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
+import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.solofit.app.data.local.dao.DailyLogDao
@@ -47,8 +49,6 @@ import com.solofit.app.data.local.entity.WeightEntryEntity
 import com.solofit.app.data.local.entity.WorkoutSessionEntity
 import com.solofit.app.data.local.seed.FoodSeedData
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Database(
     entities = [
@@ -76,7 +76,7 @@ import kotlinx.coroutines.launch
         GroupMemberEntity::class,
         FriendEventEntity::class
     ],
-    version = 15,
+    version = 16,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -441,8 +441,15 @@ abstract class SoloFitDatabase : RoomDatabase() {
             }
         }
 
+        /** v15 -> v16: index group_members.friendId (covers the ON DELETE CASCADE from friends). */
+        val MIGRATION_15_16 = object : Migration(15, 16) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_group_members_friendId ON group_members(friendId)")
+            }
+        }
+
         fun build(context: Context, scope: CoroutineScope): SoloFitDatabase {
-            val db = Room.databaseBuilder(
+            return Room.databaseBuilder(
                 context.applicationContext,
                 SoloFitDatabase::class.java,
                 DB_NAME
@@ -451,23 +458,41 @@ abstract class SoloFitDatabase : RoomDatabase() {
                     MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5,
                     MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9,
                     MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12,
-                    MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15
+                    MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                    MIGRATION_15_16
                 )
-
                 .addCallback(object : Callback() {
+                    // Seed synchronously through the creation connection. This runs
+                    // once, inside Room's create transaction, off the main thread —
+                    // so there's no need for a static DB handle (the old approach
+                    // stashed the instance in a mutable companion field and raced the
+                    // build() return).
                     override fun onCreate(db: SupportSQLiteDatabase) {
-                        scope.launch(Dispatchers.IO) {
-                            runCatching { dbHelper?.foodDao()?.insertAll(FoodSeedData.items) }
+                        db.beginTransaction()
+                        try {
+                            for (f in FoodSeedData.items) {
+                                val cv = ContentValues().apply {
+                                    put("name", f.name)
+                                    put("category", f.category)
+                                    put("caloriesPer100g", f.caloriesPer100g)
+                                    put("proteinPer100g", f.proteinPer100g)
+                                    put("carbsPer100g", f.carbsPer100g)
+                                    put("fatsPer100g", f.fatsPer100g)
+                                    put("fiberPer100g", f.fiberPer100g)
+                                    put("isCustom", if (f.isCustom) 1 else 0)
+                                    f.barcode?.let { put("barcode", it) }
+                                    f.servingGrams?.let { put("servingGrams", it) }
+                                    f.servingLabel?.let { put("servingLabel", it) }
+                                }
+                                db.insert("food_items", SQLiteDatabase.CONFLICT_IGNORE, cv)
+                            }
+                            db.setTransactionSuccessful()
+                        } finally {
+                            db.endTransaction()
                         }
                     }
                 })
                 .build()
-            // Expose the built instance for the callback to use.
-            dbHelper = db
-            return db
         }
-
-        /** Holder so Callback.onCreate can access DAOs without a circular build(). */
-        private var dbHelper: SoloFitDatabase? = null
     }
 }

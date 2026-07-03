@@ -1,11 +1,17 @@
-# SoloFit — Barcode Scanning (Open Food Facts)
+# SoloFit — Food Scanning (Barcode + AI photo)
 
-The one network-using feature: scan a product barcode to fetch exact macros.
-This is a **lookup, not guessing** — no ML, no photo inference.
+Two opt-in scan paths:
+1. **Barcode lookup** — scan a product barcode to fetch exact macros. This is a
+   **lookup, not guessing** (no inference): the barcode is read on-device and the
+   macros come from Open Food Facts / the local cache.
+2. **AI food-photo estimation** — the user photographs a plated dish and the image
+   is **uploaded to Google's Gemini API**, which returns an estimated
+   per-100g macro breakdown. This only runs on an explicit "AI scan" tap and
+   requires a configured `GEMINI_API_KEY`.
 
-> The photo food-classification and on-device portion estimator that previously
-> lived here were **removed** in the v2.2 "fitness OS" pivot in favour of manual
-> entry against the local food dataset (see `docs/FITNESS_OS.md`).
+> The earlier on-device TFLite photo-classifier was **removed** in the v2.2
+> "fitness OS" pivot. AI photo estimation was later re-introduced as the
+> **cloud** Gemini path above — it is not on-device (see `ui/scan/AiFoodScanViewModel.kt`).
 
 ## Flow
 ```
@@ -18,9 +24,13 @@ Camera ─▶ Google Code Scanner (Play Services, on-device)
 ```
 
 ## Privacy
-- Networking is restricted to `openfoodfacts.org` via `res/xml/network_security_config.xml`
-  (cleartext disabled).
-- A scanned product is cached in the local food table, so repeat scans are fully offline.
+- Networking is restricted to three allowlisted hosts via
+  `res/xml/network_security_config.xml` (cleartext disabled, all other domains blocked):
+  `openfoodfacts.org`, `nal.usda.gov`, and `googleapis.com` (Gemini).
+- Barcode scanning is on-device (Google Code Scanner); a scanned product is cached
+  in the local food table, so repeat barcode scans are fully offline.
+- **AI food-photo scan uploads the captured image to Google Gemini.** This is the
+  only feature that transmits user-captured images off the device, and it is opt-in.
 
 ## Key files
 - `data/scanner/BarcodeScanner.kt` — wraps `GmsBarcodeScanning` (Play Services).

@@ -19,6 +19,20 @@ class FitnessMathTest {
     }
 
     @Test
+    fun `subjective readiness blends check-in inputs to 0-100`() {
+        // Perfect day: 8h sleep, lowest stress (level 1), max mood, max energy -> 100.
+        assertEquals(100, FitnessMath.subjectiveReadinessScore(8f, 1, 5, 5))
+        // Worst day: no sleep, max stress (5), min mood/energy. mood(1/5*20=4) and
+        // energy(1/5*30=6) can't hit zero at level 1, so the floor is 10.
+        assertEquals(10, FitnessMath.subjectiveReadinessScore(0f, 5, 1, 1))
+        // Sleep is capped at the 8h target (oversleeping doesn't overflow the band).
+        assertEquals(
+            FitnessMath.subjectiveReadinessScore(8f, 3, 3, 3),
+            FitnessMath.subjectiveReadinessScore(12f, 3, 3, 3)
+        )
+    }
+
+    @Test
     fun `vtaper ratio divides shoulders by waist`() {
         assertEquals(1.6, FitnessMath.vTaperRatio(128.0, 80.0)!!, 1e-9)
         assertNull(FitnessMath.vTaperRatio(null, 80.0))
@@ -63,42 +77,12 @@ class FitnessMathTest {
     }
 }
 
-class FitnessMathProgressionTest {
-    @Test
-    fun `all sets hit top with low rir leads to increase`() {
-        val p = FitnessMath.progression(
-            repsPerSet = listOf(12, 12, 12),
-            rirPerSet = listOf(1, 1, 0),
-            topOfRange = 12
-        )
-        assertEquals(FitnessMath.Progression.INCREASE, p)
-    }
-
-    @Test
-    fun `below range leads to hold`() {
-        val p = FitnessMath.progression(
-            repsPerSet = listOf(8, 9, 8),
-            rirPerSet = listOf(2, 2, 2),
-            topOfRange = 12
-        )
-        assertEquals(FitnessMath.Progression.HOLD, p)
-    }
-
-    @Test
-    fun `struggled badly with zero rir leads to deload`() {
-        val p = FitnessMath.progression(
-            repsPerSet = listOf(5, 4),
-            rirPerSet = listOf(0, 0),
-            topOfRange = 12
-        )
-        assertEquals(FitnessMath.Progression.DELOAD, p)
-    }
-
-    @Test
-    fun `empty leads to none`() {
-        assertEquals(FitnessMath.Progression.NONE, FitnessMath.progression(emptyList(), emptyList(), 12))
-    }
-
+/**
+ * NOTE: the RIR-based `FitnessMath.progression` API previously covered here was
+ * removed from the app, so those tests were dropped; the transformation-score
+ * coverage below remains valid.
+ */
+class FitnessMathTransformationTest {
     @Test
     fun `transformation score weights and normalizes`() {
         // all components 1.0 -> 100 regardless of weights

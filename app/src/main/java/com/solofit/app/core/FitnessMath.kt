@@ -74,6 +74,30 @@ object FitnessMath {
         return ((weighted / totalWeight) * 100).roundToInt()
     }
 
+    /**
+     * Subjective daily readiness (0..100) from self-reported check-in inputs.
+     * Distinct from [recoveryScore], which blends objective signals (steps, water,
+     * workout completion). Kept here (Android-free) so both scores are single-sourced
+     * and unit-testable rather than reimplemented inside the DataStore layer.
+     *
+     *  sleep  30%  (target 8h)
+     *  stress 20%  (1 = high stress … 5 = low)
+     *  mood   20%  (1..5)
+     *  energy 30%  (1..5)
+     */
+    fun subjectiveReadinessScore(
+        sleepHours: Float,
+        stressLevel: Int,
+        moodLevel: Int,
+        energyLevel: Int
+    ): Int {
+        val sleep = ((sleepHours / 8f).coerceAtMost(1f) * 30).toInt()
+        val stress = ((5 - stressLevel) / 4f * 20).toInt()
+        val mood = (moodLevel / 5f * 20).toInt()
+        val energy = (energyLevel / 5f * 30).toInt()
+        return (sleep + stress + mood + energy).coerceIn(0, 100)
+    }
+
     /** Readiness label from a recovery score. */
     fun readinessLabel(score: Int?): String = when {
         score == null -> "—"

@@ -1,5 +1,6 @@
 package com.solofit.app.sol
 
+import java.util.Locale
 import kotlin.math.exp
 import kotlin.math.max
 import kotlin.math.min
@@ -85,8 +86,11 @@ object SetbackPredictor {
 
     private fun sigmoid(z: Double): Double = 1.0 / (1.0 + exp(-z.coerceIn(-15.0, 15.0)))
 
+    // NOTE: Locale.US is required — the values are persisted as comma-separated and
+    // re-parsed with String.toDouble(), which only accepts '.' as the decimal point.
+    // Using the default locale corrupts the model on comma-decimal locales.
     fun serializeWeights(weights: DoubleArray): String =
-        weights.joinToString(",") { "%.10f".format(it) }
+        weights.joinToString(",") { String.format(Locale.US, "%.10f", it) }
 
     fun deserializeWeights(raw: String): DoubleArray? =
         runCatching { raw.split(",").map { it.toDouble() }.toDoubleArray() }.getOrNull()

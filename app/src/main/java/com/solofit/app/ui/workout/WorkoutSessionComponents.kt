@@ -22,6 +22,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -119,7 +124,7 @@ fun ProgressRing(
                         .border(1.dp, HighGreen.copy(alpha = 0.3f), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("✓", color = HighGreen, fontWeight = FontWeight.Bold, fontSize = 18.sp)
+                    Icon(Icons.Filled.Check, contentDescription = null, tint = HighGreen, modifier = Modifier.size(20.dp))
                 }
             }
 
@@ -288,15 +293,9 @@ fun WorkoutExerciseCard(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("⏱", fontSize = 14.sp)
-                            Text("${restTime} rest", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        Text("${restTime} rest", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Box(Modifier.size(4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.2f)))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("⚡", fontSize = 14.sp)
-                            Text("$kcal kcal", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        Text("$kcal kcal", fontSize = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
                     Spacer(Modifier.height(16.dp))
@@ -343,12 +342,7 @@ fun WorkoutExerciseCard(
 
                         isComplete -> {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(
-                                    "✓",
-                                    color = HighGreen,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp
-                                )
+                                Icon(Icons.Filled.Check, contentDescription = null, tint = HighGreen, modifier = Modifier.size(18.dp))
                                 Text(
                                     "Completed",
                                     color = HighGreen,
@@ -504,7 +498,7 @@ fun SessionHeader(
                         .background(WorkoutAccent.copy(alpha = 0.18f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("🔥", fontSize = 18.sp)
+                    Icon(Icons.Filled.LocalFireDepartment, contentDescription = null, tint = WorkoutAccent, modifier = Modifier.size(20.dp))
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
@@ -680,7 +674,7 @@ fun UpNextCard(
                     .border(1.dp, Color.White.copy(alpha = 0.1f), RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("→", color = MaterialTheme.colorScheme.onSurface, fontSize = 22.sp)
+                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
             }
         }
     }

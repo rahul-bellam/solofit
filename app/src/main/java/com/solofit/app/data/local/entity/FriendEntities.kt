@@ -77,7 +77,14 @@ data class FriendGroupEntity(
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["groupId", "friendId"], unique = true)]
+    // The composite unique index covers lookups by groupId (leftmost) and the
+    // pair, but not friendId alone. A standalone friendId index lets the
+    // ON DELETE CASCADE from `friends` avoid a full table scan (and silences
+    // Room's missing-foreign-key-index warning).
+    indices = [
+        Index(value = ["groupId", "friendId"], unique = true),
+        Index(value = ["friendId"])
+    ]
 )
 data class GroupMemberEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

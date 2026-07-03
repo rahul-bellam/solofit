@@ -22,14 +22,16 @@ class MorningGoalsWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val settings = withContext(Dispatchers.IO) { prefs.reminderSettings.first() }
-        if (settings.morningGoalsEnabled) {
-            notifier.notify(
-                channelId = SoloNotifier.CHANNEL_JOURNAL,
-                notificationId = SoloNotifier.ID_MORNING,
-                title = "Good Morning",
-                message = "Recovery looks solid today. A normal training session should feel comfortable."
-            )
-        }
+        // Don't re-arm when disabled — otherwise a cancelled reminder would
+        // resurrect itself and keep a daily no-op worker alive indefinitely.
+        if (!settings.morningGoalsEnabled) return Result.success()
+
+        notifier.notify(
+            channelId = SoloNotifier.CHANNEL_JOURNAL,
+            notificationId = SoloNotifier.ID_MORNING,
+            title = "Good Morning",
+            message = "Recovery looks solid today. A normal training session should feel comfortable."
+        )
         scheduler.scheduleMorningGoals(settings)
         return Result.success()
     }

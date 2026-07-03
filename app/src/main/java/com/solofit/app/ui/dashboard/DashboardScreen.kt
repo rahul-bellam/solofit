@@ -290,7 +290,7 @@ fun DashboardScreen(
                                 )
                                 Spacer(Modifier.height(4.dp))
                                 Text(
-                                    "View energy & stress →",
+                                    "View energy and stress",
                                     fontSize = 12.sp, color = RecoveryAccent, fontWeight = FontWeight.Medium
                                 )
                             }

@@ -22,14 +22,16 @@ class EveningGratitudeWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         val settings = withContext(Dispatchers.IO) { prefs.reminderSettings.first() }
-        if (settings.eveningGratitudeEnabled) {
-            notifier.notify(
-                channelId = SoloNotifier.CHANNEL_JOURNAL,
-                notificationId = SoloNotifier.ID_EVENING,
-                title = "Evening Check-In",
-                message = "Today included meaningful progress. Small consistent actions tend to compound over time."
-            )
-        }
+        // Don't re-arm when disabled — otherwise a cancelled reminder would
+        // resurrect itself and keep a daily no-op worker alive indefinitely.
+        if (!settings.eveningGratitudeEnabled) return Result.success()
+
+        notifier.notify(
+            channelId = SoloNotifier.CHANNEL_JOURNAL,
+            notificationId = SoloNotifier.ID_EVENING,
+            title = "Evening Check-In",
+            message = "Today included meaningful progress. Small consistent actions tend to compound over time."
+        )
         scheduler.scheduleEveningGratitude(settings)
         return Result.success()
     }

@@ -187,7 +187,7 @@ fun ScanScreen(
                 }
 
                 ScanUiState.Logged -> {
-                    Text("Logged ✓")
+                    Text("Logged")
                 }
             }
         }

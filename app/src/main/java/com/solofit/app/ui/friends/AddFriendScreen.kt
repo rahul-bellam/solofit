@@ -42,7 +42,7 @@ import com.solofit.app.ui.theme.SurfaceBg
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFriendScreen(
-    viewModel: FriendViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
+    viewModel: FriendViewModel = androidx.hilt.navigation.compose.hiltViewModel(),
     onBack: () -> Unit
 ) {
     var code by remember { mutableStateOf("") }

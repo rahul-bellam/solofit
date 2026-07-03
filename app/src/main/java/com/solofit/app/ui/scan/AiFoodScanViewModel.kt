@@ -121,8 +121,17 @@ class AiFoodScanViewModel @Inject constructor(
         return@withLock false
     }
 
+    /**
+     * Analyzes [bitmap] and recycles it when done. This ViewModel takes sole
+     * ownership of the bitmap on EVERY code path (early guard, rate-limit,
+     * key checks, success, and error) — callers must NOT recycle it, or they'd
+     * race the async encode/upload and hit "Can't compress a recycled bitmap".
+     */
     fun analyzeFood(bitmap: Bitmap) {
-        if (_isScanning.value) return
+        if (_isScanning.value) {
+            bitmap.recycle()
+            return
+        }
         _isScanning.value = true
         viewModelScope.launch {
             if (checkRateLimit()) {
@@ -130,6 +139,7 @@ class AiFoodScanViewModel @Inject constructor(
                     AiScanResult.Error("Rate limited — max $maxRequestsPerMinute scans per minute, ${minIntervalMs / 1000}s between scans.")
                 )
                 _isScanning.value = false
+                bitmap.recycle()
                 return@launch
             }
 
@@ -140,6 +150,7 @@ class AiFoodScanViewModel @Inject constructor(
                     AiScanResult.Error("Set GEMINI_API_KEY in app/build.gradle.kts")
                 )
                 _isScanning.value = false
+                bitmap.recycle()
                 return@launch
             }
             if (!BuildConfig.GEMINI_API_KEY.startsWith("AIza")) {
@@ -147,6 +158,7 @@ class AiFoodScanViewModel @Inject constructor(
                     AiScanResult.Error("Invalid API key format. Get a valid Gemini API key from aistudio.google.com.")
                 )
                 _isScanning.value = false
+                bitmap.recycle()
                 return@launch
             }
             try {
