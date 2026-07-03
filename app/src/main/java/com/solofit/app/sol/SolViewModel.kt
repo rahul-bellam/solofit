@@ -433,8 +433,10 @@ class SolViewModel @Inject constructor(
             }
             val protein30d = if (targetProtein > 0) totals30d.map { it.second.proteinG / targetProtein } else emptyList()
             val protein90d = if (targetProtein > 0) totals90d.map { it.second.proteinG / targetProtein } else emptyList()
-            val meditation30dTotal = metrics30d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
-            val meditation90dTotal = metrics90d.sumOf { runCatching { prefs.dailyWellness(it.date).first().meditationMinutes }.getOrDefault(0) }
+            // Single batched DataStore read per window instead of one read per day.
+            val meditationByDate90d = runCatching { prefs.meditationMinutesFor(metrics90d.map { it.date }) }.getOrDefault(emptyMap())
+            val meditation30dTotal = metrics30d.sumOf { meditationByDate90d[it.date] ?: 0 }
+            val meditation90dTotal = metrics90d.sumOf { meditationByDate90d[it.date] ?: 0 }
             val bodyWeight30d = weight30d.map { it.weightKg }
             val bodyWeight90d = weight90d.map { it.weightKg }
 
@@ -512,15 +514,14 @@ class SolViewModel @Inject constructor(
                 last3 >= prev3 -> 1
                 else -> 0
             }
+            val meditationByDateWeekly = runCatching { prefs.meditationMinutesFor(weeklyMetrics.map { it.date }) }.getOrDefault(emptyMap())
             val features = SetbackPredictor.extractFeatures(
                 daysSinceLastWorkout = daysSinceLastWorkout,
                 avgRecovery7d = weeklyRecovery.average().let { if (it.isNaN()) null else it.toInt() },
                 avgSleep3d = avgSleep3d,
                 avgProteinAdherence7d = weeklyProteinPct.average().let { if (it.isNaN()) null else it },
                 avgSteps3d = avgSteps3d,
-                meditatedAny7d = weeklyMetrics.any { m ->
-                    runCatching { prefs.dailyWellness(m.date).first().meditationMinutes > 0 }.getOrDefault(false)
-                },
+                meditatedAny7d = weeklyMetrics.any { m -> (meditationByDateWeekly[m.date] ?: 0) > 0 },
                 journaledAny7d = recentEntries.isNotEmpty(),
                 isWeekend = now.dayOfWeek == DayOfWeek.SATURDAY || now.dayOfWeek == DayOfWeek.SUNDAY,
                 momentumDirection = momentumDirection
@@ -594,9 +595,7 @@ class SolViewModel @Inject constructor(
                     avgSteps3d = yWeeklyMetrics.takeLast(3).mapNotNull { it.steps?.toInt() }.let {
                         if (it.isNotEmpty()) it.average().toInt() else null
                     },
-                    meditatedAny7d = yWeeklyMetrics.any { m ->
-                        runCatching { prefs.dailyWellness(m.date).first().meditationMinutes > 0 }.getOrDefault(false)
-                    },
+                    meditatedAny7d = prefs.meditationMinutesFor(yWeeklyMetrics.map { it.date }).values.any { it > 0 },
                     journaledAny7d = runCatching { journalRepository.observeRecentGratitude(7).first().any { it.date == yesterdayStr } }.getOrDefault(false),
                     isWeekend = LocalDate.parse(yesterdayStr).dayOfWeek == DayOfWeek.SATURDAY ||
                         LocalDate.parse(yesterdayStr).dayOfWeek == DayOfWeek.SUNDAY,

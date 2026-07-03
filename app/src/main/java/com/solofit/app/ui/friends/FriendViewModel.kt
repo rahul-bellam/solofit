@@ -14,11 +14,14 @@ import com.solofit.app.domain.repository.FriendRepository
 import com.solofit.app.domain.repository.GroupRepository
 import com.solofit.app.domain.repository.SoloIdentityRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -50,13 +53,23 @@ class FriendViewModel @Inject constructor(
     private val _addSuccess = MutableStateFlow(false)
     val addSuccess: StateFlow<Boolean> = _addSuccess.asStateFlow()
 
+    // The local Solo identity is a one-shot read (created during onboarding). Held in
+    // a flow so it can feed the combined UI state and refresh if regenerated.
+    private val identity = MutableStateFlow<SoloIdentityEntity?>(null)
+
+    init {
+        viewModelScope.launch { identity.value = identityRepository.get() }
+    }
+
     val uiState: StateFlow<FriendsUiState> = combine(
         friendRepository.observeAccepted(),
         friendRepository.observePending(),
         friendRepository.observeAcceptedCount(),
-        groupRepository.observeGroups()
-    ) { accepted, pending, count, groups ->
+        groupRepository.observeGroups(),
+        identity
+    ) { accepted, pending, count, groups, id ->
         FriendsUiState(
+            identity = id,
             acceptedFriends = accepted,
             pendingRequests = pending,
             totalAccepted = count,
@@ -64,19 +77,30 @@ class FriendViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), FriendsUiState())
 
-    private val _detailState = MutableStateFlow(FriendDetailUiState())
-    val detailState: StateFlow<FriendDetailUiState> = _detailState.asStateFlow()
+    // Which friend the detail screen is showing; drives [detailState] reactively so
+    // saved permissions, events, and relationship type actually load and stay live.
+    private val selectedFriendId = MutableStateFlow<Long?>(null)
 
-    init {
-        viewModelScope.launch {
-            identityRepository.get()?.let { identity ->
-                _detailState.value = _detailState.value.copy(
-                    permissions = emptyMap(),
-                    events = emptyList()
-                )
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val detailState: StateFlow<FriendDetailUiState> = selectedFriendId
+        .flatMapLatest { id ->
+            if (id == null) {
+                flowOf(FriendDetailUiState())
+            } else {
+                combine(
+                    friendRepository.observeById(id),
+                    friendRepository.observePermissions(id),
+                    friendRepository.observeEvents(id)
+                ) { friend, permissions, events ->
+                    FriendDetailUiState(
+                        friend = friend,
+                        permissions = permissions.associate { it.category to it.level },
+                        events = events
+                    )
+                }
             }
         }
-    }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), FriendDetailUiState())
 
     fun loadIdentity(callback: (SoloIdentityEntity?) -> Unit) {
         viewModelScope.launch {
@@ -134,16 +158,7 @@ class FriendViewModel @Inject constructor(
     }
 
     fun loadFriendDetail(friendId: Long) {
-        viewModelScope.launch {
-            val friend = friendRepository.getById(friendId)
-            val permissions = friendRepository.observePermissions(friendId)
-            val events = friendRepository.observeEvents(friendId)
-            _detailState.value = FriendDetailUiState(
-                friend = friend,
-                permissions = emptyMap(),
-                events = emptyList()
-            )
-        }
+        selectedFriendId.value = friendId
     }
 
     fun setPermission(friendId: Long, category: String, level: String) {
@@ -178,10 +193,19 @@ class FriendViewModel @Inject constructor(
         }
     }
 
-    fun getGroupMembers(groupId: Long, callback: (List<GroupMemberEntity>) -> Unit) {
-        viewModelScope.launch {
-            groupRepository.observeMembers(groupId).collect { callback(it) }
+    // Members of the group currently being managed. Reactive (replaces the old
+    // getGroupMembers(callback), whose collect{} leaked a coroutine per call).
+    private val selectedGroupId = MutableStateFlow<Long?>(null)
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val selectedGroupMembers: StateFlow<List<GroupMemberEntity>> = selectedGroupId
+        .flatMapLatest { id ->
+            if (id == null) flowOf(emptyList()) else groupRepository.observeMembers(id)
         }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    fun selectGroup(groupId: Long?) {
+        selectedGroupId.value = groupId
     }
 
     fun clearCodeError() {

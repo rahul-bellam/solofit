@@ -20,6 +20,9 @@ interface FriendDao {
     @Query("SELECT * FROM friends WHERE id = :id")
     suspend fun getById(id: Long): FriendEntity?
 
+    @Query("SELECT * FROM friends WHERE id = :id")
+    fun observeById(id: Long): Flow<FriendEntity?>
+
     @Query("SELECT * FROM friends WHERE soloId = :soloId")
     suspend fun getBySoloId(soloId: String): FriendEntity?
 

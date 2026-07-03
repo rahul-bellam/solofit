@@ -142,10 +142,11 @@ fun NutritionScreen(
                     }
                 }.getOrNull()
                 if (bmp != null) {
+                    // analyzeFood takes ownership of the bitmap and recycles it when
+                    // done — recycling here would race its async encode/upload.
                     kotlinx.coroutines.withContext(Dispatchers.Main) {
                         aiScanViewModel.analyzeFood(bmp)
                     }
-                    bmp.recycle()
                 }
                 tempPhotoFile?.let { if (it.exists()) it.delete() }
             }

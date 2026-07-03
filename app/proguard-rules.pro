@@ -38,10 +38,6 @@
 -keep,allowobfuscation,allowshrinking class retrofit2.Response
 -keepattributes Signature, Exceptions
 
-# ---- TensorFlow Lite ----
--keep class org.tensorflow.lite.** { *; }
--dontwarn org.tensorflow.lite.**
-
 # ---- ML Kit / Code Scanner ----
 -keep class com.google.mlkit.** { *; }
 -keep class com.google.android.gms.** { *; }

@@ -36,7 +36,12 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideOkHttp(): OkHttpClient {
-        val logging = HttpLoggingInterceptor().apply {
+        // BASIC logging prints the request line, which includes the full URL. The
+        // Gemini/USDA keys are passed as `?key=…`/`?api_key=…` query params, so we
+        // route the log through a redacting logger to keep keys out of logcat.
+        val logging = HttpLoggingInterceptor { message ->
+            android.util.Log.d("OkHttp", KEY_QUERY_REGEX.replace(message, "$1=***"))
+        }.apply {
             level = if (BuildConfig.DEBUG) {
                 HttpLoggingInterceptor.Level.BASIC
             } else {
@@ -49,6 +54,8 @@ object NetworkModule {
             .readTimeout(15, TimeUnit.SECONDS)
             .build()
     }
+
+    private val KEY_QUERY_REGEX = Regex("(?i)\\b(key|api_key|apikey)=[^&\\s]+")
 
     @Provides
     @Singleton

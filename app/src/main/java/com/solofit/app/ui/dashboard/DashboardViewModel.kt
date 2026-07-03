@@ -88,49 +88,63 @@ class DashboardViewModel @Inject constructor(
     val snackbarEvent = _snackbar.receiveAsFlow()
     private val dayFlow = MutableStateFlow(java.time.LocalDate.now().dayOfWeek.value)
 
+    // The current day key, made reactive so all date-scoped flows re-subscribe when
+    // the day rolls over while the screen is open (avoids showing yesterday's data
+    // past midnight). Updated by the ticker below.
+    private val dateFlow = MutableStateFlow(DateUtils.today())
+
     init {
         viewModelScope.launch {
             while (true) {
                 val now = java.time.LocalTime.now()
                 val nextMidnight = java.time.Duration.between(now, java.time.LocalTime.MAX).toMillis() + 1
                 delay(nextMidnight)
-                dayFlow.value = java.time.LocalDate.now().dayOfWeek.value
+                val newNow = java.time.LocalDate.now()
+                dayFlow.value = newNow.dayOfWeek.value
+                dateFlow.value = DateUtils.today()
             }
         }
     }
 
-    private val today: String get() = DateUtils.today()
+    /** Snapshot of the reactive day key; use for one-shot writes (water logging, etc.). */
+    private val today: String get() = dateFlow.value
 
-    private val core = combine(
-        profileRepository.observeProfile(),
-        dailyLogRepository.observeTotalsForDate(today),
-        profileRepository.waterMl(today),
-        profileRepository.waterGoalMl,
-        workoutRepository.observeHistory()
-    ) { profile, totals, water, goal, history ->
-        val dates = history.map { it.session.date }
-        val now = LocalDate.now()
-        val firstDate = (dates.minOrNull()?.let { runCatching { LocalDate.parse(it) }.getOrNull() }) ?: now
-        val daysTracked = ChronoUnit.DAYS.between(firstDate, now).toInt().coerceAtLeast(0) + 1
-        CoreData(
-            profile = profile,
-            totals = totals,
-            water = water,
-            waterGoal = goal,
-            streak = StreakCalculator.currentStreak(dates, now),
-            activeThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
-            workoutToday = dates.contains(today),
-            daysTracked = daysTracked
-        )
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val core = dateFlow.flatMapLatest { date ->
+        combine(
+            profileRepository.observeProfile(),
+            dailyLogRepository.observeTotalsForDate(date),
+            profileRepository.waterMl(date),
+            profileRepository.waterGoalMl,
+            workoutRepository.observeHistory()
+        ) { profile, totals, water, goal, history ->
+            val dates = history.map { it.session.date }
+            val now = LocalDate.now()
+            val firstDate = (dates.minOrNull()?.let { runCatching { LocalDate.parse(it) }.getOrNull() }) ?: now
+            val daysTracked = ChronoUnit.DAYS.between(firstDate, now).toInt().coerceAtLeast(0) + 1
+            CoreData(
+                profile = profile,
+                totals = totals,
+                water = water,
+                waterGoal = goal,
+                streak = StreakCalculator.currentStreak(dates, now),
+                activeThisWeek = StreakCalculator.daysActiveInWindow(dates, now, 7),
+                workoutToday = dates.contains(date),
+                daysTracked = daysTracked
+            )
+        }
     }
 
-    private val transform = combine(
-        profileRepository.phaseName,
-        profileRepository.phaseStartDate,
-        profileRepository.phaseTargetDays,
-        bodyRepository.observeMetric(today)
-    ) { name, start, target, metric ->
-        TransformData(name, start, target, metric?.sleepHours, metric?.steps, metric?.energyScore)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val transform = dateFlow.flatMapLatest { date ->
+        combine(
+            profileRepository.phaseName,
+            profileRepository.phaseStartDate,
+            profileRepository.phaseTargetDays,
+            bodyRepository.observeMetric(date)
+        ) { name, start, target, metric ->
+            TransformData(name, start, target, metric?.sleepHours, metric?.steps, metric?.energyScore)
+        }
     }
 
     // Inputs for the Transformation Score: goal weights + waist progress + strength progress.
@@ -160,7 +174,10 @@ class DashboardViewModel @Inject constructor(
         ScoreInputs(goal, waistProgress, strengthProgress)
     }
 
-    private val prefsFlow = combine(prefs.stepGoal, prefs.meditationMinutes(today)) { g, m -> StepGoalAndMed(g, m) }
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val prefsFlow = dateFlow.flatMapLatest { date ->
+        combine(prefs.stepGoal, prefs.meditationMinutes(date)) { g, m -> StepGoalAndMed(g, m) }
+    }
 
     private val isRefreshingAndPrefs = combine(_isRefreshing, prefsFlow) { refreshing, p -> refreshing to p }
 
@@ -251,7 +268,10 @@ class DashboardViewModel @Inject constructor(
         }
     }
 
-    val planDismissed: StateFlow<Boolean> = savedStateHandle.getStateFlow("plan_dismissed_$today", false)
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val planDismissed: StateFlow<Boolean> = dateFlow
+        .flatMapLatest { date -> savedStateHandle.getStateFlow("plan_dismissed_$date", false) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     fun dismissCompletedPlan() {
         savedStateHandle["plan_dismissed_$today"] = true

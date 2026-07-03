@@ -2,8 +2,10 @@ package com.solofit.app.reminders
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import com.solofit.app.BuildConfig
 import com.solofit.app.core.perf.PerfTrace
 import com.solofit.app.data.local.SoloFitDatabase
 import com.solofit.app.data.local.UserPreferences
@@ -42,6 +44,9 @@ class DbMaintenanceWorker @AssistedInject constructor(
             userPreferences.pruneOldData()
             Result.success()
         } catch (e: Exception) {
+            // Maintenance is best-effort; never fail the chain, but surface the
+            // cause in debug so silent VACUUM/prune failures are diagnosable.
+            if (BuildConfig.DEBUG) Log.w("DbMaintenanceWorker", "maintenance failed", e)
             Result.success()
         }
     }

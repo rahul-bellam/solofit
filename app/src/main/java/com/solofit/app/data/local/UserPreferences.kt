@@ -13,8 +13,10 @@ import com.solofit.app.domain.model.SoloFitModule
 import com.solofit.app.domain.model.ReminderSettings
 import com.solofit.app.domain.model.ThemeMode
 import com.solofit.app.domain.model.TrainingGoal
+import com.solofit.app.core.FitnessMath
 import com.solofit.app.sol.WellnessThresholds
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
 import javax.inject.Inject
@@ -351,6 +353,20 @@ class UserPreferences @Inject constructor(
         context.dataStore.edit { it[key] = minutes.coerceAtLeast(0) }
     }
 
+    /**
+     * Batched read of meditation minutes for many dates in a SINGLE DataStore
+     * snapshot. Callers computing multi-day windows (7/30/90d) must use this
+     * instead of collecting [meditationMinutes]/[dailyWellness] once per day,
+     * which would read the whole preferences file N times.
+     */
+    suspend fun meditationMinutesFor(dates: Collection<String>): Map<String, Int> {
+        if (dates.isEmpty()) return emptyMap()
+        val snapshot = context.dataStore.data.first()
+        return dates.associateWith { date ->
+            snapshot[intPreferencesKey("meditation_$date")] ?: 0
+        }
+    }
+
     private val customHabitsKey = stringPreferencesKey("custom_habits")
 
     /** Habit completed flag for a given date + habit id. */
@@ -373,9 +389,14 @@ class UserPreferences @Inject constructor(
         }
 
     suspend fun addCustomHabit(habitId: String, displayName: String) {
+        // '|' separates entries and ':' separates id from name, so neither may
+        // appear inside a value or the list would corrupt on read. Strip them.
+        val safeId = habitId.replace('|', ' ').replace(':', ' ').trim()
+        val safeName = displayName.replace('|', ' ').replace(':', ' ').trim()
+        if (safeId.isEmpty()) return
         context.dataStore.edit { prefs ->
             val existing = prefs[customHabitsKey].orEmpty()
-            val updated = if (existing.isNotEmpty()) "$existing|$habitId:$displayName" else "$habitId:$displayName"
+            val updated = if (existing.isNotEmpty()) "$existing|$safeId:$safeName" else "$safeId:$safeName"
             prefs[customHabitsKey] = updated
         }
     }
@@ -415,13 +436,9 @@ class UserPreferences @Inject constructor(
         }
     }
 
-    /** Compute a readiness score 0–100 from today's wellness data. */
+    /** Compute a readiness score 0–100 from today's wellness data (see FitnessMath). */
     fun readinessScore(date: String): Flow<Int> = dailyWellness(date).map { w ->
-        val sleep = ((w.sleepHours / 8f).coerceAtMost(1f) * 30).toInt()
-        val stress = ((5 - w.stressLevel) / 4f * 20).toInt()
-        val mood = (w.moodLevel / 5f * 20).toInt()
-        val energy = (w.energyLevel / 5f * 30).toInt()
-        (sleep + stress + mood + energy).coerceIn(0, 100)
+        FitnessMath.subjectiveReadinessScore(w.sleepHours, w.stressLevel, w.moodLevel, w.energyLevel)
     }
 
     /**

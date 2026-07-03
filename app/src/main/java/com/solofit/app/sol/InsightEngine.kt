@@ -9,8 +9,12 @@ class InsightEngine @Inject constructor() {
         const val MIN_DAYS_FOR_TRENDS = 3
     }
 
-    fun computeBriefing(input: SolInput, memory: SolMemoryData? = null): SolBriefing {
-        val timeOfDay = LocalTime.now()
+    fun computeBriefing(
+        input: SolInput,
+        memory: SolMemoryData? = null,
+        now: LocalTime = LocalTime.now()
+    ): SolBriefing {
+        val timeOfDay = now
         val morning = timeOfDay.hour < 12
         val evening = timeOfDay.hour >= 17
         val recovery = input.recoveryScore

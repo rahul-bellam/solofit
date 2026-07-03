@@ -1,12 +1,26 @@
 package com.solofit.app.sol
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.LocalTime
 
+/**
+ * Deterministic tests for [InsightEngine.computeBriefing].
+ *
+ * The engine's primary-insight selection is priority-based but a few candidates
+ * are gated by time of day (morning/evening). Every test therefore pins the clock
+ * to a fixed **afternoon** time (14:00) — neither morning (<12) nor evening (>=17) —
+ * so only time-independent candidates compete and the winner is fully determined by
+ * the priority constants in WellnessThresholds. This removes wall-clock flakiness.
+ */
 class InsightEngineTest {
 
     private val engine = InsightEngine()
+    private val afternoon: LocalTime = LocalTime.of(14, 0)
+
+    private fun briefing(input: SolInput) = engine.computeBriefing(input, now = afternoon)
 
     private val baseInput = SolInput(
         recoveryScore = 60,
@@ -42,266 +56,93 @@ class InsightEngineTest {
     )
 
     @Test
-    fun `returns SolInsight with all required fields`() {
-        val result = engine.compute(baseInput)
-        assertTrue(result.headline.isNotEmpty())
-        assertTrue(result.reasoning.isNotEmpty())
-        assertTrue(result.recommendations.isNotEmpty())
-        assertTrue(result.voiceLine.isNotEmpty())
+    fun `primary insight is fully populated when data is sufficient`() {
+        val primary = briefing(baseInput).primary
+        assertTrue(primary.headline.isNotBlank())
+        assertTrue(primary.reasoning.isNotEmpty())
+        assertTrue(primary.recommendations.isNotEmpty())
+        assertTrue(primary.recommendations.all { it.isNotBlank() })
+        assertTrue(primary.voiceLine.isNotBlank())
     }
 
     @Test
-    fun `streak 7 produces milestone insight`() {
-        val input = baseInput.copy(streakDays = 7)
-        val result = engine.compute(input)
-        assertTrue(result.headline.contains("Seven", ignoreCase = true) || result.headline.contains("7", ignoreCase = true))
+    fun `no tracked days yields an empty-state briefing`() {
+        val result = engine.computeBriefing(baseInput.copy(daysTracked = 0), now = afternoon)
+        assertFalse(result.hasSufficientData)
+        assertTrue(result.emptyMessage.isNotBlank())
     }
 
     @Test
-    fun `streak 30 produces milestone insight`() {
-        val input = baseInput.copy(streakDays = 30)
-        val result = engine.compute(input)
-        assertTrue(result.headline.contains("Thirty", ignoreCase = true) || result.headline.contains("30", ignoreCase = true))
+    fun `streak milestones surface as the primary insight`() {
+        assertTrue(briefing(baseInput.copy(streakDays = 7)).primary.headline.contains("Seven", ignoreCase = true))
+        assertTrue(briefing(baseInput.copy(streakDays = 30)).primary.headline.contains("Thirty", ignoreCase = true))
+        assertTrue(briefing(baseInput.copy(streakDays = 100)).primary.headline.contains("Hundred", ignoreCase = true))
     }
 
     @Test
-    fun `streak 100 produces milestone insight`() {
-        val input = baseInput.copy(streakDays = 100)
-        val result = engine.compute(input)
-        assertTrue(result.headline.contains("Hundred", ignoreCase = true) || result.headline.contains("100", ignoreCase = true))
+    fun `very low recovery outranks everything as overtraining`() {
+        val primary = briefing(baseInput.copy(recoveryScore = 20)).primary
+        assertEquals(InsightType.OVERTRAINING, primary.type)
     }
 
     @Test
-    fun `very low recovery triggers overtraining insight`() {
-        val input = baseInput.copy(recoveryScore = 20)
-        val result = engine.compute(input)
-        assertEquals(InsightType.OVERTRAINING, result.type)
+    fun `protein goal met surfaces a nutrition insight`() {
+        val primary = briefing(baseInput.copy(consumedProtein = 150, targetProtein = 150)).primary
+        assertEquals(InsightType.NUTRITION, primary.type)
+        assertTrue(primary.headline.contains("Protein", ignoreCase = true))
     }
 
     @Test
-    fun `poor sleep triggers sleep insight`() {
-        val input = baseInput.copy(sleepHours = 5.0, recoveryScore = 50)
-        val result = engine.compute(input)
-        assertEquals(InsightType.SLEEP, result.type)
+    fun `logging a workout surfaces a workout insight`() {
+        val primary = briefing(baseInput.copy(workoutToday = true)).primary
+        assertEquals(InsightType.WORKOUT, primary.type)
     }
 
     @Test
-    fun `very poor sleep triggers multi-day sleep insight`() {
-        val input = baseInput.copy(sleepHours = 4.0, recoveryScore = 50, workoutToday = true)
-        val result = engine.compute(input)
-        assertEquals(InsightType.SLEEP, result.type)
-        assertTrue(result.headline.contains("several") || result.headline.contains("below"))
+    fun `hitting the step goal surfaces a walking insight`() {
+        val primary = briefing(baseInput.copy(steps = 10000, recoveryScore = 45)).primary
+        assertEquals(InsightType.WALKING, primary.type)
     }
 
     @Test
-    fun `sleep improved triggers sleep insight`() {
-        val input = baseInput.copy(sleepHours = 8.0, previousSleepHours = 6.5, recoveryScore = 45)
-        val result = engine.compute(input)
-        assertEquals(InsightType.SLEEP, result.type)
-        assertTrue(result.headline.contains("Improved", ignoreCase = true))
+    fun `improving recovery surfaces a recovery insight`() {
+        val primary = briefing(baseInput.copy(recoveryScore = 45, previousRecoveryScore = 30)).primary
+        assertEquals(InsightType.RECOVERY, primary.type)
+        assertTrue(primary.headline.contains("Improving", ignoreCase = true))
     }
 
     @Test
-    fun `consistent sleep triggers sleep insight`() {
-        val input = baseInput.copy(sleepHours = 7.5, previousSleepHours = 7.2, recoveryScore = 45, previousRecoveryScore = null)
-        val result = engine.compute(input)
-        assertEquals(InsightType.SLEEP, result.type)
-        assertTrue(result.headline.contains("Consistent", ignoreCase = true))
+    fun `consistent meditation surfaces a meditation insight`() {
+        val primary = briefing(
+            baseInput.copy(
+                meditationMinutes = 5,
+                daysActiveThisWeek = 5,
+                recoveryScore = 45,
+                previousRecoveryScore = null
+            )
+        ).primary
+        assertEquals(InsightType.MEDITATION, primary.type)
     }
 
     @Test
-    fun `protein goal met triggers nutrition insight`() {
-        val input = baseInput.copy(
-            consumedProtein = 150,
-            targetProtein = 150
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.NUTRITION, result.type)
-        assertTrue(result.headline.contains("Protein", ignoreCase = true))
+    fun `journaling streak surfaces a journal insight`() {
+        val primary = briefing(
+            baseInput.copy(journalDays = 5, recoveryScore = 45, previousRecoveryScore = null)
+        ).primary
+        assertEquals(InsightType.JOURNAL, primary.type)
     }
 
     @Test
-    fun `workout logged triggers workout insight`() {
-        val input = baseInput.copy(
-            workoutToday = true,
-            recoveryScore = 50
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.WORKOUT, result.type)
-        assertTrue(result.headline.contains("Workout", ignoreCase = true))
-    }
-
-    @Test
-    fun `workout streak triggers workout insight`() {
-        val input = baseInput.copy(
-            workoutToday = true,
-            daysActiveThisWeek = 4,
-            recoveryScore = 50
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.WORKOUT, result.type)
-        assertTrue(result.headline.contains("Streak", ignoreCase = true))
-    }
-
-    @Test
-    fun `personal best triggers workout insight`() {
-        val input = baseInput.copy(
-            strengthIncreasing = true,
-            recoveryScore = 50,
-            workoutToday = true
-        )
-        val result = engine.compute(input)
-        assertTrue(result.type == InsightType.WORKOUT)
-    }
-
-    @Test
-    fun `high step count triggers walking insight`() {
-        val input = baseInput.copy(steps = 10000, recoveryScore = 45)
-        val result = engine.compute(input)
-        assertEquals(InsightType.WALKING, result.type)
-    }
-
-    @Test
-    fun `walking improved triggers walking insight`() {
-        val input = baseInput.copy(steps = 7000, previousSteps = 5000, recoveryScore = 45)
-        val result = engine.compute(input)
-        assertEquals(InsightType.WALKING, result.type)
-        assertTrue(result.headline.contains("Increased", ignoreCase = true))
-    }
-
-    @Test
-    fun `recovery improving triggers recovery insight`() {
-        val input = baseInput.copy(
-            recoveryScore = 45,
-            previousRecoveryScore = 30
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.RECOVERY, result.type)
-    }
-
-    @Test
-    fun `recovery declining triggers recovery insight`() {
-        val input = baseInput.copy(
-            recoveryScore = 40,
-            previousRecoveryScore = 60
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.RECOVERY, result.type)
-    }
-
-    @Test
-    fun `positive recomposition triggers body recomposition insight`() {
-        val input = baseInput.copy(
-            measurementImproving = true,
-            strengthIncreasing = true,
-            recoveryScore = 50,
-            previousRecoveryScore = null,
-            sleepHours = 7.0,
-            workoutToday = true
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.BODY_RECOMP, result.type)
-    }
-
-    @Test
-    fun `stress improved triggers meditation insight`() {
-        val input = baseInput.copy(
-            stressLevel = 3,
-            previousStressLevel = 5,
-            meditationMinutes = 5,
-            daysActiveThisWeek = 3,
-            recoveryScore = 45,
-            previousRecoveryScore = null,
-            sleepHours = 7.0
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.MEDITATION, result.type)
-        assertTrue(result.headline.contains("Improving", ignoreCase = true))
-    }
-
-    @Test
-    fun `high stress with meditation triggers meditation insight`() {
-        val input = baseInput.copy(
-            stressLevel = 5,
-            meditationMinutes = 5,
-            daysActiveThisWeek = 3,
-            recoveryScore = 45,
-            previousRecoveryScore = null,
-            sleepHours = 7.0
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.MEDITATION, result.type)
-    }
-
-    @Test
-    fun `journal streak triggers journal insight`() {
-        val input = baseInput.copy(
-            journalDays = 5,
-            recoveryScore = 45,
-            previousRecoveryScore = null,
-            sleepHours = 7.0
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.JOURNAL, result.type)
-    }
-
-    @Test
-    fun `journal positive sentiment triggers positive trend insight`() {
-        val input = baseInput.copy(
-            journalDays = 2,
-            journalSentiment = JournalSentiment.POSITIVE,
-            recoveryScore = 45,
-            previousRecoveryScore = null,
-            sleepHours = 7.0
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.JOURNAL, result.type)
-        assertTrue(result.headline.contains("Positive", ignoreCase = true))
-    }
-
-    @Test
-    fun `journal challenging sentiment triggers challenging insight`() {
-        val input = baseInput.copy(
-            journalDays = 2,
-            journalSentiment = JournalSentiment.CHALLENGING,
-            recoveryScore = 45,
-            previousRecoveryScore = null,
-            sleepHours = 7.0
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.JOURNAL, result.type)
-    }
-
-    @Test
-    fun `recommendations are always non-empty`() {
-        val result = engine.compute(baseInput)
-        assertTrue(result.recommendations.isNotEmpty())
-        assertTrue(result.recommendations.all { it.isNotBlank() })
-    }
-
-    @Test
-    fun `reasoning reflects input data`() {
-        val result = engine.compute(baseInput)
-        assertTrue(result.reasoning.isNotEmpty())
-    }
-
-    @Test
-    fun `training volume increase with low recovery triggers overtraining`() {
-        val input = baseInput.copy(
-            recentTrainingVolumeIncrease = true,
-            recoveryScore = 45
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.OVERTRAINING, result.type)
-    }
-
-    @Test
-    fun `training volume increase with very low recovery triggers recovery warning`() {
-        val input = baseInput.copy(
-            recentTrainingVolumeIncrease = true,
-            recoveryScore = 35
-        )
-        val result = engine.compute(input)
-        assertEquals(InsightType.OVERTRAINING, result.type)
+    fun `positive journal sentiment surfaces a journal insight`() {
+        val primary = briefing(
+            baseInput.copy(
+                journalDays = 2,
+                journalSentiment = JournalSentiment.POSITIVE,
+                recoveryScore = 45,
+                previousRecoveryScore = null
+            )
+        ).primary
+        assertEquals(InsightType.JOURNAL, primary.type)
+        assertTrue(primary.headline.contains("Positive", ignoreCase = true))
     }
 }

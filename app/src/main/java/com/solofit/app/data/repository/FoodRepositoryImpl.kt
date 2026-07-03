@@ -30,7 +30,11 @@ class FoodRepositoryImpl @Inject constructor(
         if (query.isBlank()) return emptyList()
         val trimmed = query.trim().lowercase()
         usdaResultCache.get(trimmed)?.let { return it }
-        val result = try {
+        // Use null (not emptyList) as the failure sentinel so a transient network
+        // error is NOT cached — otherwise an identical retry within the TTL would
+        // return an empty list without ever hitting the API again. A genuine
+        // "no matches" success IS cached to avoid re-querying.
+        val result: List<FoodItemEntity>? = try {
             val response = usdaService.searchFoods(query = query.trim())
             response.foods.mapNotNull { usda ->
                 val kcal = usda.foodNutrients.find { it.nutrientId == 1008 }?.value
@@ -51,8 +55,9 @@ class FoodRepositoryImpl @Inject constructor(
                 )
             }
         } catch (_: Exception) {
-            emptyList()
+            null
         }
+        if (result == null) return emptyList()
         usdaResultCache.put(trimmed, result)
         return result
     }

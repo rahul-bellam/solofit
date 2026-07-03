@@ -39,13 +39,19 @@ class ProgressPhotoRepositoryImpl @Inject constructor(
 
     override suspend fun savePhoto(bitmap: Bitmap, date: String, pose: String): Long =
         withContext(io) {
+            // This repository takes sole ownership of the bitmap and recycles it
+            // here; callers must NOT recycle it, or they'd race this async compress.
             // Cap to a sensible resolution so progress photos don't bloat storage.
             val capped = BitmapUtils.capInMemory(bitmap, maxEdge = 1080)
-            val fileName = "pp_${pose}_${System.currentTimeMillis()}.jpg"
-            FileOutputStream(File(dir, fileName)).use { out ->
-                capped.compress(Bitmap.CompressFormat.JPEG, 85, out)
+            try {
+                val fileName = "pp_${pose}_${System.currentTimeMillis()}.jpg"
+                FileOutputStream(File(dir, fileName)).use { out ->
+                    capped.compress(Bitmap.CompressFormat.JPEG, 85, out)
+                }
+                dao.insert(ProgressPhotoEntity(date = date, pose = pose, fileName = fileName))
+            } finally {
+                capped.recycle()
             }
-            dao.insert(ProgressPhotoEntity(date = date, pose = pose, fileName = fileName))
         }
 
     override fun fileFor(fileName: String): File = File(dir, File(fileName).name)

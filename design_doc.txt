@@ -1,0 +1,894 @@
+# SoloFit Design System & UX Constitution
+
+### Version 1.0 – The Rules Every Human and AI Contributor Must Follow
+
+---
+
+# Philosophy
+
+SoloFit is **not** a fitness app.
+
+It is **not** an AI app.
+
+It is **not** a health dashboard.
+
+It is a **long-term wellness companion** that quietly helps people become healthier one day at a time.
+
+The app should feel like:
+
+* a leather notebook
+* an experienced coach
+* a thoughtful friend
+* a quiet workspace
+* something people trust
+
+Never like:
+
+* social media
+* a startup landing page
+* ChatGPT
+* a gaming app
+* a fitness influencer
+* an analytics dashboard
+
+---
+
+# Core Principles
+
+Everything in SoloFit must satisfy these principles.
+
+## 1. Calm over Excitement
+
+Never try to impress.
+
+Try to reassure.
+
+The user opens SoloFit because they want clarity.
+
+Not stimulation.
+
+---
+
+## 2. Intelligence over Information
+
+Do not show numbers.
+
+Show meaning.
+
+Bad
+
+```
+Recovery
+72
+```
+
+Good
+
+```
+Recovery looks stronger than yesterday.
+
+Today is suitable for your planned workout.
+```
+
+---
+
+## 3. One Important Thing
+
+Every screen must answer exactly one question.
+
+Dashboard
+
+> What deserves my attention today?
+
+Workout
+
+> What am I doing right now?
+
+Nutrition
+
+> What should I eat?
+
+Recovery
+
+> How prepared am I?
+
+Journal
+
+> How am I feeling?
+
+Walking
+
+> Have I moved enough?
+
+Meditation
+
+> Can I slow down?
+
+If a screen answers multiple unrelated questions,
+
+split it.
+
+---
+
+## 4. Progressive Disclosure
+
+Never overwhelm beginners.
+
+Features appear naturally over time.
+
+Example
+
+Day 1
+
+Dashboard
+
+Workout
+
+Nutrition
+
+Water
+
+Walking
+
+Week 2
+
+Journal
+
+Meditation
+
+Recovery
+
+Month 1
+
+Body Recomp
+
+Burnout
+
+Patterns
+
+Predictions
+
+Advanced users should see more intelligence.
+
+Beginners should see simplicity.
+
+---
+
+# Visual Identity
+
+## Materials
+
+Imagine the interface made from
+
+paper
+
+linen
+
+aged leather
+
+matte ceramic
+
+burnished metal
+
+wood
+
+Never
+
+glass
+
+chrome
+
+neon
+
+plastic
+
+liquid gradients
+
+---
+
+# Color Philosophy
+
+Color communicates domain.
+
+Never decoration.
+
+Every accent has meaning.
+
+Workout
+
+Warm iron
+
+Copper
+
+Intensity
+
+Nutrition
+
+Olive leather
+
+Grounded
+
+Natural
+
+Recovery
+
+Slate bronze
+
+Rest
+
+Stability
+
+Meditation
+
+Muted taupe
+
+Quiet
+
+Walking
+
+Weathered stone
+
+Movement
+
+Journal
+
+Terracotta clay
+
+Reflection
+
+Body Recomp
+
+Aged bronze
+
+Precision
+
+Stress
+
+Smoked burgundy
+
+Awareness
+
+Burnout
+
+Ash charcoal
+
+Serious
+
+Sol
+
+Warm gold
+
+Only Sol owns gold.
+
+No other generic component should use it.
+
+---
+
+# Typography
+
+Two fonts only.
+
+Playfair Display
+
+Headlines
+
+Identity
+
+Reflection
+
+Milestones
+
+Plus Jakarta Sans
+
+Everything else.
+
+Rules
+
+Maximum one large headline.
+
+Do not use huge text everywhere.
+
+Numbers should not dominate.
+
+Whitespace is typography.
+
+---
+
+# Layout Rules
+
+Every page must have rhythm.
+
+Never
+
+```
+Card
+
+Card
+
+Card
+
+Card
+
+Card
+
+Card
+```
+
+Instead
+
+```
+Headline
+
+Space
+
+Hero
+
+Inline Information
+
+Space
+
+Small Card
+
+Text
+
+Divider
+
+Action
+
+Space
+```
+
+The eye should travel naturally.
+
+---
+
+# Cards
+
+Cards are containers.
+
+Not decoration.
+
+Ask before creating one:
+
+Can this be text?
+
+Can this be an inline row?
+
+Can this simply be a divider?
+
+If yes,
+
+don't create another card.
+
+---
+
+# Corners
+
+Small
+
+12dp
+
+Medium
+
+16dp
+
+Large
+
+24dp
+
+Never random radii.
+
+---
+
+# Elevation
+
+Flat.
+
+Always.
+
+No floating cards.
+
+No huge shadows.
+
+Hairline borders.
+
+Subtle contrast.
+
+---
+
+# Icons
+
+Every icon must communicate.
+
+Delete decorative icons.
+
+If removing the icon makes the UI clearer,
+
+remove it.
+
+---
+
+# Motion
+
+Animation should explain.
+
+Never entertain.
+
+Allowed
+
+Fade
+
+Crossfade
+
+Progress growth
+
+Slide
+
+Expand
+
+Collapse
+
+Counter animation
+
+Forbidden
+
+Bounce
+
+Elastic overshoot
+
+Confetti
+
+Sparkles
+
+Fireworks
+
+Particle effects
+
+---
+
+# Sol
+
+Sol is not ChatGPT.
+
+Sol is not Gemini.
+
+Sol is not Alexa.
+
+Sol is not Siri.
+
+Sol is an observant wellness companion.
+
+Sol notices.
+
+Sol explains.
+
+Sol recommends.
+
+Sol never lectures.
+
+---
+
+# Tone
+
+Never
+
+Amazing!
+
+Fantastic!
+
+Great job!
+
+You're crushing it!
+
+Let's go!!
+
+Instead
+
+"I noticed..."
+
+"Recovery has improved."
+
+"Sleep has become more consistent."
+
+"A short walk would probably help today."
+
+Quiet confidence.
+
+---
+
+# Notifications
+
+Never interrupt unnecessarily.
+
+Every notification must answer
+
+Why now?
+
+If no answer exists,
+
+don't send it.
+
+---
+
+# Dashboard Rules
+
+The dashboard is not a report.
+
+It is a conversation.
+
+Reading order
+
+Greeting
+
+↓
+
+Today's Priority
+
+↓
+
+Reason
+
+↓
+
+Action
+
+↓
+
+Progress
+
+↓
+
+Optional intelligence
+
+↓
+
+Reflection
+
+↓
+
+Explore
+
+The first screen should reduce anxiety.
+
+Not increase it.
+
+---
+
+# Workout Screens
+
+Workout is the only place that should feel intense.
+
+Dark theme.
+
+Minimal distractions.
+
+Large timer.
+
+Large exercise.
+
+Everything else disappears.
+
+No unnecessary metrics.
+
+---
+
+# Nutrition
+
+Focus on protein.
+
+Not calories.
+
+Meals.
+
+Not macros.
+
+Suggestions.
+
+Not guilt.
+
+Accuracy should feel valuable.
+
+Never mandatory.
+
+---
+
+# Recovery
+
+The recovery screen should feel slower.
+
+Lower visual density.
+
+More whitespace.
+
+Soft transitions.
+
+Quiet colors.
+
+---
+
+# Journal
+
+The journal is private.
+
+Never gamify emotions.
+
+Never score feelings.
+
+Never rank entries.
+
+---
+
+# Stress & Burnout
+
+Never diagnose.
+
+Never alarm.
+
+Never create fear.
+
+Say
+
+"Stress has been gradually increasing."
+
+Never
+
+"You are burned out."
+
+---
+
+# Body Recomposition
+
+Celebrate trends.
+
+Ignore daily fluctuations.
+
+Weeks matter.
+
+Days do not.
+
+---
+
+# Walking
+
+Walking should feel achievable.
+
+10 minutes matters.
+
+Never imply
+
+"Only 3000 steps."
+
+Instead
+
+"Another short walk would reach today's goal."
+
+---
+
+# Micro Wins
+
+Only celebrate genuine improvements.
+
+Examples
+
+Earlier bedtime
+
+Protein improved
+
+Walked more
+
+Finished workout
+
+Lower stress
+
+Recovered faster
+
+Never invent wins.
+
+---
+
+# Friends
+
+Friends exist for accountability.
+
+Not competition.
+
+Forbidden
+
+Leaderboards
+
+XP
+
+Ranks
+
+Trophies
+
+Global feeds
+
+Likes
+
+Follower counts
+
+Trending
+
+Instead
+
+Quiet encouragement.
+
+Shared consistency.
+
+Mutual progress.
+
+---
+
+# Groups
+
+Groups should feel like
+
+A small team.
+
+Not Discord.
+
+Not WhatsApp.
+
+Not Slack.
+
+No endless chat.
+
+Shared activity.
+
+Shared goals.
+
+Support.
+
+---
+
+# AI Rules
+
+AI exists to reduce effort.
+
+Never to show off.
+
+Every AI feature must answer
+
+"What problem disappeared?"
+
+If none,
+
+remove it.
+
+---
+
+# Feature Rules
+
+Before adding any feature,
+
+ask
+
+Does it make healthier habits easier?
+
+Does it reduce thinking?
+
+Does it remove friction?
+
+Does it strengthen long-term consistency?
+
+Would someone still use it after 5 years?
+
+If no,
+
+don't build it.
+
+---
+
+# Design Rules
+
+Never use color just because something looks empty.
+
+Never add an icon because a row feels plain.
+
+Never add a chart because data exists.
+
+Never animate for attention.
+
+Never use gradients.
+
+Never use glass.
+
+Never use neon.
+
+Never copy Dribbble.
+
+Never copy ChatGPT.
+
+Never copy fitness apps.
+
+Build SoloFit.
+
+---
+
+# Engineering Rules
+
+Business logic lives in engines.
+
+UI never computes intelligence.
+
+UserTwin is the source of truth.
+
+Repositories expose facts.
+
+Engines create meaning.
+
+UI presents meaning.
+
+---
+
+# Simplicity Test
+
+For every screen ask
+
+Can one sentence replace three?
+
+Can one graph replace four cards?
+
+Can one interaction replace two screens?
+
+Can one decision replace five settings?
+
+If yes,
+
+simplify.
+
+---
+
+# Emotional Test
+
+After using SoloFit,
+
+the user should feel
+
+✓ calmer
+
+✓ more capable
+
+✓ understood
+
+✓ less guilty
+
+✓ quietly motivated
+
+They should never feel
+
+✗ judged
+
+✗ overwhelmed
+
+✗ addicted
+
+✗ pressured
+
+✗ manipulated
+
+---
+
+# The Final Test
+
+Before merging any UI change, every contributor (human or AI) must answer **yes** to all of these:
+
+1. Does this solve a real user problem?
+2. Does it reduce cognitive load?
+3. Does it fit SoloFit's philosophy?
+4. Would a beginner immediately understand it?
+5. Does it respect the user's attention?
+6. Is every color purposeful?
+7. Is every animation functional?
+8. Could I remove something and make it better?
+9. Does it make Sol feel more like a trusted companion rather than an assistant?
+10. Will this design still feel timeless in five years?
+
+If any answer is **no**, revise the design before merging.
+
+---
+
+# The SoloFit Promise
+
+> **SoloFit will never try to be the loudest app on your phone. It will strive to be the one you trust the most. Every design decision should help people become 1% healthier today than they were yesterday, through clarity, consistency, and quiet guidance—not through pressure, comparison, or novelty.**

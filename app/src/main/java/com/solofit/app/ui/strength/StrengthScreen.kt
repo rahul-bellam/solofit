@@ -75,7 +75,7 @@ fun StrengthScreen(
             item {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Estimated 1RM over time (Epley). Strength ↑ with waist ↓ = winning.",
+                    "Estimated 1RM over time (Epley). Rising strength alongside a steady or shrinking waist is the signal worth watching.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

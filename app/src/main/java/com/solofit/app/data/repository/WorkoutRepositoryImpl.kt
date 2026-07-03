@@ -29,23 +29,20 @@ class WorkoutRepositoryImpl @Inject constructor(
         exercises: List<ExercisePlan>,
         routineId: Long?
     ): Long {
-        val id = if (routineId == null) {
-            dao.insertRoutine(RoutineEntity(name = name, notes = notes))
-        } else {
-            dao.updateRoutine(RoutineEntity(id = routineId, name = name, notes = notes))
-            dao.clearExercises(routineId)
-            routineId
-        }
         val entities = exercises.mapIndexed { index, plan ->
             ExerciseEntity(
-                routineId = id,
+                routineId = 0,               // overwritten with the real id inside the transaction
                 name = plan.name,
                 muscleGroup = plan.muscleGroup,
                 orderIndex = index
             )
         }
-        dao.insertExercises(entities)
-        return id
+        // Single transaction: insert/update the routine and (re)write its exercises
+        // atomically so a crash can't leave the routine without its exercises.
+        return dao.saveRoutineWithExercises(
+            RoutineEntity(id = routineId ?: 0L, name = name, notes = notes),
+            entities
+        )
     }
 
     override suspend fun deleteRoutine(routine: RoutineEntity) = dao.deleteRoutine(routine)

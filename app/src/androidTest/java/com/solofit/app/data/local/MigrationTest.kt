@@ -68,10 +68,12 @@ class MigrationTest {
     @Test
     fun migrateAll_1_to_latest_succeeds() {
         helper.createDatabase(dbName, 1).close()
-        // Validates the entire chain up to the current schema (catches drift).
+        // Validates the ENTIRE chain up to the current schema version (catches drift).
+        // Must list every migration through the latest DB version; the target version
+        // is intentionally hard-coded so a schema bump without a migration fails here.
         helper.runMigrationsAndValidate(
             dbName,
-            8,
+            LATEST_DB_VERSION,
             true,
             SoloFitDatabase.MIGRATION_1_2,
             SoloFitDatabase.MIGRATION_2_3,
@@ -79,7 +81,20 @@ class MigrationTest {
             SoloFitDatabase.MIGRATION_4_5,
             SoloFitDatabase.MIGRATION_5_6,
             SoloFitDatabase.MIGRATION_6_7,
-            SoloFitDatabase.MIGRATION_7_8
+            SoloFitDatabase.MIGRATION_7_8,
+            SoloFitDatabase.MIGRATION_8_9,
+            SoloFitDatabase.MIGRATION_9_10,
+            SoloFitDatabase.MIGRATION_10_11,
+            SoloFitDatabase.MIGRATION_11_12,
+            SoloFitDatabase.MIGRATION_12_13,
+            SoloFitDatabase.MIGRATION_13_14,
+            SoloFitDatabase.MIGRATION_14_15,
+            SoloFitDatabase.MIGRATION_15_16
         ).close()
+    }
+
+    private companion object {
+        // Keep in lock-step with @Database(version = …) in SoloFitDatabase.
+        const val LATEST_DB_VERSION = 16
     }
 }

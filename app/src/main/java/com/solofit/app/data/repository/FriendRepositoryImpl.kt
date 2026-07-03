@@ -22,6 +22,7 @@ class FriendRepositoryImpl @Inject constructor(
     override fun observeAcceptedCount(): Flow<Int> = friendDao.observeAcceptedCount()
 
     override suspend fun getById(id: Long): FriendEntity? = friendDao.getById(id)
+    override fun observeById(id: Long): Flow<FriendEntity?> = friendDao.observeById(id)
     override suspend fun getBySoloId(soloId: String): FriendEntity? = friendDao.getBySoloId(soloId)
 
     override suspend fun addFriend(
